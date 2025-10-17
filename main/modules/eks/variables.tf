@@ -1,0 +1,11 @@
+variable "name" { type = string }
+variable "vpc_id" { type = string }
+variable "subnet_ids" { type = list(string) }
+variable "account_id" { type = string }
+variable "instance_type" { type = string }
+variable "desired_size" { type = number }
+variable "min_size" { type = number }
+variable "max_size" { type = number }
+variable "log_retention_days" { type = number }
+variable "kms_key_arn" { type = string }
+variable "common_tags" { type = map(string) }

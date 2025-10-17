@@ -1,0 +1,10 @@
+variable "name" { type = string }
+variable "vpc_id" { type = string }
+variable "subnet_ids" { type = list(string) }
+variable "eks_sg_id" { type = string }
+variable "db_class" { type = string }
+variable "db_multi_az" { type = bool }
+variable "db_storage" { type = number }
+variable "db_backup_retention" { type = number }
+variable "kms_key_arn" { type = string }
+variable "common_tags" { type = map(string) }

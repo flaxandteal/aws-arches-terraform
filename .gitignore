@@ -1,7 +1,7 @@
-# scribbles directory
+# various
 **/workings/*
 /workings/*
-k8s-multi-terraform.code-workspace
+*-workspace
 *infracost*
 
 # Local .terraform directories

@@ -5,43 +5,35 @@
 Provisions a VPC, subnets, security group, Network ACL, internet gateway, route table, S3 VPC endpoint, IAM user, three S3 buckets (data, logs, Terraform state), an EKS cluster with CloudWatch logging, and a remote state backend in AWS, supporting dev, stage, uat, and prod environments.
 
 # Prerequisites
-Install Terraform (v1.5+).
-Set AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY via environment variables or ~/.aws/credentials).
-
-# Local Usage
-1. Initialize:
+1. Install Terraform (v1.5+).
+***Do yourself a favour and use tfenv to manage versions***
 ```
-terraform init
-```
-
-
-2. Create workspaces (required to avoid validation errors):terraform workspace new dev
-```
-terraform workspace new stage
-terraform workspace new uat
-terraform workspace new prod
+git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+export PATH="$HOME/.tfenv/bin:$PATH"
+source ~/.bashrc  # or ~/.zshrc
+tfenv list-remote
+tfenv install <version>  or tfenv install latest
 ```
 
-3. Select a workspace:
+2. Set AWS credentials.
 ```
-terraform workspace select dev
+export AWS_ACCESS_KEY_ID="your_access_key"
+export AWS_SECRET_ACCESS_KEY="your_secret_key"
+export AWS_DEFAULT_REGION="us-east-1"
 ```
+Ensure the AWS credentials used for bootstrap.tf have permissions to create S3 buckets and DynamoDB tables.
 
-4. Apply for an environment:
+Test your AWS credentials using the AWS CLI:
 ```
-terraform apply -var-file=dev.tfvars
+aws sts get-caller-identity
 ```
+This should return your AWS account details. If it fails, your credentials are invalid or misconfigured.
 
-5. Validate configuration:
-```
-terraform validate
-```
+# Initial Bootstrap Setup (perform once per environment only)
+See bootstrap/README.md
 
-## sji todo - add bit about state bucket usage!
-
-***Important Notes***
-Always select a workspace (dev, stage, uat, prod) before running commands to avoid "Invalid value for variable" errors.
-Use .tfvars files for environment-specific settings (e.g., dev.tfvars for cheaper regions).
+# Create/Update AWS Infrastructure
+See main/README.md
 
 # Well-Architected Framework
 
@@ -52,51 +44,83 @@ Operational Excellence: Modular code, workspace-based naming.
 
 
 # Repo Structure
-aws-terraform/
+```
+aws-arches-terraform/
+├── bootstrap/
+│   ├── bootstrap.tf  # Defines S3 bucket and DynamoDB table to hold Terraform State
+│   └── terraform.tfstate  # Local state for bootstrap
+├── main-project/ # Main project
+├── .terraform-version
 ├── main.tf
 ├── variables.tf
-├── outputs.tf
 ├── dev.tfvars
-├── stage.tfvars
+├── staging.tfvars
 ├── uat.tfvars
 ├── prod.tfvars
-├── terraform.tfvars.example
 ├── modules/
 │   ├── common/
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   └── outputs.tf
-│   ├── network/
+│   ├── vpc/
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   └── outputs.tf
-│   ├── access/
+│   ├── kms/
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   └── outputs.tf
-│   ├── storage/
+│   ├── eks/
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   └── outputs.tf
-│   └── eks/
-│       ├── main.tf
-│       ├── variables.tf
-│       └── outputs.tf
-├── README.md
-└── .gitignore
+│   ├── rds/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── s3/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── ecr/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── secrets/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── iam/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+```
 
 
-# Usage Local
-cd aws
-terraform init
-terraform workspace new dev
-terraform workspace select dev
-terraform apply -var-file=dev.tfvars
 
-Repeat for stage.tfvars, uat.tfvars, prod.tfvars.
+## AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+aws configure
+This prompts you to enter:
 
-terraform fmt --recursive
-terraform validate
+    AWS Access Key ID
+    AWS Secret Access Key
+    Default region (e.g., us-east-1)
+    Output format (e.g., json) This creates a ~/.aws/credentials file and a ~/.aws/config file.
+
+aws sts get-caller-identity
+
+## Set Environment variables
+export AWS_ACCESS_KEY_ID="your_access_key"
+export AWS_SECRET_ACCESS_KEY="your_secret_key"
+export AWS_DEFAULT_REGION="us-east-1"
+Add these to your ~/.bashrc, ~/.zshrc, or equivalent to persist them across sessions.
+
+
+
 
 Scribbles
 Terraform init —backend-config=/env/dev.conf
