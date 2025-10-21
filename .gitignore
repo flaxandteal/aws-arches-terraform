@@ -4,6 +4,9 @@
 *-workspace
 *infracost*
 
+# AWS files
+aws/*
+
 # Local .terraform directories
 **/.terraform/*
 
