@@ -2,9 +2,9 @@ terraform {
   required_version = ">= 1.9.7"
 
   backend "s3" {
-    bucket = "tf-state"  # run backend.tf to create this bucket
+    bucket = "tf-state-<your_aws_account_id>" # Replace with your AWS account ID then run backend.tf to create this bucket
     key    = "terraform/state.tfstate"
-    region = "eu-west-2"
+    region = "eu-north-1"
   }
 
   required_providers {
@@ -42,14 +42,14 @@ module "vpc" {
   source = "./modules/vpc"
 
   region                   = var.region
-  name                    = module.common.name
-  vpc_cidr                = local.vpc_cidr
-  azs                     = local.azs
-  subnet_count            = var.subnet_count
-  single_nat              = module.common.name != "aws-prod"
-  ingress_cidr_blocks     = var.ingress_cidr_blocks
+  name                     = module.common.name
+  vpc_cidr                 = local.vpc_cidr
+  azs                      = local.azs
+  subnet_count             = var.subnet_count
+  single_nat               = module.common.name != "aws-prod"
+  ingress_cidr_blocks      = var.ingress_cidr_blocks
   nacl_ingress_cidr_blocks = var.nacl_ingress_cidr_blocks
-  common_tags             = module.common.common_tags
+  common_tags              = module.common.common_tags
 }
 
 module "kms" {
@@ -77,27 +77,27 @@ module "eks" {
 module "rds" {
   source = "./modules/rds"
 
-  name               = module.common.name
-  vpc_id             = module.vpc.vpc_id
-  subnet_ids         = module.vpc.private_subnets
-  eks_sg_id          = module.eks.node_security_group_id
-  db_class           = var.db_class
-  db_multi_az        = var.db_multi_az
-  db_storage         = var.db_storage
+  name                = module.common.name
+  vpc_id              = module.vpc.vpc_id
+  subnet_ids          = module.vpc.private_subnets
+  eks_sg_id           = module.eks.node_security_group_id
+  db_class            = var.db_class
+  db_multi_az         = var.db_multi_az
+  db_storage          = var.db_storage
   db_backup_retention = var.db_backup_retention
-  kms_key_arn        = module.kms.data_key_arn
-  common_tags        = module.common.common_tags
+  kms_key_arn         = module.kms.data_key_arn
+  common_tags         = module.common.common_tags
 }
 
 module "s3" {
   source = "./modules/s3"
 
-  name                     = module.common.name
-  account_id               = var.account_id
-  kms_key_arn              = module.kms.data_key_arn
+  name                      = module.common.name
+  account_id                = var.account_id
+  kms_key_arn               = module.kms.data_key_arn
   lifecycle_transition_days = var.lifecycle_transition_days
   lifecycle_storage_class   = var.lifecycle_storage_class
-  common_tags              = module.common.common_tags
+  common_tags               = module.common.common_tags
 }
 
 module "ecr" {

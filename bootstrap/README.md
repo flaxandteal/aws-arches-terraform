@@ -16,4 +16,4 @@ This creates the S3 bucket and DynamoDB table, with the state stored locally in 
 4. Verify Resources:
 Check that the S3 bucket and DynamoDB table were created:
 aws s3 ls s3://my-terraform-state-bucket-123
-aws dynamodb describe-table --table-name terraform-locks --region eu-central-1
+aws dynamodb describe-table --table-name terraform-locks --region eu-north-1

@@ -1,8 +1,8 @@
 # General Settings
-region      = "eu-west-2"
+region      = "eu-north-1"
 name        = "aws-prod"
-account_id  = "456789012345"  # Replace with prod account ID
-github_repo = "your-org/your-repo"  # Customize
+account_id  = "456789012345"       # Replace with prod account ID
+github_repo = "your-org/your-repo" # Customize
 common_tags = {
   Project    = "aws-cloud"
   ManagedBy  = "Terraform"
@@ -23,7 +23,7 @@ lifecycle_storage_class   = "GLACIER"
 
 # Cluster Settings
 clusters = {
-  instance_type      = "m6g.large"  # Graviton-based
+  instance_type      = "m6g.large" # Graviton-based
   desired_size       = 3
   min_size           = 3
   max_size           = 10
@@ -31,7 +31,7 @@ clusters = {
 }
 
 # Database Settings
-db_class           = "db.m6g.large"  # Graviton-based
-db_multi_az        = true
-db_storage         = 200
+db_class            = "db.m6g.large" # Graviton-based
+db_multi_az         = true
+db_storage          = 200
 db_backup_retention = 30

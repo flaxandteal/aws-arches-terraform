@@ -36,14 +36,14 @@ resource "aws_iam_role" "github_actions" {
 }
 
 resource "aws_iam_role_policy" "github_terraform" {
-  name   = "${var.name}-github-terraform"
-  role   = aws_iam_role.github_actions.id
+  name = "${var.name}-github-terraform"
+  role = aws_iam_role.github_actions.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ec2:*",
           "eks:*",
           "rds:*",
@@ -120,8 +120,8 @@ resource "aws_iam_role" "pod_s3_ecr" {
 }
 
 resource "aws_iam_role_policy" "pod_s3_ecr" {
-  name   = "${var.name}-pod-s3-ecr"
-  role   = aws_iam_role.pod_s3_ecr.id
+  name = "${var.name}-pod-s3-ecr"
+  role = aws_iam_role.pod_s3_ecr.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -131,8 +131,8 @@ resource "aws_iam_role_policy" "pod_s3_ecr" {
         Resource = ["arn:aws:s3:::${var.s3_bucket}", "arn:aws:s3:::${var.s3_bucket}/*"]
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",

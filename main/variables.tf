@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region"
   type        = string
-  default     = "eu-west-2"
+  default     = "eu-north-1"
 }
 
 variable "name" {
@@ -17,7 +17,7 @@ variable "account_id" {
 variable "github_repo" {
   description = "GitHub repo for OIDC (e.g., 'org/repo')"
   type        = string
-  default     = "your-org/your-repo"  # Customize
+  default     = "your-org/your-repo" # Customize
 }
 
 variable "common_tags" {

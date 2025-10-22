@@ -1,5 +1,5 @@
 locals {
-  tags = {}
+  tags          = {}
   is_serverless = var.db_class == "db.serverless"
 }
 
@@ -8,9 +8,9 @@ resource "random_password" "db" {
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name        = "${var.name}/rds-credentials"
-  kms_key_id  = var.kms_key_arn
-  tags        = merge(var.common_tags, local.tags)
+  name       = "${var.name}/rds-credentials"
+  kms_key_id = var.kms_key_arn
+  tags       = merge(var.common_tags, local.tags)
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials" {
@@ -22,8 +22,8 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 }
 
 module "rds_aurora" {
-  count  = local.is_serverless ? 1 : 0
-  source = "terraform-aws-modules/rds-aurora/aws"
+  count   = local.is_serverless ? 1 : 0
+  source  = "terraform-aws-modules/rds-aurora/aws"
   version = "~> 6.0"
 
   name           = "${var.name}-postgres"
@@ -38,14 +38,14 @@ module "rds_aurora" {
   kms_key_id             = var.kms_key_arn
   deletion_protection    = true
 
-  database_name          = "appdb"
-  master_username        = "admin"
-  master_password        = random_password.db.result
-  port                   = 5432
+  database_name   = "appdb"
+  master_username = "admin"
+  master_password = random_password.db.result
+  port            = 5432
 
   enabled_cloudwatch_logs_exports = ["postgresql"]
-  backup_retention_period = var.db_backup_retention
-  apply_immediately       = var.name == "aws-prod" ? false : true
+  backup_retention_period         = var.db_backup_retention
+  apply_immediately               = var.name == "aws-prod" ? false : true
 
   parameters = [
     { name = "rds.logical_replication", value = "1" }
@@ -55,8 +55,8 @@ module "rds_aurora" {
 }
 
 module "rds_standard" {
-  count  = local.is_serverless ? 0 : 1
-  source = "terraform-aws-modules/rds/aws"
+  count   = local.is_serverless ? 0 : 1
+  source  = "terraform-aws-modules/rds/aws"
   version = "~> 6.0"
 
   identifier     = "${var.name}-postgres"
@@ -70,17 +70,17 @@ module "rds_standard" {
   kms_key_id             = var.kms_key_arn
   deletion_protection    = true
 
-  db_name                = "appdb"
-  username               = "admin"
-  password               = random_password.db.result
-  port                   = 5432
+  db_name  = "appdb"
+  username = "admin"
+  password = random_password.db.result
+  port     = 5432
 
   enabled_cloudwatch_logs_exports = ["postgresql"]
-  backup_retention_period = var.db_backup_retention
-  multi_az               = var.db_multi_az
-  allocated_storage      = var.db_storage
+  backup_retention_period         = var.db_backup_retention
+  multi_az                        = var.db_multi_az
+  allocated_storage               = var.db_storage
 
-  apply_immediately      = var.name == "aws-prod" ? false : true
+  apply_immediately = var.name == "aws-prod" ? false : true
 
   parameters = [
     { name = "rds.logical_replication", value = "1" }

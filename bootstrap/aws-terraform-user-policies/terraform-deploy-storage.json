@@ -63,7 +63,7 @@
         "dynamodb:TagResource",
         "dynamodb:UntagResource"
       ],
-      "Resource": "arn:aws:dynamodb:eu-central-1:034791378213:table/terraform-locks"
+      "Resource": "arn:aws:dynamodb:eu-north-1:034791378213:table/terraform-locks"
     },
     {
       "Effect": "Allow",

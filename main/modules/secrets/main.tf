@@ -9,7 +9,7 @@ resource "aws_secretsmanager_secret" "app_secrets" {
 }
 
 resource "aws_secretsmanager_secret_rotation" "db_credentials" {
-  secret_id = var.rds_secret
+  secret_id           = var.rds_secret
   rotation_lambda_arn = aws_lambda_function.rotate.arn
   rotation_rules {
     automatically_after_days = 30
@@ -21,7 +21,7 @@ resource "aws_lambda_function" "rotate" {
   handler       = "index.handler"
   runtime       = "nodejs18.x"
   role          = aws_iam_role.lambda.arn
-  filename      = "${path.module}/rotation.zip"  # Placeholder; create rotation Lambda code
+  filename      = "${path.module}/rotation.zip" # Placeholder; create rotation Lambda code
   timeout       = 30
   tags          = merge(var.common_tags, local.tags)
 }
@@ -32,7 +32,7 @@ resource "aws_iam_role" "lambda" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = { Service = "lambda.amazonaws.com" }
         Action    = "sts:AssumeRole"
       }
@@ -42,8 +42,8 @@ resource "aws_iam_role" "lambda" {
 }
 
 resource "aws_iam_role_policy" "lambda" {
-  name   = "${var.name}-rds-rotation-policy"
-  role   = aws_iam_role.lambda.id
+  name = "${var.name}-rds-rotation-policy"
+  role = aws_iam_role.lambda.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

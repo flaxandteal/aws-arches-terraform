@@ -19,7 +19,7 @@ tfenv install <version>  or tfenv install latest
 ```
 export AWS_ACCESS_KEY_ID="your_access_key"
 export AWS_SECRET_ACCESS_KEY="your_secret_key"
-export AWS_DEFAULT_REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-north-1"
 ```
 Ensure the AWS credentials used for bootstrap.tf have permissions to create S3 buckets and DynamoDB tables.
 
@@ -108,7 +108,7 @@ This prompts you to enter:
 
     AWS Access Key ID
     AWS Secret Access Key
-    Default region (e.g., eu-central-1)
+    Default region (e.g., eu-north-1)
     Output format (e.g., json) This creates a ~/.aws/credentials file and a ~/.aws/config file.
 
 aws sts get-caller-identity
@@ -116,7 +116,7 @@ aws sts get-caller-identity
 ## Set Environment variables
 export AWS_ACCESS_KEY_ID="your_access_key"
 export AWS_SECRET_ACCESS_KEY="your_secret_key"
-export AWS_DEFAULT_REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-north-1"
 Add these to your ~/.bashrc, ~/.zshrc, or equivalent to persist them across sessions.
 
 

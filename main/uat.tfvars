@@ -1,8 +1,8 @@
 # General Settings
-region      = "eu-west-2"
+region      = "eu-north-1"
 name        = "aws-uat"
-account_id  = "345678901234"  # Replace with uat account ID
-github_repo = "your-org/your-repo"  # Customize
+account_id  = "345678901234"       # Replace with uat account ID
+github_repo = "your-org/your-repo" # Customize
 common_tags = {
   Project    = "aws-cloud"
   ManagedBy  = "Terraform"
@@ -23,7 +23,7 @@ lifecycle_storage_class   = "GLACIER"
 
 # Cluster Settings
 clusters = {
-  instance_type      = "t4g.medium"  # Graviton-based
+  instance_type      = "t4g.medium" # Graviton-based
   desired_size       = 2
   min_size           = 2
   max_size           = 4
@@ -31,7 +31,7 @@ clusters = {
 }
 
 # Database Settings
-db_class           = "db.t4g.medium"  # Graviton-based
-db_multi_az        = true
-db_storage         = 100
+db_class            = "db.t4g.medium" # Graviton-based
+db_multi_az         = true
+db_storage          = 100
 db_backup_retention = 14

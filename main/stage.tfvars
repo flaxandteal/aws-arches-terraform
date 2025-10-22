@@ -1,8 +1,8 @@
 # General Settings
-region      = "eu-west-2"
+region      = "eu-north-1"
 name        = "aws-stage"
-account_id  = "234567890123"  # Replace with staging account ID
-github_repo = "your-org/your-repo"  # Customize
+account_id  = "234567890123"       # Replace with staging account ID
+github_repo = "your-org/your-repo" # Customize
 common_tags = {
   Project    = "aws-cloud"
   ManagedBy  = "Terraform"
@@ -23,7 +23,7 @@ lifecycle_storage_class   = "GLACIER"
 
 # Cluster Settings
 clusters = {
-  instance_type      = "t4g.medium"  # Graviton-based
+  instance_type      = "t4g.medium" # Graviton-based
   desired_size       = 2
   min_size           = 1
   max_size           = 3
@@ -31,7 +31,7 @@ clusters = {
 }
 
 # Database Settings
-db_class           = "db.serverless"  # Aurora Serverless
-db_multi_az        = false
-db_storage         = 0  # Ignored for serverless
+db_class            = "db.serverless" # Aurora Serverless
+db_multi_az         = false
+db_storage          = 0 # Ignored for serverless
 db_backup_retention = 7
