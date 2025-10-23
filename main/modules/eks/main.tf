@@ -20,22 +20,10 @@ module "eks" {
       desired_size                  = var.desired_size
       instance_types                = [var.instance_type]
       disk_size                     = 50
-      subnet_ids                    = var.subnet_ids # Distribute across AZs
+      subnet_ids                    = var.subnet_ids
       additional_security_group_ids = [aws_security_group.node.id]
       launch_template = {
         ebs_kms_key_id = var.kms_key_arn
-      }
-
-      # Add lifecycle block to ignore changes
-      # this should help avoid flux causing the state to become out of sync
-      lifecycle = {
-        ignore_changes = [
-          desired_size,
-          default_node_pool[0].node_count,
-          metadata[0].annotations,
-          # or metadata[0].labels,
-          # or status, etc.
-        ]
       }
     }
   }
@@ -65,7 +53,7 @@ module "eks" {
       from_port   = 443
       to_port     = 443
       type        = "egress"
-      cidr_blocks = ["0.0.0.0/0"] # Adjust if client provides specific CIDR
+      cidr_blocks = ["0.0.0.0/0"]
     }
   }
 
@@ -75,8 +63,7 @@ module "eks" {
     vpc-cni    = {}
   }
 
-  cluster_enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-  cloudwatch_log_group_retention_in_days = var.log_retention_days
+  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = merge(var.common_tags, local.tags)
 }
@@ -99,30 +86,23 @@ resource "aws_security_group" "node" {
   tags = merge(var.common_tags, local.tags)
 }
 
-resource "aws_eks_access_entry" "admin" {
-  cluster_name  = module.eks.cluster_name
-  principal_arn = aws_iam_role.eks_admin.arn
-  type          = "STANDARD"
-}
-
-resource "aws_eks_access_policy_association" "admin" {
-  cluster_name  = module.eks.cluster_name
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = aws_iam_role.eks_admin.arn
-}
-
+# IAM Role for EKS Admins
 resource "aws_iam_role" "eks_admin" {
   name = "${var.name}-eks-admin"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect    = "Allow"
-        Principal = { AWS = "arn:aws:iam::${var.account_id}:root" }
-        Action    = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          AWS = var.eks_admin_principal_arn
+        }
+        Action = "sts:AssumeRole"
       }
     ]
   })
+
   tags = merge(var.common_tags, local.tags)
 }
 
@@ -139,4 +119,20 @@ resource "aws_iam_role_policy" "eks_admin" {
       }
     ]
   })
+}
+
+resource "aws_eks_access_entry" "admin" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = aws_iam_role.eks_admin.arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "admin" {
+  cluster_name  = module.eks.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = aws_iam_role.eks_admin.arn
+
+  access_scope {
+    type = "cluster"
+  }
 }

@@ -3,7 +3,7 @@ Apply the Bootstrap Configuration
 1. cd /bootstrap
 
 2. Create an IAM user in AWS 
-In the AWS console create a new AWS user with the permissions in the json policies file in /aws-terraform-user-policies.
+In the AWS console create a new AWS user caled terraform-deployer and assign the AdministratorAccess policy.
 
 3. Initialize and Apply the Bootstrap Configuration:
 terraform init

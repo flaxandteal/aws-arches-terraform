@@ -1,11 +1,13 @@
 terraform {
   required_version = ">= 1.9.7"
 
-  backend "s3" {
-    bucket = "tf-state-<your_aws_account_id>" # Replace with your AWS account ID then run backend.tf to create this bucket
-    key    = "terraform/state.tfstate"
-    region = "eu-north-1"
-  }
+  backend "local" {}
+
+  # backend "s3" {
+  #   bucket = "tf-state-<your_aws_account_id>" # Replace with your AWS account ID then run backend.tf to create this bucket
+  #   key    = "terraform/state.tfstate"
+  #   region = "eu-north-1"
+  # }
 
   required_providers {
     aws = {
@@ -60,33 +62,34 @@ module "kms" {
 }
 
 module "eks" {
-  source = "./modules/eks"
-
-  name               = module.common.name
-  vpc_id             = module.vpc.vpc_id
-  subnet_ids         = module.vpc.private_subnets
-  instance_type      = var.clusters.instance_type
-  desired_size       = var.clusters.desired_size
-  min_size           = var.clusters.min_size
-  max_size           = var.clusters.max_size
-  log_retention_days = var.clusters.log_retention_days
-  kms_key_arn        = module.kms.data_key_arn
-  common_tags        = module.common.common_tags
+  source                  = "./modules/eks"
+  name                    = var.name
+  vpc_id                  = module.vpc.vpc_id
+  subnet_ids              = module.vpc.private_subnets
+  account_id              = var.account_id
+  instance_type           = var.clusters.instance_type
+  desired_size            = var.clusters.desired_size
+  min_size                = var.clusters.min_size
+  max_size                = var.clusters.max_size
+  log_retention_days      = var.clusters.log_retention_days
+  kms_key_arn             = module.kms.data_key_arn
+  common_tags             = module.common.common_tags
+  eks_admin_principal_arn = var.eks_admin_principal_arn
 }
 
-module "rds" {
-  source = "./modules/rds"
 
-  name                = module.common.name
+module "rds" {
+  source              = "./modules/rds"
+  name                = var.name
   vpc_id              = module.vpc.vpc_id
-  subnet_ids          = module.vpc.private_subnets
+  subnet_ids          = module.vpc.private_subnets # Must include at least two subnets
   eks_sg_id           = module.eks.node_security_group_id
+  kms_key_arn         = module.kms.ecr_key_arn
   db_class            = var.db_class
+  db_backup_retention = var.db_backup_retention
   db_multi_az         = var.db_multi_az
   db_storage          = var.db_storage
-  db_backup_retention = var.db_backup_retention
-  kms_key_arn         = module.kms.data_key_arn
-  common_tags         = module.common.common_tags
+  common_tags         = var.common_tags
 }
 
 module "s3" {
@@ -115,6 +118,7 @@ module "secrets" {
   rds_secret  = module.rds.db_credentials_secret_arn
   kms_key_arn = module.kms.secrets_key_arn
   common_tags = module.common.common_tags
+  # rotation_lambda_arn = var.rotation_lambda_arn
 }
 
 module "iam" {

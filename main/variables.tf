@@ -72,6 +72,12 @@ variable "clusters" {
   })
 }
 
+variable "eks_admin_principal_arn" {
+  description = "ARN of the IAM user or role allowed to assume the EKS admin role"
+  type        = string
+}
+
+
 variable "db_class" {
   description = "RDS instance class or Aurora serverless configuration"
   type        = string
@@ -91,3 +97,8 @@ variable "db_backup_retention" {
   description = "RDS backup retention period in days"
   type        = number
 }
+
+# variable "rotation_lambda_arn" {
+#   description = "ARN of the Lambda function to use for secret rotation"
+#   type        = string
+# }

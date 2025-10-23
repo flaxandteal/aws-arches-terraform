@@ -1,8 +1,8 @@
 # General Settings
 region      = "eu-north-1"
 name        = "catalina"
-account_id  = "123456789012"       # Replace with dev account ID
-github_repo = "your-org/your-repo" # Customize
+account_id  = "034791378213"                                # Replace with dev account ID
+github_repo = "https://github.com/flaxandteal/coral-arches" # Customize
 common_tags = {
   Project    = "catalina"
   ManagedBy  = "Terraform"
@@ -11,6 +11,9 @@ common_tags = {
 extra_tags = {
   Purpose = "development"
 }
+
+# Secrets Settings
+#rotation_lambda_arn = "arn:aws:lambda:eu-north-1:034791378213:function:SecretsManager-RotatePostgreSQLSingleUser"
 
 # Network Settings
 ingress_cidr_blocks      = ["10.0.0.0/16"]
@@ -22,6 +25,7 @@ lifecycle_transition_days = 30
 lifecycle_storage_class   = "GLACIER"
 
 # Cluster Settings
+eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer"
 clusters = {
   instance_type      = "t4g.small" # Graviton-based
   desired_size       = 1
