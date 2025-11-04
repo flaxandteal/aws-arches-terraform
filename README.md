@@ -1,6 +1,3 @@
-# WIP!! This is untested currently and various things have yet to be completely ironed out.
-
-
 # AWS Terraform Repository
 Provisions a VPC, subnets, security group, Network ACL, internet gateway, route table, S3 VPC endpoint, IAM user, three S3 buckets (data, logs, Terraform state), an EKS cluster with CloudWatch logging, and a remote state backend in AWS, supporting dev, stage, uat, and prod environments.
 
@@ -12,7 +9,7 @@ git clone https://github.com/tfutils/tfenv.git ~/.tfenv
 export PATH="$HOME/.tfenv/bin:$PATH"
 source ~/.bashrc  # or ~/.zshrc
 tfenv list-remote
-tfenv install <version>  or tfenv install latest
+terraform <version>  or tfenv install latest
 ```
 
 2. Set AWS credentials.
@@ -36,12 +33,10 @@ See bootstrap/README.md
 See main/README.md
 
 # Well-Architected Framework
-
 Security: Security group and least-privilege IAM.
 Reliability: Multi-subnet in prod for multi-AZ. 
 Cost Optimization: Smaller CIDRs in dev/stage.
 Operational Excellence: Modular code, workspace-based naming.
-
 
 # Repo Structure
 ```
@@ -86,17 +81,11 @@ aws-arches-terraform/
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   └── outputs.tf
-│   ├── secrets/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
 │   ├── iam/
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   └── outputs.tf
 ```
-
-
 
 ## AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -118,11 +107,3 @@ export AWS_ACCESS_KEY_ID="your_access_key"
 export AWS_SECRET_ACCESS_KEY="your_secret_key"
 export AWS_DEFAULT_REGION="eu-north-1"
 Add these to your ~/.bashrc, ~/.zshrc, or equivalent to persist them across sessions.
-
-
-
-
-Scribbles
-Terraform init —backend-config=/env/dev.conf
-
-Terraform apply —var-file=/env/dev.tfvars

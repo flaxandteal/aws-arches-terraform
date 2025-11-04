@@ -1,41 +1,45 @@
-# General Settings
-region      = "eu-north-1"
-name        = "catalina"
-account_id  = "034791378213"                                # Replace with dev account ID
-github_repo = "https://github.com/flaxandteal/coral-arches" # Customize
+# --------------------------------------------------------------------------
+# Common 
+# --------------------------------------------------------------------------
+region = "eu-north-1"
+name   = "catalina-dev"
+
 common_tags = {
   Project    = "catalina"
   ManagedBy  = "Terraform"
   CostCenter = "IT"
 }
+
 extra_tags = {
   Purpose = "development"
 }
 
-# Secrets Settings
-#rotation_lambda_arn = "arn:aws:lambda:eu-north-1:034791378213:function:SecretsManager-RotatePostgreSQLSingleUser"
+# --------------------------------------------------------------------------
+# VPC 
+# --------------------------------------------------------------------------
+vpc_cidr = "10.20.0.0/16"
+vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 
-# Network Settings
-ingress_cidr_blocks      = ["10.0.0.0/16"]
-nacl_ingress_cidr_blocks = ["10.0.0.0/16"]
-subnet_count             = 1
+# --------------------------------------------------------------------------
+# EKS
+# --------------------------------------------------------------------------
+eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer" #replace this!
+cluster_version         = "1.34"
 
-# Storage Settings
-lifecycle_transition_days = 30
-lifecycle_storage_class   = "GLACIER"
-
-# Cluster Settings
-eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer"
 clusters = {
-  instance_type      = "t4g.small" # Graviton-based
+  instance_type      = "t4g.small"
   desired_size       = 1
   min_size           = 1
   max_size           = 2
   log_retention_days = 3
 }
 
-# Database Settings
-db_class            = "db.serverless" # Aurora Serverless
-db_multi_az         = false
-db_storage          = 0 # Ignored for serverless
-db_backup_retention = 7
+github_repo   = "https://github.com/flaxandteal/catalina-fluxcd"
+
+# --------------------------------------------------------------------------
+# s3
+# --------------------------------------------------------------------------
+lifecycle_transition_days = 30
+lifecycle_storage_class   = "GLACIER"
+#enable_logging   = false
+#logging_bucket   = "catalina-dev-logs-bucket" 

@@ -1,13 +1,19 @@
-variable "region" {
-  type    = string
-  default = "eu-north-1"
+variable "name" {
+  type        = string
+  description = "Environment name"
 }
 
-variable "name" { type = string }
-variable "vpc_cidr" { type = string }
-variable "azs" { type = list(string) }
-variable "subnet_count" { type = number }
-variable "single_nat" { type = bool }
-variable "ingress_cidr_blocks" { type = list(string) }
-variable "nacl_ingress_cidr_blocks" { type = list(string) }
-variable "common_tags" { type = map(string) }
+variable "cidr" {
+  type        = string
+  description = "VPC CIDR"
+}
+
+variable "azs" {
+  type        = list(string)
+  description = "Availability zones"
+}
+
+variable "common_tags" {
+  type    = map(string)
+  default = {}
+}

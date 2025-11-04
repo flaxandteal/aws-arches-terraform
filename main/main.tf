@@ -1,37 +1,36 @@
 terraform {
-  required_version = ">= 1.9.7"
+  required_version = ">= 1.5"
 
-  backend "local" {}
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "= 6.15.0" # ← Required by EKS module v21+
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.0"
+    }
 
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.19"
+    }
+  }
+#sji todo
   # backend "s3" {
   #   bucket = "tf-state-<your_aws_account_id>" # Replace with your AWS account ID then run backend.tf to create this bucket
   #   key    = "terraform/state.tfstate"
   #   region = "eu-north-1"
   # }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
-  }
 }
 
 provider "aws" {
   region = var.region
 }
 
-data "aws_availability_zones" "available" {}
-
-locals {
-  vpc_cidr = "10.0.0.0/16"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 2)
-}
-
+# --------------------------------------------------------------------------
+# Common 
+# --------------------------------------------------------------------------
 module "common" {
   source = "./modules/common"
 
@@ -40,100 +39,111 @@ module "common" {
   extra_tags  = var.extra_tags
 }
 
+# --------------------------------------------------------------------------
+# VPC
+# --------------------------------------------------------------------------
 module "vpc" {
   source = "./modules/vpc"
 
-  region                   = var.region
-  name                     = module.common.name
-  vpc_cidr                 = local.vpc_cidr
-  azs                      = local.azs
-  subnet_count             = var.subnet_count
-  single_nat               = module.common.name != "aws-prod"
-  ingress_cidr_blocks      = var.ingress_cidr_blocks
-  nacl_ingress_cidr_blocks = var.nacl_ingress_cidr_blocks
-  common_tags              = module.common.common_tags
-}
-
-module "kms" {
-  source = "./modules/kms"
-
   name        = module.common.name
   common_tags = module.common.common_tags
+
+  cidr = var.vpc_cidr
+  azs  = var.vpc_azs
 }
 
-module "eks" {
-  source                  = "./modules/eks"
-  name                    = var.name
-  vpc_id                  = module.vpc.vpc_id
-  subnet_ids              = module.vpc.private_subnets
-  account_id              = var.account_id
-  instance_type           = var.clusters.instance_type
-  desired_size            = var.clusters.desired_size
-  min_size                = var.clusters.min_size
-  max_size                = var.clusters.max_size
-  log_retention_days      = var.clusters.log_retention_days
-  kms_key_arn             = module.kms.data_key_arn
-  common_tags             = module.common.common_tags
-  eks_admin_principal_arn = var.eks_admin_principal_arn
-}
-
-
-module "rds" {
-  source              = "./modules/rds"
-  name                = var.name
-  vpc_id              = module.vpc.vpc_id
-  subnet_ids          = module.vpc.private_subnets # Must include at least two subnets
-  eks_sg_id           = module.eks.node_security_group_id
-  kms_key_arn         = module.kms.ecr_key_arn
-  db_class            = var.db_class
-  db_backup_retention = var.db_backup_retention
-  db_multi_az         = var.db_multi_az
-  db_storage          = var.db_storage
-  common_tags         = var.common_tags
-}
-
-module "s3" {
-  source = "./modules/s3"
-
-  name                      = module.common.name
-  account_id                = var.account_id
-  kms_key_arn               = module.kms.data_key_arn
-  lifecycle_transition_days = var.lifecycle_transition_days
-  lifecycle_storage_class   = var.lifecycle_storage_class
-  common_tags               = module.common.common_tags
-}
-
-module "ecr" {
-  source = "./modules/ecr"
-
-  name        = module.common.name
-  kms_key_arn = module.kms.ecr_key_arn
-  common_tags = module.common.common_tags
-}
-
-module "secrets" {
-  source = "./modules/secrets"
-
-  name        = module.common.name
-  rds_secret  = module.rds.db_credentials_secret_arn
-  kms_key_arn = module.kms.secrets_key_arn
-  common_tags = module.common.common_tags
-  # rotation_lambda_arn = var.rotation_lambda_arn
-}
-
+# --------------------------------------------------------------------------
+# IAM
+# --------------------------------------------------------------------------
 module "iam" {
   source = "./modules/iam"
 
-  name           = module.common.name
-  github_repo    = var.github_repo
-  eks_oidc_arn   = module.eks.oidc_provider_arn
-  account_id     = var.account_id
-  s3_bucket      = module.s3.bucket_name
-  ecr_repository = module.ecr.repository_url
-  common_tags    = module.common.common_tags
+  name        = module.common.name
+  common_tags = module.common.common_tags
+  github_repo = var.github_repo
+  region      = var.region
 }
 
-output "eks_cluster_endpoint" { value = module.eks.cluster_endpoint }
-output "rds_instance_endpoint" { value = module.rds.db_instance_endpoint }
-output "ecr_repository_url" { value = module.ecr.repository_url }
-output "s3_bucket_name" { value = module.s3.bucket_name }
+# --------------------------------------------------------------------------
+# EKS
+# --------------------------------------------------------------------------
+module "eks" {
+  source = "./modules/eks"
+
+  name        = module.common.name
+  common_tags = module.common.common_tags
+
+  github_repo             = var.github_repo
+  eks_admin_principal_arn = var.eks_admin_principal_arn
+
+  cluster_version          = var.cluster_version
+  vpc_id                   = module.vpc.vpc_id
+  subnet_ids               = module.vpc.private_subnet_ids
+  control_plane_subnet_ids = module.vpc.control_plane_subnet_ids
+
+  node_group = {
+    instance_type = var.clusters.instance_type
+    desired_size  = var.clusters.desired_size
+    min_size      = var.clusters.min_size
+    max_size      = var.clusters.max_size
+  }
+
+  #ebs_kms_key_arn = module.kms.ebs_kms_key_arn
+
+  log_retention_days = var.clusters.log_retention_days
+
+}
+
+# --------------------------------------------------------------------------
+# KMS 
+# --------------------------------------------------------------------------
+module "kms" {
+  source = "./modules/kms"
+
+  name               = module.common.name
+  common_tags        = module.common.common_tags
+  node_iam_role_name = module.eks.node_iam_role_name # for EBS key policy
+}
+
+# --------------------------------------------------------------------------
+# s3
+# --------------------------------------------------------------------------
+module "s3" {
+  source = "./modules/s3"
+  name   = module.common.name
+
+  lifecycle_transition_days = var.lifecycle_transition_days
+  lifecycle_storage_class   = var.lifecycle_storage_class
+  s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  common_tags               = module.common.common_tags
+}
+
+# --------------------------------------------------------------------------
+# RDS
+# --------------------------------------------------------------------------
+module "rds" {
+  source = "./modules/rds"
+
+  name        = module.common.name
+  common_tags = module.common.common_tags
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnet_ids
+  eks_sg_id  = module.eks.node_security_group_id 
+
+  db_class            = var.db_class
+  db_storage          = var.db_storage
+  db_multi_az         = var.db_multi_az
+  db_backup_retention = var.db_backup_retention
+  kms_key_arn         = module.kms.ebs_kms_key_arn
+}
+
+# --------------------------------------------------------------------------
+# ECR - sji don't need this. images still in github presumably?
+# --------------------------------------------------------------------------
+# module "ecr" {
+#   source = "./modules/ecr"
+
+#   name        = module.common.name
+#   common_tags = module.common.common_tags
+# }

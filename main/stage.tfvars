@@ -1,37 +1,45 @@
-# General Settings
-region      = "eu-north-1"
-name        = "aws-stage"
-account_id  = "234567890123"       # Replace with staging account ID
-github_repo = "your-org/your-repo" # Customize
+# --------------------------------------------------------------------------
+# Common 
+# --------------------------------------------------------------------------
+region = "eu-north-1"
+name   = "catalina-stage"
+
 common_tags = {
-  Project    = "aws-cloud"
+  Project    = "catalina"
   ManagedBy  = "Terraform"
   CostCenter = "IT"
 }
+
 extra_tags = {
   Purpose = "staging"
 }
 
-# Network Settings
-ingress_cidr_blocks      = ["10.0.0.0/16"]
-nacl_ingress_cidr_blocks = ["10.0.0.0/16"]
-subnet_count             = 1
+# --------------------------------------------------------------------------
+# VPC 
+# --------------------------------------------------------------------------
+vpc_cidr = "10.20.0.0/16"
+vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 
-# Storage Settings
-lifecycle_transition_days = 30
-lifecycle_storage_class   = "GLACIER"
+# --------------------------------------------------------------------------
+# EKS
+# --------------------------------------------------------------------------
+eks_admin_principal_arn = "arn:aws:iam::123456:user/terraform-deployer" #replace this!
+cluster_version         = "1.34"
 
-# Cluster Settings
 clusters = {
-  instance_type      = "t4g.medium" # Graviton-based
-  desired_size       = 2
+  instance_type      = "t4g.medium"
+  desired_size       = 1
   min_size           = 1
-  max_size           = 3
-  log_retention_days = 7
+  max_size           = 2
+  log_retention_days = 3
 }
 
-# Database Settings
-db_class            = "db.serverless" # Aurora Serverless
-db_multi_az         = false
-db_storage          = 0 # Ignored for serverless
-db_backup_retention = 7
+github_repo   = "https://github.com/flaxandteal/catalina-fluxcd"
+
+# --------------------------------------------------------------------------
+# s3
+# --------------------------------------------------------------------------
+lifecycle_transition_days = 30
+lifecycle_storage_class   = "GLACIER"
+enable_logging   = true
+logging_bucket   = "catalina-stage-logs-bucket"  # create separately

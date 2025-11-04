@@ -1,37 +1,45 @@
-# General Settings
-region      = "eu-north-1"
-name        = "aws-uat"
-account_id  = "345678901234"       # Replace with uat account ID
-github_repo = "your-org/your-repo" # Customize
+# --------------------------------------------------------------------------
+# Common 
+# --------------------------------------------------------------------------
+region = "eu-north-1"
+name   = "catalina-uat"
+
 common_tags = {
-  Project    = "aws-cloud"
+  Project    = "catalina"
   ManagedBy  = "Terraform"
   CostCenter = "IT"
 }
+
 extra_tags = {
   Purpose = "uat"
 }
 
-# Network Settings
-ingress_cidr_blocks      = ["10.0.0.0/16"]
-nacl_ingress_cidr_blocks = ["10.0.0.0/16"]
-subnet_count             = 1
+# --------------------------------------------------------------------------
+# VPC 
+# --------------------------------------------------------------------------
+vpc_cidr = "10.20.0.0/16"
+vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 
-# Storage Settings
-lifecycle_transition_days = 30
-lifecycle_storage_class   = "GLACIER"
+# --------------------------------------------------------------------------
+# EKS
+# --------------------------------------------------------------------------
+eks_admin_principal_arn = "arn:aws:iam::123456:user/terraform-deployer" #replace this!
+cluster_version         = "1.34"
 
-# Cluster Settings
 clusters = {
-  instance_type      = "t4g.medium" # Graviton-based
-  desired_size       = 2
-  min_size           = 2
-  max_size           = 4
-  log_retention_days = 14
+  instance_type      = "t4g.medium"
+  desired_size       = 1
+  min_size           = 1
+  max_size           = 2
+  log_retention_days = 3
 }
 
-# Database Settings
-db_class            = "db.t4g.medium" # Graviton-based
-db_multi_az         = true
-db_storage          = 100
-db_backup_retention = 14
+github_repo   = "https://github.com/flaxandteal/catalina-fluxcd"
+
+# --------------------------------------------------------------------------
+# s3
+# --------------------------------------------------------------------------
+lifecycle_transition_days = 30
+lifecycle_storage_class   = "GLACIER"
+enable_logging   = true
+logging_bucket   = "catalina-uat-logs-bucket"  # create separately

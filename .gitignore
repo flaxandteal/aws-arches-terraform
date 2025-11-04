@@ -1,11 +1,18 @@
 # various
+workings
+workings/*
 **/workings/*
 /workings/*
 *-workspace
+multi-cloud-arches-terraform.code-workspace
 *infracost*
+.github
+session-manager-plugin.*
 
 # AWS files
 aws/*
+/aws/*
+**/aws/*
 
 # Local .terraform directories
 **/.terraform/*
@@ -15,7 +22,10 @@ aws/*
 *.tfstate*
 .terraform/ 
 .tfvars
+terraform.*
+terraform-debug.log
 terraform.tfstate.*
+**/.terraform/providers/**
 
 # Crash log files
 crash.log

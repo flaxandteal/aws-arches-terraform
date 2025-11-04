@@ -3,9 +3,9 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "terraform-state-${data.aws_caller_identity.current.account_id}" # Ensure this bucket name is globally unique
+  bucket = "catalina-terraform-state"
   tags = {
-    Name        = "terraform-state"
+    Name = "terraform-state"
   }
 }
 
