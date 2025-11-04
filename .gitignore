@@ -6,7 +6,6 @@ workings/*
 *-workspace
 multi-cloud-arches-terraform.code-workspace
 *infracost*
-.github
 session-manager-plugin.*
 
 # AWS files

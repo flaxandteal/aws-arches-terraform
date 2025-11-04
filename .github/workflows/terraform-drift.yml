@@ -1,0 +1,62 @@
+name: Daily Terraform Drift Detection
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch: 
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  drift-check:
+    strategy:
+      matrix:
+        environment: [dev] #stage, uat, prod] #sji todo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Drift Detection
+        id: drift
+        uses: ./.github/actions/terraform-drift
+        with:
+          environment: ${{ matrix.environment }}
+          tfvars-file: ${{ matrix.environment }}.tfvars
+          backend-file: ${{ matrix.environment }}.backend.tfvars
+          fail-on-drift: "false"  # Only alert, don't fail
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Alert on Drift
+        if: steps.drift.outputs.has-drift == 'true'
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "*Terraform Drift Detected in ${{ matrix.environment }}*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Environment:* `${{ matrix.environment }}`\n*Action:* Review drift plan in GitHub Artifacts"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "View Plan" },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

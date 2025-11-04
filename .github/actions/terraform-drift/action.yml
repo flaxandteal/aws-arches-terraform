@@ -1,0 +1,72 @@
+# .github/actions/terraform-drift/action.yml
+name: "Terraform Drift Detection"
+description: "Checks for Terraform drift in a given environment"
+inputs:
+  environment:
+    description: "Environment to check (dev, stage, uat, prod)"
+    required: true
+  tfvars-file:
+    description: "Path to tfvars file"
+    required: true
+  backend-file:
+    description: "Path to backend config"
+    required: true
+  fail-on-drift:
+    description: "Fail workflow if drift is detected"
+    required: false
+    default: "false"
+
+outputs:
+  has-drift:
+    description: "true if drift detected"
+    value: ${{ steps.check.outputs.has-drift }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.9.0
+
+    - name: Terraform Init
+      run: |
+        terraform init -backend-config="${{ inputs.backend-file }}"
+
+    - name: Terraform Plan (Check Drift)
+      id: plan
+      env:
+        TF_VAR_environment: ${{ inputs.environment }}
+      run: |
+        terraform plan \
+          -var-file="${{ inputs.tfvars-file }}" \
+          -detailed-exitcode \
+          -out=tfplan \
+          > plan.txt 2>&1 || true
+        echo "exitcode=$?" >> $GITHUB_OUTPUT
+
+    - name: Detect Drift
+      id: check
+      run: |
+        if grep -q "No changes\|0 to change" plan.txt; then
+          echo "No drift detected"
+          echo "has-drift=false" >> $GITHUB_OUTPUT
+        else
+          echo "Drift detected!"
+          echo "has-drift=true" >> $GITHUB_OUTPUT
+          cat plan.txt
+        fi
+
+    - name: Upload Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: drift-plan-${{ inputs.environment }}
+        path: |
+          tfplan
+          plan.txt
+
+    - name: Fail on Drift
+      if: ${{ inputs.fail-on-drift == 'true' && steps.check.outputs.has-drift == 'true' }}
+      run: |
+        echo "Drift detected and fail-on-drift=true – failing job"
+        exit 1

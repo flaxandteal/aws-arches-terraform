@@ -1,0 +1,31 @@
+name: Terraform Security Scan (Trivy + tfsec)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Full Security Scan
+        uses: ./.github/actions/terraform-security-scan
+        with:
+            environment: dev
+            tfvars-file: dev.tfvars
+            backend-file: dev.backend.tfvars

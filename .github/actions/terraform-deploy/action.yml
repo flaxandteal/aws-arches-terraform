@@ -1,0 +1,51 @@
+name: "Terraform CD"
+inputs:
+  environment:
+    required: true
+  tfvars-file:
+    required: true
+  backend-file:
+    required: true
+  auto-apply:
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.9.0
+
+    - name: Terraform Init
+      run: |
+        terraform init \
+          -backend-config="${{ inputs.backend-file }}"
+
+    - name: Terraform Validate
+      run: terraform validate
+
+    - name: Terraform Plan
+      id: plan
+      env:
+        TF_VAR_environment: ${{ inputs.environment }}
+      run: |
+        terraform plan \
+          -var-file="${{ inputs.tfvars-file }}" \
+          -out=tfplan \
+          -detailed-exitcode
+        echo "exitcode=$?" >> $GITHUB_OUTPUT
+
+    - name: Upload Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan-${{ inputs.environment }}
+        path: tfplan
+
+    - name: Show Plan
+      if: steps.plan.outputs.exitcode != '0'
+      run: terraform show -no-color tfplan
+
+    - name: Terraform Apply
+      if: ${{ inputs.auto-apply == 'true' && steps.plan.outputs.exitcode == '2' }}
+      run: terraform apply -auto-approve tfplan

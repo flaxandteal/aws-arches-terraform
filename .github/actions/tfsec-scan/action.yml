@@ -1,0 +1,27 @@
+name: "tfsec Scan"
+description: "Runs official tfsec on Terraform code"
+inputs:
+  path:
+    default: "."
+    required: false
+  severity:
+    default: "CRITICAL,HIGH"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: tfsec Scan
+      uses: aquasecurity/tfsec-action@v1.28.0
+      with:
+        working-directory: ${{ inputs.path }}
+        format: 'sarif'
+        output: 'tfsec-results.sarif'
+        soft-fail: true
+        severity: ${{ inputs.severity }}
+        config-file: .tfsec.yml  # optional
+
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: tfsec-results.sarif
