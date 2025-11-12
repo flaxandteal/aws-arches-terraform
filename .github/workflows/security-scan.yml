@@ -104,11 +104,11 @@ jobs:
         shell: bash
 
       # --- Rocket.Chat alert (weekly only) ---
-      - name: Alert Rocket.Chat
+      - name: Alert Rocket.Chat (weekly only)
         if: github.event_name == 'schedule'
         uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
         with:
-          type: ${{ steps.static.outcome == 'success' && steps.plan_scan.outcome == 'success' && 'success' || 'failure' }}
+          type: ${{ job.status }}
           job_name: Weekly Security Scan
           mention: ${{ steps.sum_high.outputs.high_critical > 0 && '@all' || '' }}
           channel: '#security-alerts'
@@ -116,7 +116,7 @@ jobs:
           commit: true
           token: ${{ secrets.GITHUB_TOKEN }}
           text: |
-            **Weekly Security Scan** – **${{ steps.static.outcome == 'success' && steps.plan_scan.outcome == 'success' && 'PASSED' || 'FAILED' }}**
+            **Weekly Security Scan** – **${{ job.status == 'success' && 'PASSED' || 'FAILED' }}**
             *Total findings:* `${{ steps.sum_total.outputs.total }}`
             *High/Critical:* `${{ steps.sum_high.outputs.high_critical }}`
             *Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
