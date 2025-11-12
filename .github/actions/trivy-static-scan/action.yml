@@ -16,7 +16,7 @@ runs:
       uses: actions/checkout@v4
 
     - name: Trivy Static Scan
-      uses: aquasecurity/trivy-action@v0.32.0
+      uses: aquasecurity/trivy-action@master
       with:
         scan-type: 'fs'
         scan-ref: ${{ inputs.path }}
