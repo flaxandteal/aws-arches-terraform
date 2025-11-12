@@ -29,13 +29,13 @@ runs:
       with:
         sarif_file: trivy-static.sarif
 
-        #sji continue-on-error: true not suitable long term - maybe send alerts to something like this: 
-    - name: Notify Rocket.Chat
-      if failure()  # only send on failure, remove this line to always send
-      run: |
-        curl -X POST -H 'Content-Type: application/json' \
-          -d '{
-                "text": "🚨 GitHub Action failed: {{ github.workflow }} > {{ github.job }}\nCommit: {{ github.sha }}\n<{{ github.server_url }}/{{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
-              }' \
-          {{ secrets.ROCKETCHAT_WEBHOOK_URL }}
-  # only on scans of main branch
+  #       #sji continue-on-error: true not suitable long term - maybe send alerts to something like this: 
+  #   - name: Notify Rocket.Chat
+  #     if failure()  # only send on failure, remove this line to always send
+  #     run: |
+  #       curl -X POST -H 'Content-Type: application/json' \
+  #         -d '{
+  #               "text": "🚨 GitHub Action failed: {{ github.workflow }} > {{ github.job }}\nCommit: {{ github.sha }}\n<{{ github.server_url }}/{{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
+  #             }' \
+  #         {{ secrets.ROCKETCHAT_WEBHOOK_URL }}
+  # # only on scans of main branch
