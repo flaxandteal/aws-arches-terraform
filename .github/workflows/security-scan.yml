@@ -40,9 +40,9 @@ jobs:
           path: .
 
       - name: tfsec Scan
-        uses: tfsec/tfsec-action@v1
+        uses: ./.github/actions/trivy-static-scan
         with:
-          soft_fail: false
+          path: .
 
       # --- Plan + dynamic scan ---
       - name: Terraform Plan
