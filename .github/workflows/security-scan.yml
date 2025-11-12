@@ -2,7 +2,7 @@
 name: Terraform Security Scan (Trivy + tfsec)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   push:
   #   branches: [ main ]
   #   paths:
@@ -14,18 +14,20 @@ on:
   #     - '**/*.tf'
   #     - '**/*.tfvars'
 
+  # Weekly scan – with Rocket.Chat alert
+  schedule:
+    - cron: '0 2 * * 1'  # every Monday 02:00 UTC
+
 permissions:
   contents: read
-  actions: read # needed for fingerprinting
+  actions: read # fingerprinting
+  issues: write  # uto-issue creation
   security-events: write #sarif upload
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Full Security Scan
         uses: ./.github/actions/terraform-security-scan
         with:
