@@ -1,3 +1,4 @@
+# ./github/workflows/security-scan.yml
 name: Terraform Security Scan (Trivy + tfsec)
 
 on:

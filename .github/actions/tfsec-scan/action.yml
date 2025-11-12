@@ -1,3 +1,4 @@
+# .`github/actions/tfsec-scan/action.yml
 name: "tfsec Scan"
 description: "Runs official tfsec on Terraform code"
 inputs:

@@ -1,3 +1,4 @@
+# .github/actions/terraform-security-scan/action.yml
 name: "Terraform Security Scan (All)"
 description: "Runs Trivy (static + plan) + tfsec"
 inputs:
