@@ -16,13 +16,12 @@ on:
 
 permissions:
   contents: read
-  security-events: write
+  actions: read # needed for fingerprinting
+  security-events: write #sarif upload
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
