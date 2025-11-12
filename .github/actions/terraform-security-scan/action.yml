@@ -15,6 +15,7 @@ runs:
       uses: hashicorp/setup-terraform@v3
 
     - name: Terraform Init
+      shell: bash
       run: terraform init -backend-config="${{ inputs.backend-file }}"
 
     # Static scans
@@ -23,6 +24,7 @@ runs:
 
     # Plan + dynamic scan
     - name: Terraform Plan
+      shell: bash
       run: |
         terraform plan -var-file="${{ inputs.tfvars-file }}" -out=tfplan
 
