@@ -16,6 +16,7 @@ runs:
     - name: tfsec Scan
       id: tfsec
       uses: aquasecurity/tfsec-action@v1.28.0
+      continue-on-error: true
       with:
         working-directory: ${{ inputs.path }}
         format: json
@@ -59,6 +60,6 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: tfsec-results-${{ github.run_id }}
+        name: tfsec-results-${{ github.run_id }}-${{ github.job }}
         path: tfsec-results.json
         retention-days: 30

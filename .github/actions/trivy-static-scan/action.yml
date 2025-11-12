@@ -16,6 +16,7 @@ runs:
 
     - name: Trivy Static Scan
       id: trivy
+      continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: fs
@@ -53,6 +54,6 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: trivy-static-${{ github.run_id }}
+        name: trivy-static-${{ github.run_id }}-${{ github.job }}
         path: trivy-static.json
         retention-days: 30

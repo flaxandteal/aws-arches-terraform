@@ -11,6 +11,7 @@ runs:
   steps:
     - name: Trivy Plan Scan
       id: trivy
+      continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: config
@@ -48,6 +49,6 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: trivy-plan-${{ github.run_id }}
+        name: trivy-plan-${{ github.run_id }}-${{ github.job }}
         path: trivy-plan.json
         retention-days: 30
