@@ -15,7 +15,7 @@ runs:
     # -------------------------------------------------
     - name: tfsec Scan
       id: tfsec
-      uses: aquasecurity/tfsec-action@v1.28.0
+      uses: aquasecurity/tfsec-action@v1.0.3
       continue-on-error: true
       with:
         working-directory: ${{ inputs.path }}
