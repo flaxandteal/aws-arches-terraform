@@ -16,7 +16,7 @@ terraform {
       version = "~> 1.19"
     }
   }
-#sji todo
+  #sji todo
   # backend "s3" {
   #   bucket = "tf-state-<your_aws_account_id>" # Replace with your AWS account ID then run backend.tf to create this bucket
   #   key    = "terraform/state.tfstate"
@@ -129,7 +129,7 @@ module "rds" {
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnet_ids
-  eks_sg_id  = module.eks.node_security_group_id 
+  eks_sg_id  = module.eks.node_security_group_id
 
   db_class            = var.db_class
   db_storage          = var.db_storage

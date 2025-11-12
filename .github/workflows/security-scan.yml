@@ -1,6 +1,7 @@
 name: Terraform Security Scan (Trivy + tfsec)
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths:

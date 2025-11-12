@@ -34,7 +34,7 @@ clusters = {
   log_retention_days = 3
 }
 
-github_repo   = "https://github.com/flaxandteal/catalina-fluxcd"
+github_repo = "https://github.com/flaxandteal/catalina-fluxcd"
 
 # --------------------------------------------------------------------------
 # s3

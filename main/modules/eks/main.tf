@@ -82,8 +82,7 @@ module "eks" {
     var.common_tags,
     local.tags,
     {
-      GitHubRepo  = var.github_repo
-      Environment = try(regex("-(dev|stage|prod)$", var.name)[0], "dev")
+      GitHubRepo = var.github_repo
     }
   )
 }

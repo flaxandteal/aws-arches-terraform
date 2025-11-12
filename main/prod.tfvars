@@ -34,12 +34,12 @@ clusters = {
   log_retention_days = 3
 }
 
-github_repo   = "https://github.com/flaxandteal/catalina-fluxcd"
+github_repo = "https://github.com/flaxandteal/catalina-fluxcd"
 
 # --------------------------------------------------------------------------
 # s3
 # --------------------------------------------------------------------------
 lifecycle_transition_days = 30
 lifecycle_storage_class   = "GLACIER"
-enable_logging   = true
-logging_bucket   = "catalina-prod-logs-bucket"  # create separately
+enable_logging            = true
+logging_bucket            = "catalina-prod-logs-bucket" # create separately
