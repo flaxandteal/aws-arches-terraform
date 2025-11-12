@@ -1,0 +1,49 @@
+name: tflint
+description: Run TFLint
+
+inputs:
+  terraform_version:
+    description: Terraform version to use
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+  - name: Checkout
+    uses: actions/checkout@v4
+
+  - name: Setup Terraform
+    uses: hashicorp/setup-terraform@v3
+    with:
+      terraform_version: ${{ inputs.terraform_version }}
+
+  - name: Terraform FMT
+    run: terraform fmt -check -recursive
+    shell: bash
+
+  - name: Cache plugin dir
+    uses: actions/cache@v4      
+    with:
+      path: ~/.tflint.d/plugins
+      key: ${{ matrix.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
+
+  - name: Setup TFLint
+    uses: terraform-linters/setup-tflint@v4      
+    with:
+      tflint_version: latest
+
+  - name: Show version
+    run: tflint --version
+    shell: bash
+
+  - name: Init TFLint
+    run: tflint --init
+    shell: bash
+    env:
+      # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+      GITHUB_TOKEN: ${{ github.token }}
+
+  - name: Run TFLint
+    run: tflint -f compact
+    shell: bash

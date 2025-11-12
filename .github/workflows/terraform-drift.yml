@@ -1,27 +1,85 @@
 name: Daily Terraform Drift Detection
 
-on:
-  schedule:
-    - cron: '0 6 * * *'
-  workflow_dispatch: 
+on: #sji todo schedule for uat and prod only?? for catalina certainly
+  # schedule:
+  #   - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      environments:
+        type: string
+        description: 'Comma-separated list of environments (e.g. dev,uat,prod or "all")'
+        required: true
+        default: 'dev' #sji all for generic! or uat and prod only for catalina?
+      rocketchat_channel:
+        description: 'Rocket.Chat channel to send drift alerts to'
+        required: false
+        default: '#project-catalina-support' 
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
+  # -------------------------------------------------
+  # Build matrix from input
+  # -------------------------------------------------
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      # -------------------------------------------------
+      #  Set environment matrix
+      # -------------------------------------------------
+      - name: Set environment matrix
+        id: set-matrix
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            # Scheduled run → check all
+            ENV_LIST='["dev","stage","uat","prod"]'
+          else
+            INPUT="${{ inputs.environments }}"
+            if [[ "$INPUT" == "all" ]]; then
+              ENV_LIST='["dev","stage","uat","prod"]'
+            else
+              # Clean input: trim, split on comma/space, dedupe, lowercase
+              CLEAN=$(echo "$INPUT" | tr ',' ' ' | tr -s ' ' | xargs)
+              ENV_ARRAY=($CLEAN)
+              # Filter only valid envs
+              VALID=()
+              for env in "${ENV_ARRAY[@]}"; do
+                env=$(echo "$env" | tr '[:upper:]' '[:lower:]')
+                if [[ " dev stage uat prod " == *" $env "* ]]; then
+                  VALID+=("\"$env\"")
+                fi
+              done
+              # Dedupe
+              UNIQUE=$(printf '%s\n' "${VALID[@]}" | sort -u)
+              ENV_LIST=$(printf ',%s' $UNIQUE)
+              ENV_LIST="[${ENV_LIST:1}]"
+            fi
+          fi
+          echo "matrix=$ENV_LIST" >> $GITHUB_OUTPUT
+          echo "Selected environments: $ENV_LIST"
+  # -------------------------------------------------
+  #  Drift Detection Job
+  # -------------------------------------------------
   drift-check:
+    needs: build-matrix
     strategy:
       matrix:
-        environment: [dev] #stage, uat, prod] #sji todo
+        environment: ${{ fromJSON(needs.build-matrix.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # -------------------------------------------------
+      #  Run Drift Detection
+      # -------------------------------------------------
       - name: Run Drift Detection
         id: drift
-        uses: ./.github/actions/terraform-drift
+        uses: ./.github/actions/terraform/drift
         with:
           environment: ${{ matrix.environment }}
           tfvars-file: ${{ matrix.environment }}.tfvars
@@ -31,32 +89,55 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Alert on Drift
+      # -------------------------------------------------
+      #  Drift detected
+      # -------------------------------------------------
+      - name: Alert Rocket.Chat on Drift
         if: steps.drift.outputs.has-drift == 'true'
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
         with:
-          payload: |
-            {
-              "text": "*Terraform Drift Detected in ${{ matrix.environment }}*",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Environment:* `${{ matrix.environment }}`\n*Action:* Review drift plan in GitHub Artifacts"
-                  }
-                },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "View Plan" },
-                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          type: warning
+          job_name: Terraform Drift Detection
+          channel: ${{ inputs.tfvars-file }} 
+          url: ${{ secrets.ROCKETCHAT_WEBHOOK }} 
+          token: ${{ secrets.GITHUB_TOKEN }}
+          mention: '@all'
+          text: |
+            *Terraform Drift Detected* in `${{ matrix.environment }}`
+            Review the drift plan in the GitHub Actions run.
+          attachments: |
+            [
+              {
+                "title": "View Plan",
+                "title_link": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "color": "#FFCC00",
+                "fields": [
+                  { "title": "Environment", "value": "${{ matrix.environment }}", "short": true },
+                  { "title": "Run ID", "value": "${{ github.run_id }}", "short": true }
+                ]
+              }
+            ]
+
+      # -------------------------------------------------
+      #  No drift
+      # -------------------------------------------------
+      - name: Alert Rocket.Chat – No Drift
+        if: steps.drift.outputs.has-drift != 'true'   # covers false, missing, or any other value
+        uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
+        with:
+          type: success
+          job_name: Terraform Drift Detection
+          channel: ${{ inputs.tfvars-file }}
+          url: ${{ secrets.ROCKETCHAT_WEBHOOK }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          text: |
+            *No Terraform drift* in `${{ matrix.environment }}` – all resources are in sync.
+          attachments: |
+            [
+              {
+                "title": "View Run",
+                "title_link": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "color": "#36A64F"
+              }
+            ]
+              

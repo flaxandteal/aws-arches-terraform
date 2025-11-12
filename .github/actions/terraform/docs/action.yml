@@ -1,0 +1,61 @@
+name: Generate Terraform Docs for All Modules
+description: Auto-generates Terraform docs for all modules and injects them into their respective READMEs
+
+#Note: This action checks out the PR branch, generates Terraform docs for the root  and all other modules
+# then injects them into README.md files. 
+# You may customise this by creating your own README.md file and any generated docs can be restricted between these marers:
+#<!-- BEGIN_TF_DOCS -->
+#[generated content]
+#<!-- END_TF_DOCS -->
+# Alternatively if a README.md exists without the markers the docs will be appended to the end of the file.
+
+inputs:
+  ref:
+    description: Git branch or PR ref to checkout
+    required: false
+    default: ${{ github.event.pull_request.head.ref }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: ⬇️ Checkout PR branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+
+    - name: 📦 Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git
+
+    - name: 🧾 Generate Terraform Docs for Root Module
+      uses: terraform-docs/gh-actions@main
+      with:
+        working-dir: .
+        config-file: .terraform-docs.yml
+        output-file: README.md
+        output-method: inject
+        git-push: true
+
+    - name: 🔁 Generate Terraform Docs for All Modules
+      shell: bash
+      run: |
+        for dir in modules/*/; do
+          if [ -f "$dir/main.tf" ]; then
+            echo "📄 Generating docs for $dir"
+            terraform-docs --config .terraform-docs.yml markdown document "$dir" > "$dir/README.md.tmp"
+
+            # Inject docs into README.md using BEGIN_TF_DOCS/END_TF_DOCS markers
+            if grep -q 'BEGIN_TF_DOCS' "$dir/README.md"; then
+              terraform-docs --config .terraform-docs.yml markdown document "$dir" | \
+                sed -e '1s/^/<!-- BEGIN_TF_DOCS -->\n/' -e '$s/$/\n<!-- END_TF_DOCS -->/' > "$dir/README.md.tmp"
+
+              awk '/<!-- BEGIN_TF_DOCS -->/{flag=1;print;next}/<!-- END_TF_DOCS -->/{flag=0;next} !flag' "$dir/README.md" > "$dir/README.md.base"
+              cat "$dir/README.md.base" "$dir/README.md.tmp" > "$dir/README.md.new"
+              mv "$dir/README.md.new" "$dir/README.md"
+            else
+              echo -e "\n<!-- BEGIN_TF_DOCS -->\n$(cat "$dir/README.md.tmp")\n<!-- END_TF_DOCS -->" >> "$dir/README.md"
+            fi
+
+            rm -f "

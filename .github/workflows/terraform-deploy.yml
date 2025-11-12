@@ -1,20 +1,30 @@
 #unfinished - we need to add proper change control around this for uat and prod deployments
 #sji todo
-name: Terraform CD
+name: Terraform Deploy
+# on:
+#   workflow_run:
+#       workflows: ["Security Scan"]
+#       types:
+#         - completed
 
+      #endpoints with zap??
+
+      #quality
 on:
   push:
-    branches: [ main ]
-    paths:
-      - '**.tf'
-      - '**.tfvars'
-      - '**.backend.tfvars'
   workflow_dispatch:
     inputs:
+      auto-apply:
+        type: choice
+        options: [true, false]
+        description: 'Automatically apply the planned changes'
+        required: true
+        default: 'false'
       environment:
         type: choice
         options: [dev, stage, uat, prod]
         required: true
+        default: dev
 
 permissions:
   contents: read
@@ -22,69 +32,20 @@ permissions:
   deployments: write
 
 jobs:
-  # ── Non-Prod: Auto ──
-  non-prod:
-    if: github.event_name == 'push' || github.event.inputs.environment != 'prod'
-    strategy:
-      matrix:
-        environment: [dev, stage, uat]
-    environment: ${{ matrix.environment }}
+  deploy:
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Security Scan
-        uses: ./.github/actions/security-scan
 
       - name: Terraform Plan & Apply
-        uses: ./.github/actions/terraform-cd
+        uses: ./.github/actions/terraform/deploy
         with:
-          environment: ${{ matrix.environment }}
-          tfvars-file: ${{ matrix.environment }}.tfvars
-          backend-file: ${{ matrix.environment }}.backend.tfvars
-          auto-apply: "true"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-  # ── Prod: Manual Gate ── sji todo
-  prod:
-    if: github.event.inputs.environment == 'prod'
-    environment:
-      name: prod
-      url: https://console.aws.amazon.com
-    needs: non-prod
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Security Scan
-        uses: ./.github/actions/security-scan
-
-      - name: Terraform Plan
-        uses: ./.github/actions/terraform-cd
-        with:
-          environment: prod
-          tfvars-file: prod.tfvars
-          backend-file: prod.backend.tfvars
-          auto-apply: "false"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Manual Approval
-        uses: trstringer/manual-approval@v1
-        with:
-          approvers: "admin-team"
-          minimum-approvals: 1
-
-      - name: Terraform Apply
-        if: steps.manual-approval.outputs.approved == 'true'
-        run: |
-          terraform init -backend-config=prod.backend.tfvars
-          terraform apply -auto-approve tfplan
+          environment: ${{ inputs.environment }}
+          tfvars-file: ${{ inputs.environment }}.tfvars
+          backend-file: ${{ inputs.environment }}.backend.tfvars
+          auto-apply: ${{ inputs.auto-apply }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

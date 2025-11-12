@@ -1,4 +1,4 @@
-name: "Terraform CD"
+name: "Terraform Deploy"
 inputs:
   environment:
     required: true
@@ -12,11 +12,31 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # ---------------------------------------------
+    # 1. Get Terraform Version
+    # ---------------------------------------------
+    - name: Get Terraform Version
+      uses: ./.github/actions/terraform/version
+
+    # ---------------------------------------------
+    # 2. Setup Terraform
+    # ---------------------------------------------
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: 1.9.0
 
+    # ---------------------------------------------
+    # 3. Terraform Quality Check
+    # ---------------------------------------------
+    - name: Terraform Quality Check
+      uses: ./.github/actions/terraform/quality
+      with:
+        terraform_version: ${{ steps.tf-version.outputs.version }}
+
+    # ---------------------------------------------
+    # 4. Terraform Deploy
+    # ---------------------------------------------
     - name: Terraform Init
       run: |
         terraform init \

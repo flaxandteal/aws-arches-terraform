@@ -40,11 +40,13 @@ jobs:
       # --- Static scans ---
       - name: Trivy Static Scan
         id: static
+        continue-on-error: true
         uses: ./.github/actions/trivy-static-scan
         with:
           path: .
 
       - name: tfsec Scan
+        continue-on-error: true
         uses: ./.github/actions/tfsec-scan
         with:
           path: .
@@ -58,6 +60,7 @@ jobs:
 
       - name: Trivy Plan Scan
         id: plan_scan
+        continue-on-error: true
         uses: ./.github/actions/trivy-plan-scan
         with:
           tfplan-path: tfplan

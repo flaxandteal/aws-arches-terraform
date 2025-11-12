@@ -5,7 +5,9 @@ on:
   workflow_dispatch:
     inputs:
       target-region:
-        default: eu-west-1
+        default: eu-west-1 #sji change this to your failover region
+        description: 'Target region for failover deployment'
+        required: true 
 
 jobs:
   failover:
