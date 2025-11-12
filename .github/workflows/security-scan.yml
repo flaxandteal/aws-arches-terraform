@@ -45,7 +45,7 @@ jobs:
           path: .
 
       - name: tfsec Scan
-        uses: ./.github/actions/trivy-static-scan
+        uses: ./.github/actions/tfsec-scan
         with:
           path: .
 
