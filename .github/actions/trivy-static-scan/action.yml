@@ -1,161 +1,58 @@
-# .github/actions/trivy-static-scan/action.yml
 name: "Trivy Static Scan"
-description: "Scans Terraform source files (.tf, .tfvars) with Trivy"
+description: "Scans Terraform source files with Trivy (all severities, fail on any)"
+
 inputs:
   path:
     default: "."
-    required: false
-  severity:
-    default: "CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN" #sji unknown??
     required: false
 
 runs:
   using: "composite"
   steps:
-    # -------------------------------------------------
-    # Checkout
-    # -------------------------------------------------
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    # -------------------------------------------------
-    # Run the scan
-    # -------------------------------------------------
     - name: Trivy Static Scan
+      id: trivy
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: 'fs'
+        scan-type: fs
         scan-ref: ${{ inputs.path }}
-        format: 'sarif'
-        output: 'trivy-static.sarif'
-        severity: ${{ inputs.severity }}
-        cache-dir: .trivy-cache  #optional
-        exit-code: '0'        # control failure below
+        format: json
+        output: trivy-static.json
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'                 # fail on *any* finding
+        cache-dir: .trivy-cache
 
-    # -------------------------------------------------
-    # Count CRITICAL+HIGH Issues for @all alert
-    # -------------------------------------------------
-    - name: Count high/critical issues
+    - name: Count HIGH+CRITICAL
       id: count
-      if: always()  # run even if trivy failed
+      if: always()
       run: |
         CNT=$(jq -r '
           .Results[].Vulnerabilities // [] |
           map(select(.Severity == "CRITICAL" or .Severity == "HIGH")) |
           length
-        ' trivy-results.json 2>/dev/null || echo 0)
+        ' trivy-static.json 2>/dev/null || echo 0)
         echo "high_critical=$CNT" >> $GITHUB_OUTPUT
-        echo "High/Critical: $CNT" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
-    # -------------------------------------------------
-    # Count all issues
-    # -------------------------------------------------
-    - name: Count all issues
+    - name: Count ALL
       id: total
       if: always()
       run: |
         TOTAL=$(jq -r '
           .Results[].Vulnerabilities // [] |
           length
-        ' trivy-results.json 2>/dev/null || echo 0)
+        ' trivy-static.json 2>/dev/null || echo 0)
         echo "total=$TOTAL" >> $GITHUB_OUTPUT
-        echo "Total findings: $TOTAL" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
-    # -------------------------------------------------
-    # Rocket.Chat alert **only on schedule** and **only if issues exist**
-    # -------------------------------------------------
-    - name: Alert Rocket.Chat (weekly)
-      if: github.event_name == 'schedule'
-      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
-      with:
-        type: ${{ steps.trivy.outcome == 'success' && 'success' || 'failure' }}
-        job_name: Weekly Security Scan
-        mention: ${{ steps.count.outputs.high_critical > 0 && '@all' || '' }} # @all only if high/critical > 0
-        channel: '#security-alerts'
-        url: ${{ secrets.ROCKETCHAT_WEBHOOK }}
-        commit: true
-        token: ${{ secrets.GITHUB_TOKEN }}
-        text: |
-          **Weekly Security Scan** – **${{ steps.trivy.outcome == 'success' && 'PASSED' || 'FAILED' }}**
-          *Total findings:* `${{ steps.total.outputs.total }}`
-          *High/Critical:* `${{ steps.count.outputs.high_critical }}`
-          *Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-    # -------------------------------------------------
-    # Quiet "all-clear" for scheduled runs
-    # -------------------------------------------------
-    - name: All-clear (weekly only)
-      if: github.event_name == 'schedule' && steps.count.outputs.issues == 0
-      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
-      with:
-        type: success
-        job_name: Weekly Security Scan
-        channel: '#security-alerts'
-        url: ${{ secrets.ROCKETCHAT_WEBHOOK }}
-        text: |
-          **Weekly Security Scan PASSED** – no HIGH/CRITICAL issues.
-
-    # -------------------------------------------------
-    # Upload results as artifact (scheduled)
-    # -------------------------------------------------
-    - name: Upload results
+    - name: Upload static results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: trivy-results-${{ github.run_id }}
-        path: trivy-results.json
+        name: trivy-static-${{ github.run_id }}
+        path: trivy-static.json
         retention-days: 30
-
-    # - name: Upload Trivy Results as Artifact
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: trivy-security-results
-    #     path: trivy-results.*  # txt, json, or sarif
-    #     retention-days: 30
-    # - name: Summarize Scan Results
-    #   if: always()
-    #   id: summary
-    #   run: |
-    #     # Example: Count issues from Trivy JSON (adjust path as needed)
-    #     ISSUE_COUNT=$(grep -c '"Severity":"HIGH\|CRITICAL"' trivy-results.json || echo 0)
-    #     echo "issues=$ISSUE_COUNT" >> $GITHUB_OUTPUT
-    #     echo "## Scan Summary: ${{ steps.scan.outcome }} - $ISSUE_COUNT high/critical issues" >> $GITHUB_STEP_SUMMARY
-
-    # - name: Alert in Rocket.Chat
-    #   if: always()
-    #   uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
-    #   with:
-    #     type: ${{ job.status }}  # success/failure/neutral
-    #     job_name: Security Scan
-    #     mention: '@here'  # Or '@all', or leave empty
-    #     mention_if: 'failure'  # Only mention on failure
-    #     channel: '#security-alerts'  # Your channel
-    #     url: ${{ secrets.ROCKETCHAT_WEBHOOK }}  # From repo secrets
-    #     commit: true  # Include latest commit info
-    #     token: ${{ secrets.GITHUB_TOKEN }}  # Built-in token for commit data
-    #     # Optional: Custom text with summary
-    #     text: |
-    #       Security Scan ${{ job.status }}! 
-    #       Environment: ${{ inputs.environment || 'dev' }}
-    #       Issues: ${{ steps.summary.outputs.issues || 'N/A' }}
-    #       Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      # - name: Upload SARIF to GitHub Security
-      #   uses: github/codeql-action/upload-sarif@v3
-      #   with:
-      #     sarif_file: trivy-static.sarif
-
-  #       #sji continue-on-error: true not suitable long term - maybe send alerts to something like this: 
-  #   - name: Notify Rocket.Chat
-  #     if failure()  # only send on failure, remove this line to always send
-  #     run: |
-  #       curl -X POST -H 'Content-Type: application/json' \
-  #         -d '{
-  #               "text": "🚨 GitHub Action failed: {{ github.workflow }} > {{ github.job }}\nCommit: {{ github.sha }}\n<{{ github.server_url }}/{{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
-  #             }' \
-  #         {{ secrets.ROCKETCHAT_WEBHOOK_URL }}
-  # # only on scans of main branch

@@ -1,28 +1,64 @@
-# .`github/actions/tfsec-scan/action.yml
+# .github/actions/tfsec-scan/action.yml
 name: "tfsec Scan"
-description: "Runs official tfsec on Terraform code"
+description: "Runs tfsec on Terraform code – all severities, fail on any"
+
 inputs:
   path:
     default: "."
-    required: false
-  severity:
-    default: "CRITICAL,HIGH"
     required: false
 
 runs:
   using: "composite"
   steps:
+    # -------------------------------------------------
+    # 1. Run tfsec
+    # -------------------------------------------------
     - name: tfsec Scan
+      id: tfsec
       uses: aquasecurity/tfsec-action@v1.28.0
       with:
         working-directory: ${{ inputs.path }}
-        format: 'sarif'
-        output: 'tfsec-results.sarif'
-        soft-fail: true
-        severity: ${{ inputs.severity }}
-        config-file: .tfsec.yml  # optional
+        format: json
+        output: tfsec-results.json
+        soft-fail: false                     # ← FAIL on any finding
+        severity: CRITICAL,HIGH,MEDIUM,LOW   # ← scan all
+        config-file: .tfsec.yml              # optional
 
-    - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@v3
+    # -------------------------------------------------
+    # 2. Count HIGH + CRITICAL issues
+    # -------------------------------------------------
+    - name: Count HIGH+CRITICAL
+      id: count
+      if: always()
+      run: |
+        CNT=$(jq -r '
+          .results |
+          map(select(.severity == "CRITICAL" or .severity == "HIGH")) |
+          length
+        ' tfsec-results.json 2>/dev/null || echo 0)
+        echo "high_critical=$CNT" >> $GITHUB_OUTPUT
+        echo "HIGH+CRITICAL: $CNT" >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    # -------------------------------------------------
+    # 3. Count ALL issues
+    # -------------------------------------------------
+    - name: Count ALL
+      id: total
+      if: always()
+      run: |
+        TOTAL=$(jq -r '.results | length' tfsec-results.json 2>/dev/null || echo 0)
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        echo "Total tfsec findings: $TOTAL" >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    # -------------------------------------------------
+    # 4. Upload JSON results as artifact
+    # -------------------------------------------------
+    - name: Upload tfsec results
+      if: always()
+      uses: actions/upload-artifact@v4
       with:
-        sarif_file: tfsec-results.sarif
+        name: tfsec-results-${{ github.run_id }}
+        path: tfsec-results.json
+        retention-days: 30

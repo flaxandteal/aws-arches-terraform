@@ -1,31 +1,53 @@
-# .github/actions/trivy-plan-scan/action.yml
 name: "Trivy Plan Scan"
-description: "Scans Terraform plan output with Trivy"
+description: "Scans Terraform plan output with Trivy (all severities, fail on any)"
+
 inputs:
   tfplan-path:
     default: "tfplan"
-    required: false
-  severity:
-    default: "CRITICAL,HIGH"
     required: false
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Trivy Plan Scan
+      id: trivy
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: 'config'
+        scan-type: config
         scan-ref: ${{ inputs.tfplan-path }}
-        format: 'sarif'
-        output: 'trivy-plan.sarif'
-        severity: ${{ inputs.severity }}
-        cache-dir: .trivy-cache  #optional
+        format: json
+        output: trivy-plan.json
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'                 # fail on *any* finding
+        cache-dir: .trivy-cache
 
-    - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@v3
+    - name: Count HIGH+CRITICAL
+      id: count
+      if: always()
+      run: |
+        CNT=$(jq -r '
+          .Results[].Vulnerabilities // [] |
+          map(select(.Severity == "CRITICAL" or .Severity == "HIGH")) |
+          length
+        ' trivy-plan.json 2>/dev/null || echo 0)
+        echo "high_critical=$CNT" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Count ALL
+      id: total
+      if: always()
+      run: |
+        TOTAL=$(jq -r '
+          .Results[].Vulnerabilities // [] |
+          length
+        ' trivy-plan.json 2>/dev/null || echo 0)
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Upload plan results
+      if: always()
+      uses: actions/upload-artifact@v4
       with:
-        sarif_file: trivy-plan.sarif
+        name: trivy-plan-${{ github.run_id }}
+        path: trivy-plan.json
+        retention-days: 30

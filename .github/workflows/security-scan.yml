@@ -1,36 +1,134 @@
-# ./github/workflows/security-scan.yml
 name: Terraform Security Scan (Trivy + tfsec)
 
 on:
   workflow_dispatch: {}
   push:
-  #   branches: [ main ]
-  #   paths:
-  #     - '**/*.tf'
-  #     - '**/*.tfvars'
-  # pull_request:
-  #   branches: [ main ]
-  #   paths:
-  #     - '**/*.tf'
-  #     - '**/*.tfvars'
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
 
-  # Weekly scan – with Rocket.Chat alert
   schedule:
-    - cron: '0 2 * * 1'  # every Monday 02:00 UTC
+    - cron: '0 2 * * 1'   # Monday 02:00 UTC
 
 permissions:
   contents: read
-  actions: read # fingerprinting
-  issues: write  # uto-issue creation
-  security-events: write #sarif upload
+  actions: read
+  issues: write
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Full Security Scan
-        uses: ./.github/actions/terraform-security-scan
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        shell: bash
+        run: terraform init -backend-config="${{ inputs.backend-file }}"
+
+      # --- Static scans ---
+      - name: Trivy Static Scan
+        id: static
+        uses: ./.github/actions/trivy-static-scan
         with:
-            environment: dev
-            tfvars-file: dev.tfvars
-            backend-file: dev.backend.tfvars
+          path: .
+
+      - name: tfsec Scan
+        uses: tfsec/tfsec-action@v1
+        with:
+          soft_fail: false
+
+      # --- Plan + dynamic scan ---
+      - name: Terraform Plan
+        id: plan
+        shell: bash
+        run: |
+          terraform plan -var-file="${{ inputs.tfvars-file }}" -out=tfplan
+
+      - name: Trivy Plan Scan
+        id: plan_scan
+        uses: ./.github/actions/trivy-plan-scan
+        with:
+          tfplan-path: tfplan
+
+      # --- Sum HIGH+CRITICAL across all tools ---
+      - name: Sum HIGH+CRITICAL across all tools
+        id: sum_high
+        if: always()
+        run: |
+          # Load JSON files safely
+          STATIC=$(cat trivy-static.json 2>/dev/null || echo '{}')
+          TFSEC=$(cat tfsec-results.json 2>/dev/null || echo '{}')
+          PLAN=$(cat trivy-plan.json 2>/dev/null || echo '{}')
+
+          CNT=$(
+            jq -n \
+              --argjson s "$STATIC" \
+              --argjson t "$TFSEC" \
+              --argjson p "$PLAN" \
+              '
+                ($s.Results[].Vulnerabilities // [] | map(select(.Severity == "CRITICAL" or .Severity == "HIGH")) | length) +
+                ($t.results // [] | map(select(.severity == "CRITICAL" or .severity == "HIGH")) | length) +
+                ($p.Results[].Vulnerabilities // [] | map(select(.Severity == "CRITICAL" or .Severity == "HIGH")) | length)
+              '
+          )
+          echo "high_critical=$CNT" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Sum TOTAL across all tools
+        id: sum_total
+        if: always()
+        run: |
+          STATIC=$(cat trivy-static.json 2>/dev/null || echo '{}')
+          TFSEC=$(cat tfsec-results.json 2>/dev/null || echo '{}')
+          PLAN=$(cat trivy-plan.json 2>/dev/null || echo '{}')
+
+          TOTAL=$(
+            jq -n \
+              --argjson s "$STATIC" \
+              --argjson t "$TFSEC" \
+              --argjson p "$PLAN" \
+              '
+                ($s.Results[].Vulnerabilities // [] | length) +
+                ($t.results // [] | length) +
+                ($p.Results[].Vulnerabilities // [] | length)
+              '
+          )
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # --- Rocket.Chat alert (weekly only) ---
+      - name: Alert Rocket.Chat
+        if: github.event_name == 'schedule'
+        uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
+        with:
+          type: ${{ steps.static.outcome == 'success' && steps.plan_scan.outcome == 'success' && 'success' || 'failure' }}
+          job_name: Weekly Security Scan
+          mention: ${{ steps.sum_high.outputs.high_critical > 0 && '@all' || '' }}
+          channel: '#security-alerts'
+          url: ${{ secrets.ROCKETCHAT_WEBHOOK }}
+          commit: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          text: |
+            **Weekly Security Scan** – **${{ steps.static.outcome == 'success' && steps.plan_scan.outcome == 'success' && 'PASSED' || 'FAILED' }}**
+            *Total findings:* `${{ steps.sum_total.outputs.total }}`
+            *High/Critical:* `${{ steps.sum_high.outputs.high_critical }}`
+            *Run:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # --- All-clear (weekly only) ---
+      - name: All-clear (weekly)
+        if: github.event_name == 'schedule' && steps.sum_high.outputs.high_critical == 0 && steps.sum_total.outputs.total == 0
+        uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@master
+        with:
+          type: success
+          job_name: Weekly Security Scan
+          channel: '#security-alerts'
+          url: ${{ secrets.ROCKETCHAT_WEBHOOK }}
+          text: |
+            **Weekly Security Scan PASSED** – no findings.
