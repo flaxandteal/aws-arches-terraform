@@ -3,15 +3,15 @@ name: Terraform Security Scan (Trivy + tfsec)
 on:
   workflow_dispatch: {}
   push:
-    branches: [ main ]
-    paths:
-      - '**/*.tf'
-      - '**/*.tfvars'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - '**/*.tf'
-      - '**/*.tfvars'
+  #   branches: [ main ]
+  #   paths:
+  #     - '**/*.tf'
+  #     - '**/*.tfvars'
+  # pull_request:
+  #   branches: [ main ]
+  #   paths:
+  #     - '**/*.tf'
+  #     - '**/*.tfvars'
 
   schedule:
     - cron: '0 2 * * 1'   # Monday 02:00 UTC
