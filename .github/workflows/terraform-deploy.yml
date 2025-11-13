@@ -41,7 +41,7 @@ jobs:
         uses: ./.github/actions/terraform/deploy
         with:
           environment: ${{ inputs.environment }}
-          tfvars-file: main/${{ inputs.environment }}.tfvars
+          tfvars-file: ./main/${{ inputs.environment }}.tfvars
           backend-file: main/${{ inputs.environment }}.backend.tfvars
           auto-apply: ${{ inputs.auto-apply }}
         env:
