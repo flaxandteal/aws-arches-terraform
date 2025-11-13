@@ -24,4 +24,4 @@ runs:
         version=$(cat .terraform-version)
         echo "Terraform version: $version"
         echo "version=$version" >> $GITHUB_OUTPUT
-      working-directory: ${{ inputs.working-directory }}
+      # working-directory: ${{ inputs.working-directory }}
