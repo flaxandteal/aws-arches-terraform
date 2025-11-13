@@ -37,7 +37,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Terraform Plan & Apply
+      - name: Terraform Check, Plan & Apply
         uses: ./.github/actions/terraform/deploy
         with:
           environment: ${{ inputs.environment }}
