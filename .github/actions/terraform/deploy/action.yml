@@ -19,8 +19,8 @@ runs:
     # 1. Get Terraform Version
     # ---------------------------------------------
     - name: Get Terraform Version
-      working-directory: ${{ inputs.working-directory }}
       uses: ./.github/actions/terraform/version
+      working-directory: ${{ inputs.working-directory }}
 
     # ---------------------------------------------
     # 2. Setup Terraform
