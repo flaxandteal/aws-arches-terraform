@@ -16,13 +16,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Check out code
+      uses: actions/checkout@v4
     # ---------------------------------------------
     # 1. Get Terraform Version
     # ---------------------------------------------
     - name: Get Terraform Version
       uses: ./.github/actions/terraform/version
-      with:
-        working-directory: ${{ inputs.working-directory }}
+      # with:
+      #   working-directory: ${{ inputs.working-directory }}
 
     # ---------------------------------------------
     # 2. Setup Terraform
@@ -31,7 +33,7 @@ runs:
       uses: hashicorp/setup-terraform@v3
       with:
           terraform_version: ${{ steps.tf-version.outputs.version }}
-          working-directory: ${{ inputs.working-directory }}
+          # working-directory: ${{ inputs.working-directory }}
 
     # ---------------------------------------------
     # 3. Terraform Quality Check - fmt & lint
@@ -40,7 +42,7 @@ runs:
       uses: ./.github/actions/terraform/quality
       with:
         terraform_version: ${{ steps.tf-version.outputs.version }}
-        working-directory: ${{ inputs.working-directory }}
+        # working-directory: ${{ inputs.working-directory }}
 
     # ---------------------------------------------
     # 4. Terraform Init
@@ -54,55 +56,55 @@ runs:
           terraform_version: ${{ steps.tf-version.outputs.version }}
           working-directory: ${{ inputs.working-directory }}
 
-    # ---------------------------------------------
-    # 5. Terraform Validate
-    # --------------------------------------------- 
-    - name: Terraform Validate
-      shell: bash
-      run: terraform validate
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}
-          working-directory: ${{ inputs.working-directory }}
+    # # ---------------------------------------------
+    # # 5. Terraform Validate
+    # # --------------------------------------------- 
+    # - name: Terraform Validate
+    #   shell: bash
+    #   run: terraform validate
+    #   with:
+    #       terraform_version: ${{ steps.tf-version.outputs.version }}
+    #       working-directory: ${{ inputs.working-directory }}
 
-    # ---------------------------------------------
-    # 6. Terraform Plan       
-    # ---------------------------------------------
-    - name: Terraform Plan
-      id: plan
-      shell: bash
-      env:
-        TF_VAR_environment: ${{ inputs.environment }}
-      run: |
-        terraform plan \
-          -var-file="${{ inputs.tfvars-file }}" \
-          -out=tfplan \
-          -detailed-exitcode
-        echo "plan_exitcode=$?" >> $GITHUB_OUTPUT
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}  
-          working-directory: ${{ inputs.working-directory }}
+    # # ---------------------------------------------
+    # # 6. Terraform Plan       
+    # # ---------------------------------------------
+    # - name: Terraform Plan
+    #   id: plan
+    #   shell: bash
+    #   env:
+    #     TF_VAR_environment: ${{ inputs.environment }}
+    #   run: |
+    #     terraform plan \
+    #       -var-file="${{ inputs.tfvars-file }}" \
+    #       -out=tfplan \
+    #       -detailed-exitcode
+    #     echo "plan_exitcode=$?" >> $GITHUB_OUTPUT
+    #   with:
+    #       terraform_version: ${{ steps.tf-version.outputs.version }}  
+    #       working-directory: ${{ inputs.working-directory }}
 
-    # ---------------------------------------------
-    # 7. Terraform Show Plan
-    # ---------------------------------------------
-    - name: Show Plan
-      if: steps.plan.outputs.exitcode != '0'
-      shell: bash
-      run: terraform show -no-color tfplan
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}  
+    # # ---------------------------------------------
+    # # 7. Terraform Show Plan
+    # # ---------------------------------------------
+    # - name: Show Plan
+    #   if: steps.plan.outputs.exitcode != '0'
+    #   shell: bash
+    #   run: terraform show -no-color tfplan
+    #   with:
+    #       terraform_version: ${{ steps.tf-version.outputs.version }}  
 
-    - name: Upload Plan
-      uses: actions/upload-artifact@v4
-      with:
-        name: tfplan-${{ inputs.environment }}
-        path: tfplan
-        retention-days: 30
+    # - name: Upload Plan
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: tfplan-${{ inputs.environment }}
+    #     path: tfplan
+    #     retention-days: 30
 
-    - name: Terraform Apply
-      shell: bash
-      if: ${{ inputs.auto-apply && steps.plan.outputs.exitcode == '2' }}
-      run: terraform apply -auto-approve tfplan
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}  
-          working-directory: ${{ inputs.working-directory }}
+    # - name: Terraform Apply
+    #   shell: bash
+    #   if: ${{ inputs.auto-apply && steps.plan.outputs.exitcode == '2' }}
+    #   run: terraform apply -auto-approve tfplan
+    #   with:
+    #       terraform_version: ${{ steps.tf-version.outputs.version }}  
+    #       working-directory: ${{ inputs.working-directory }}
