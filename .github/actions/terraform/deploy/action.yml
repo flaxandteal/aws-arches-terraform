@@ -7,7 +7,8 @@ inputs:
   backend-file:
     required: true
   auto-apply:
-    default: "true"
+    type: boolean
+    default: true
 
 runs:
   using: "composite"
@@ -54,7 +55,11 @@ runs:
           -var-file="${{ inputs.tfvars-file }}" \
           -out=tfplan \
           -detailed-exitcode
-        echo "exitcode=$?" >> $GITHUB_OUTPUT
+        echo "plan_exitcode=$?" >> $GITHUB_OUTPUT
+
+    - name: Show Plan
+      if: steps.plan.outputs.exitcode != '0'
+      run: terraform show -no-color tfplan
 
     - name: Upload Plan
       uses: actions/upload-artifact@v4
@@ -67,5 +72,5 @@ runs:
       run: terraform show -no-color tfplan
 
     - name: Terraform Apply
-      if: ${{ inputs.auto-apply == 'true' && steps.plan.outputs.exitcode == '2' }}
+      if: ${{ inputs.auto-apply && steps.plan.outputs.exitcode == '2' }}
       run: terraform apply -auto-approve tfplan

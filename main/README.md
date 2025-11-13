@@ -1,9 +1,11 @@
 # Create/Update AWS Infrastructure
 1. cd /main
 
-1. Initialize:
+2. Check that the env bootstrap and tfvars files you are using are correct.
+
+1. Initialize Locally and test (choose correct backend file):
 ```
-terraform init
+terraform init   -backend-config=dev.backend.tfvars
 ```
 
 2. Format and Validate Terraform

@@ -16,12 +16,6 @@ terraform {
       version = "~> 1.19"
     }
   }
-  #sji todo
-  # backend "s3" {
-  #   bucket = "tf-state-<your_aws_account_id>" # Replace with your AWS account ID then run backend.tf to create this bucket
-  #   key    = "terraform/state.tfstate"
-  #   region = "eu-north-1"
-  # }
 }
 
 provider "aws" {
@@ -138,9 +132,6 @@ module "rds" {
   kms_key_arn         = module.kms.ebs_kms_key_arn
 }
 
-# --------------------------------------------------------------------------
-# ECR - sji don't need this. images still in github presumably?
-# --------------------------------------------------------------------------
 # module "ecr" {
 #   source = "./modules/ecr"
 

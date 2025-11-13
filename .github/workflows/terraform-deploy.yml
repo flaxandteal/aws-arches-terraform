@@ -1,5 +1,3 @@
-#unfinished - we need to add proper change control around this for uat and prod deployments
-#sji todo
 name: Terraform Deploy
 # on:
 #   workflow_run:
@@ -43,8 +41,8 @@ jobs:
         uses: ./.github/actions/terraform/deploy
         with:
           environment: ${{ inputs.environment }}
-          tfvars-file: ${{ inputs.environment }}.tfvars
-          backend-file: ${{ inputs.environment }}.backend.tfvars
+          tfvars-file: main/${{ inputs.environment }}.tfvars
+          backend-file: main/${{ inputs.environment }}.backend.tfvars
           auto-apply: ${{ inputs.auto-apply }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

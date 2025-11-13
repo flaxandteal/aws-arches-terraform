@@ -1,5 +1,6 @@
-bucket         = "catalina-terraform-state"
-key            = "uat/terraform.tfstate"
-region         = "eu-north-1"
-dynamodb_table = "terraform-locks"
+bucket         = "tfstate-uat-034791378213"
+key            = "state/terraform.tfstate"
+region         = "eu-central-1"
 encrypt        = true
+kms_key_id     = ""
+dynamodb_table = "tflocks-uat-034791378213"

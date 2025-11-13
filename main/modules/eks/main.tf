@@ -47,10 +47,7 @@ module "eks" {
     }
   }
 
-  # cluster_enabled_log_types = [
-  #   "api", "audit", "authenticator", "controllerManager", "scheduler"
-  # ]
-  # cloudwatch_log_group_retention_in_days = var.log_retention_days
+  cloudwatch_log_group_retention_in_days = var.log_retention_days
 
   eks_managed_node_groups = {
     main = {

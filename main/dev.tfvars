@@ -23,7 +23,7 @@ vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 # --------------------------------------------------------------------------
 # EKS
 # --------------------------------------------------------------------------
-eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer" #replace this!
+eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer"
 cluster_version         = "1.34"
 
 clusters = {
@@ -35,6 +35,8 @@ clusters = {
 }
 
 github_repo = "https://github.com/flaxandteal/catalina-fluxcd"
+
+log_retention_days = 3
 
 # --------------------------------------------------------------------------
 # s3
