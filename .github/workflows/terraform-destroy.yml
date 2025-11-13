@@ -3,6 +3,18 @@ name: Terraform Destroy
 on:
   push:
   workflow_dispatch:
+    inputs:
+      auto-apply:
+        type: choice
+        options: [true, false]
+        description: 'Automatically apply the planned changes'
+        required: true
+        default: 'false'
+      environment:
+        type: choice
+        options: [dev, stage, uat, prod]
+        required: true
+        default: 'dev'
 
 permissions:
   contents: read
