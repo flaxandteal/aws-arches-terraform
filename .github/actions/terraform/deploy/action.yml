@@ -10,7 +10,8 @@ inputs:
     type: boolean
     default: true
   working-directory:
-    required: false
+    required: true
+    default: 'main'
 
 runs:
   using: "composite"
