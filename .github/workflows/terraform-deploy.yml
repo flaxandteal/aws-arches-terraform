@@ -22,7 +22,7 @@ on:
         type: choice
         options: [dev, stage, uat, prod]
         required: true
-        default: dev
+        default: 'dev'
 
 permissions:
   contents: read
