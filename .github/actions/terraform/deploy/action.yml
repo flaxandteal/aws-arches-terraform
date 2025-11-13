@@ -54,7 +54,7 @@ runs:
           -backend-config="${{ inputs.backend-file }}"
       with:
           terraform_version: ${{ steps.tf-version.outputs.version }}
-          working-directory: ${{ inputs.working-directory }}
+         # working-directory: ${{ inputs.working-directory }}
 
     # # ---------------------------------------------
     # # 5. Terraform Validate
