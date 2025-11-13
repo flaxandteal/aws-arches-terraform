@@ -37,7 +37,7 @@ jobs:
       - name: Terraform Destroy
         uses: ./.github/actions/terraform/destroy
         with:
-          environment: ${{ inputs.environment }}
-          tfvars-file: ${{ inputs.environment }}.tfvars
-          backend-file: ${{ inputs.environment }}.backend.tfvars
-          auto-apply: ${{ inputs.auto-apply }}
+          environment: dev
+          tfvars-file: dev.tfvars
+          backend-file: dev.backend.tfvars
+          auto-apply: true
