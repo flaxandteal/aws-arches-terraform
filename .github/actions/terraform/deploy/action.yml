@@ -10,9 +10,6 @@ inputs:
   auto-apply:
     type: boolean
     default: true
-  working-directory:
-    required: true
-    default: 'main'
 
 runs:
   using: "composite"
