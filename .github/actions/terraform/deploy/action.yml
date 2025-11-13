@@ -81,6 +81,7 @@ runs:
     # ---------------------------------------------
     - name: Show Plan
       if: steps.plan.outputs.exitcode != '0'
+      shell: bash
       run: terraform show -no-color tfplan
 
     - name: Upload Plan
