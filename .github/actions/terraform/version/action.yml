@@ -9,6 +9,8 @@ runs:
       shell: bash
       id: tf-version
       run: |
+        ls -la
+        pwd
         if [ ! -f .terraform-version ]; then
           echo "Error: .terraform-version file not found."
           exit 1
