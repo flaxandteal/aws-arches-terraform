@@ -54,8 +54,6 @@ runs:
     - name: Terraform Validate
       shell: bash
       run: terraform validate
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}
 
     # # ---------------------------------------------
     # # 6. Terraform Plan       
