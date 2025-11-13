@@ -9,7 +9,6 @@ name: Terraform Deploy
 
       #quality
 on:
-  push:
   workflow_dispatch:
     inputs:
       auto-apply:

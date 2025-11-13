@@ -1,19 +1,18 @@
 name: Terraform Destroy
 
 on:
+  push:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  security-events: write #sji check these
+  deployments: write
 
 jobs:
   terraform-destroy:
     name: Terraform Destroy
-    runs-on: ubuntu-latest
-    
-    # Specify environment for prod branch
-    environment: ${{ github.ref_name == 'prod' && 'prod' || '' }}
-
+    runs-on: ubuntu-latest    # check environment for prod branch sji
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -22,11 +21,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Authenticate with GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: '${{ secrets.TF_SA }}'  # Key from script
          
       - name: Terraform Destroy
         uses: ./.github/actions/terraform/destroy

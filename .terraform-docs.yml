@@ -1,0 +1,38 @@
+version: 0.20.0
+
+# Output configuration
+output-file: README.md
+output-format: markdown document
+output-mode: inject  # update between <!-- BEGIN_TF_DOCS --> and <!-- END_TF_DOCS -->
+
+# Sections to include
+sections:
+  show-header: true
+  show-aggregate-type-defaults: true
+  show-usage: true
+  show-description: true
+  show-inputs: true
+  show-outputs: true
+  show-providers: true
+  show-requirements: true
+  show-resources: true
+  show-data-sources: true
+  show-module-call: false
+
+# Sorting
+sort:
+  enabled: true
+  criteria: name
+
+# Input/output formatting
+settings:
+  anchor: true
+  color: true
+  default-to-empty: false
+  description-required: false
+  escape: true
+  hide-empty: true
+  indent: 2
+  required: true
+  sensitive: true
+  type: true

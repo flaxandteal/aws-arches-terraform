@@ -1,0 +1,48 @@
+name: Terraform Destroy
+description: Destroys terraform
+
+inputs:
+  environment:
+    required: true
+  tfvars-file:
+    required: true
+  backend-file:
+    required: true
+  auto-apply:
+    type: boolean
+    default: true
+  working-directory:
+    required: true
+    default: 'main'
+
+runs:
+  using: "composite"
+  steps:
+    # ---------------------------------------------
+    # 1. Get Terraform Version
+    # ---------------------------------------------
+    - name: Get Terraform Version
+      uses: ./.github/actions/terraform/version
+
+    # ---------------------------------------------
+    # 2. Setup Terraform
+    # ---------------------------------------------
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+          terraform_version: ${{ steps.tf-version.outputs.version }}
+        
+    # ---------------------------------------------
+    # 4. Terraform Init
+    # ---------------------------------------------
+    - name: Terraform Init
+      shell: bash
+      run: |
+        terraform init \
+          -backend-config="${{ inputs.backend-file }}"
+
+    # Apply
+    - name: Terraform Destroy
+      run: terraform destroy -auto-approve
+      shell: bash
+      #working-directory: ./environments/${{ steps.set-env.outputs.environment }}
