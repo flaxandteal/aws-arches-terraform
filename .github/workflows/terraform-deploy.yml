@@ -48,3 +48,19 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          
+  render-terraform-docs:      
+    name: Terraform Docs
+    needs: deploy
+    runs-on: ubuntu-latest
+    # Run only on pull request merges to main
+    #if github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.base_ref == 'refs/heads/main'
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  
+      
+      - name: Terraform Docs
+        uses: ./.github/actions/terraform/docs
+
