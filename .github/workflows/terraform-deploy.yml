@@ -41,9 +41,10 @@ jobs:
         uses: ./.github/actions/terraform/deploy
         with:
           environment: ${{ inputs.environment }}
-          tfvars-file: ./main/${{ inputs.environment }}.tfvars
-          backend-file: main/${{ inputs.environment }}.backend.tfvars
+          tfvars-file: ${{ inputs.environment }}.tfvars
+          backend-file: ${{ inputs.environment }}.backend.tfvars
           auto-apply: ${{ inputs.auto-apply }}
+          working-directory: main
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
