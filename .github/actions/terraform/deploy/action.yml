@@ -48,15 +48,14 @@ runs:
         terraform init \
           -backend-config="${{ inputs.backend-file }}"
 
-    # # ---------------------------------------------
-    # # 5. Terraform Validate
-    # # --------------------------------------------- 
-    # - name: Terraform Validate
-    #   shell: bash
-    #   run: terraform validate
-    #   with:
-    #       terraform_version: ${{ steps.tf-version.outputs.version }}
-    #       working-directory: ${{ inputs.working-directory }}
+    # ---------------------------------------------
+    # 5. Terraform Validate
+    # --------------------------------------------- 
+    - name: Terraform Validate
+      shell: bash
+      run: terraform validate
+      with:
+          terraform_version: ${{ steps.tf-version.outputs.version }}
 
     # # ---------------------------------------------
     # # 6. Terraform Plan       
