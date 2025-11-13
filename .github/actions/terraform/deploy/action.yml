@@ -40,10 +40,7 @@ runs:
     # ---------------------------------------------
     - name: Terraform Quality Check
       uses: ./.github/actions/terraform/quality
-      with:
-        terraform_version: ${{ steps.tf-version.outputs.version }}
-        # working-directory: ${{ inputs.working-directory }}
-
+  
     # ---------------------------------------------
     # 4. Terraform Init
     # ---------------------------------------------
@@ -52,9 +49,6 @@ runs:
       run: |
         terraform init \
           -backend-config="${{ inputs.backend-file }}"
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}
-         # working-directory: ${{ inputs.working-directory }}
 
     # # ---------------------------------------------
     # # 5. Terraform Validate
