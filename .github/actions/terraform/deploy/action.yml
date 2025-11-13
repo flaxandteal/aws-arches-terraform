@@ -31,7 +31,7 @@ runs:
       uses: hashicorp/setup-terraform@v3
       with:
           terraform_version: ${{ steps.tf-version.outputs.version }}
-          working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ inputs.working-directory }}
 
     # ---------------------------------------------
     # 3. Terraform Quality Check - fmt & lint
