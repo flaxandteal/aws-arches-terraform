@@ -1,109 +1,118 @@
-# AWS Terraform Repository
-Provisions a VPC, subnets, security group, Network ACL, internet gateway, route table, S3 VPC endpoint, IAM user, three S3 buckets (data, logs, Terraform state), an EKS cluster with CloudWatch logging, and a remote state backend in AWS, supporting dev, stage, uat, and prod environments.
-
-# Prerequisites
-1. Install Terraform (v1.5+).
-***Do yourself a favour and use tfenv to manage versions***
-```
-git clone https://github.com/tfutils/tfenv.git ~/.tfenv
-export PATH="$HOME/.tfenv/bin:$PATH"
-source ~/.bashrc  # or ~/.zshrc
-tfenv list-remote
-terraform <version>  or tfenv install latest
-```
-
-2. Set AWS credentials.
-```
-export AWS_ACCESS_KEY_ID="your_access_key"
-export AWS_SECRET_ACCESS_KEY="your_secret_key"
-export AWS_DEFAULT_REGION="eu-north-1"
-```
-Ensure the AWS credentials used for bootstrap.tf have permissions to create S3 buckets and DynamoDB tables.
-
-Test your AWS credentials using the AWS CLI:
-```
-aws sts get-caller-identity
-```
-This should return your AWS account details. If it fails, your credentials are invalid or misconfigured.
-
-# Initial Bootstrap Setup (perform once per environment only)
-See bootstrap/README.md
-
 # Create/Update AWS Infrastructure
-See main/README.md
+1. cd /main
 
-# Well-Architected Framework
-Security: Security group and least-privilege IAM.
-Reliability: Multi-subnet in prod for multi-AZ. 
-Cost Optimization: Smaller CIDRs in dev/stage.
-Operational Excellence: Modular code, workspace-based naming.
+2. Check that the env bootstrap and tfvars files you are using are correct.
 
-# Repo Structure
+1. Initialize Locally and test (choose correct backend file):
 ```
-aws-arches-terraform/
-├── bootstrap/
-│   ├── bootstrap.tf  # Defines S3 bucket and DynamoDB table to hold Terraform State
-│   └── terraform.tfstate  # Local state for bootstrap
-├── main-project/ # Main project
-├── .terraform-version
-├── main.tf
-├── variables.tf
-├── dev.tfvars
-├── staging.tfvars
-├── uat.tfvars
-├── prod.tfvars
-├── modules/
-│   ├── common/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   ├── vpc/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   ├── kms/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   ├── eks/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   ├── rds/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   ├── s3/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   ├── ecr/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   ├── iam/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
+terraform init   -backend-config=dev.backend.tfvars
 ```
 
-## AWS CLI
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
-aws --version
-aws configure
-This prompts you to enter:
+2. Format and Validate Terraform
+terraform fmt --recursive
+terraform validate
+```
 
-    AWS Access Key ID
-    AWS Secret Access Key
-    Default region (e.g., eu-north-1)
-    Output format (e.g., json) This creates a ~/.aws/credentials file and a ~/.aws/config file.
+If any specific module gets stuck or fails or if you simply wish to remove it:
+```
+terraform destroy -target module.rds.module.rds_aurora[0]
+```
 
 aws sts get-caller-identity
 
-## Set Environment variables
-export AWS_ACCESS_KEY_ID="your_access_key"
-export AWS_SECRET_ACCESS_KEY="your_secret_key"
-export AWS_DEFAULT_REGION="eu-north-1"
-Add these to your ~/.bashrc, ~/.zshrc, or equivalent to persist them across sessions.
+~/.aws/config
+
+# 1. Authenticate
+aws configure
+
+# 2. Re-run
+aws eks update-kubeconfig \
+  --name catalina-eks \
+  --region eu-north-1 \
+  --alias catalina-eks
+
+# 3. Watch
+kubectl get nodes --watch
+
+#Scribbles sji - tidy/remove
+Terraform init —backend-config=/env/dev.conf
+
+Terraform apply —var-file=/env/dev.tfvars
+
+# 1. Verify AWS auth
+aws sts get-caller-identity
+
+# 2. Update kubeconfig
+aws eks update-kubeconfig --name catalina-eks --region eu-north-1 --alias catalina-eks
+
+# 3. Check context
+kubectl config current-context
+
+# 4. Get nodes
+kubectl get nodes
+
+# 1. Create access entry for your user
+aws eks create-access-entry \
+  --cluster-name catalina-eks \
+  --principal-arn arn:aws:iam::034791378213:user/terraform-deployer \
+  --type STANDARD \
+  --region eu-north-1
+
+# 2. Grant Cluster Admin
+aws eks associate-access-policy \
+  --cluster-name catalina-eks \
+  --principal-arn arn:aws:iam::034791378213:user/terraform-deployer \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+  --access-scope type=cluster \
+  --region eu-north-1
+
+
+#test install app:
+kubectl create deployment nginx --image=nginx
+kubectl expose deployment nginx --port=80 --type=LoadBalancer
+kubectl get svc -w
+
+# Delete 
+kubectl delete deployment nginx
+kubectl delete service nginx
+
+kubectl get pods,svc | grep nginx
+
+terraform state list
+
+terraform state rm module.vpc
+
+
+aws secretsmanager delete-secret \
+  --secret-id catalina/rds-credentials \
+  --force-delete-without-recovery
+  
+#end scribbles
+
+
+Run this once from inside modules/secrets/rotation/: 
+pip install psycopg2-binary -t python
+zip -r ../rotation.zip python lambda_function.py
+This ensures all dependencies are included.
+
+The resulting rotation.zip goes in modules/secrets/.
+
+Important!
+https://docs.aws.amazon.com/autoscaling/ec2/userguide/key-policy-requirements-EBS-encryption.html
+
+***Important Notes***
+Use .tfvars files for environment-specific settings (e.g., dev.tfvars for cheaper regions).
+
+#sji todo
+If rerunning this secrets may be a problem. You may get this error:
+Error: creating Secrets Manager Secret (catalina/rds-credentials): operation error Secrets Manager: CreateSecret, https response error StatusCode: 400, RequestID: 5eef5c99-dd26-41bb-866e-b02004b45660, InvalidRequestException: You can't create this secret because a secret with this name is already scheduled for deletion.
+
+To delete the secret:
+aws secretsmanager list-secrets --query 'SecretList[].Name' --region'<your-region>'
+# find catalina/rds-credentials
+
+aws secretsmanager delete-secret \
+  --secret-id catalina/rds-credentials \
+  --force-delete-without-recovery \
+  --region'<your-region>'
+
