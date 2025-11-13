@@ -43,6 +43,6 @@ runs:
 
     # Apply
     - name: Terraform Destroy
-      run: terraform destroy -auto-approve
+      run: terraform destroy -auto-approve -var-file=dev.tfvars
       shell: bash
       #working-directory: ./environments/${{ steps.set-env.outputs.environment }}
