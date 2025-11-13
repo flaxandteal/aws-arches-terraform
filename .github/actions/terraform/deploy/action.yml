@@ -15,14 +15,15 @@ inputs:
 
 runs:
   using: "composite"
+  defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
   steps:
     # ---------------------------------------------
     # 1. Get Terraform Version
     # ---------------------------------------------
     - name: Get Terraform Version
       uses: ./.github/actions/terraform/version
-      with:
-        working-directory: ${{ inputs.working-directory }}
 
     # ---------------------------------------------
     # 2. Setup Terraform
@@ -31,7 +32,6 @@ runs:
       uses: hashicorp/setup-terraform@v3
       with:
           terraform_version: ${{ steps.tf-version.outputs.version }}
-      working-directory: ${{ inputs.working-directory }}
 
     # ---------------------------------------------
     # 3. Terraform Quality Check - fmt & lint
