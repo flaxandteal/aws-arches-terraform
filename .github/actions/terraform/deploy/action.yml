@@ -26,8 +26,8 @@ runs:
     # ---------------------------------------------
     # 1. Get Terraform Version
     # ---------------------------------------------
-    - name: Get Terraform Version
-      uses: ./.github/actions/terraform/version
+    #- name: Get Terraform Version
+    #  uses: ./.github/actions/terraform/version
 
     # ---------------------------------------------
     # 2. Setup Terraform
