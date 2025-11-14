@@ -60,4 +60,4 @@ runs:
               echo -e "\n<!-- BEGIN_TF_DOCS -->\n$(cat "$dir/README.md.tmp")\n<!-- END_TF_DOCS -->" >> "$dir/README.md"
             fi
 
-            rm -f "
+            rm -f "$dir/README.md.tmp" "$dir/README.md.base" "$dir/README.md.new" 
