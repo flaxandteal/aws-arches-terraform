@@ -41,7 +41,7 @@ jobs:
           set -euo pipefail
 
           # This is now the actual value from the dropdown (DEV, STAGE, etc.)
-          ENV="${{ inputs.environment }}"
+          ENV="${{ inputs.environment || 'DEV' }}"
 
           echo "Selected environment: $ENV"
           echo "Looking for secret: TERRAFORM_BACKEND_$ENV"
