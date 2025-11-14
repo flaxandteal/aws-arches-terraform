@@ -41,8 +41,9 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        echo "${{ inputs.environment }} !!!"
-        echo "${{ inputs.backend-file }}"
+        echo "ENV: ${{ inputs.environment }}""
+        echo "VARS: ${{ inputs.tfvars-file }}""
+        echo "BACKEND: ${{ inputs.backend-file }}"
         if [ -z "${{ inputs.backend-file }}" ]; then
           echo "ERROR: backend-file input is empty - secret may not exist!"
           exit 1
