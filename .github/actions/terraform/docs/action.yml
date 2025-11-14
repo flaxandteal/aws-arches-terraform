@@ -39,6 +39,7 @@ runs:
         git-push: true
         git-commit-message: "chore: update terraform docs"
 
+
     - name: 🔁 Generate Terraform Docs for All Modules
       shell: bash
       run: |
@@ -59,6 +60,6 @@ runs:
               echo -e "\n<!-- BEGIN_TF_DOCS -->\n$(cat "$dir/README.md.tmp")\n<!-- END_TF_DOCS -->" >> "$dir/README.md"
             fi
 
-            rm -f "$dir/README.md.tmp" "$dir/README.md.base" "$dir/README.md.new"  # ← FIX #3: Complete line
+            rm -f "$dir/README.md.tmp" "$dir/README.md.base" "$dir/README.md.new"
           fi
         done
