@@ -40,30 +40,27 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Get the environment (inputs.environment → dev, stage, etc.)
-          ENV="${{ inputs.environment || 'DEV' }}"
+          # This is now the actual value from the dropdown (DEV, STAGE, etc.)
+          ENV="${{ inputs.environment }}"
 
-          # This must exactly match your secret name in GitHub
-          SECRET_NAME="TERRAFORM_BACKEND_${ENV}"
+          echo "Selected environment: $ENV"
+          echo "Looking for secret: TERRAFORM_BACKEND_$ENV"
+
+          SECRET_VAR="TERRAFORM_BACKEND_$ENV"
           
-          # Debug line (optional – remove later if you want)
-          echo "Looking for secret: $SECRET_NAME"
-
-          # Fail fast if secret is missing
-          if [ -z "${!SECRET_NAME:-}" ]; then
-            echo "Error: Secret $SECRET_NAME not found or empty!" >&2
+          if [ -z "${!SECRET_VAR:-}" ]; then
+            echo "Error: Secret TERRAFORM_BACKEND_$ENV not found or empty!" >&2
             exit 1
           fi
 
-          mkdir -p backend    
-          BACKEND_FILE="backend.hcl" 
-
-          echo "${!SECRET_NAME}" > "$BACKEND_FILE"
+          mkdir -p backend
+          BACKEND_FILE="backend/${ENV,,}.hcl"   # creates backend/dev.hcl, backend/stage.hcl etc.
+          
+          echo "${!SECRET_VAR}" > "$BACKEND_FILE"
           echo "Backend config written to $BACKEND_FILE"
 
-          # Output the path so the next step can read it
           echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
-
+          
       - name: Terraform Check, Plan & Apply
         uses: ./.github/actions/terraform/deploy
         with:
