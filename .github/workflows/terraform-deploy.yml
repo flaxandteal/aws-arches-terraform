@@ -12,11 +12,10 @@ on:
   workflow_dispatch:
     inputs:
       auto-apply:
-        type: choice
-        options: [true, false]
+        type: boolean
         description: 'Automatically apply the planned changes'
         required: true
-        default: 'false'
+        default: false
       environment:
         type: choice
         options: [dev, stage, uat, prod]
@@ -36,12 +35,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Choose the correct backend config based on environment
+        id: select_backend
+        run: |
+          echo "Using backend configuration for environment: ${{ inputs.environment }}"
+          backend_secret="AWS_BACKEND_CONFIG_${{ inputs.environment | upper }}"
+          echo "Using secret: $backend_secret"
+          echo "BACKEND_CONFIG=${{ secrets[backend_secret] }}" >> $GITHUB_ENV
+
       - name: Terraform Check, Plan & Apply
         uses: ./.github/actions/terraform/deploy
         with:
           environment: ${{ inputs.environment }}
           tfvars-file: ${{ inputs.environment }}.tfvars
-          backend-file: ${{ inputs.environment }}.backend.tfvars
+          backend-file: ${BACKEND_CONFIG}
           auto-apply: ${{ inputs.auto-apply }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

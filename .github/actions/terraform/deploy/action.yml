@@ -9,7 +9,7 @@ inputs:
     required: true
   auto-apply:
     type: boolean
-    default: true
+    default: false
 
 runs:
   using: "composite"
@@ -35,13 +35,13 @@ runs:
       uses: ./.github/actions/terraform/quality
   
     # ---------------------------------------------
-    # 4. Terraform Init
+    # 4. Terraform Init - Get env backend
     # ---------------------------------------------
     - name: Terraform Init
       shell: bash
       run: |
-        terraform init \
-          -backend-config="${{ inputs.backend-file }}"
+        echo "${{ secrets.prod_backend_config }}" > backend.tf
+        terraform init
 
     # ---------------------------------------------
     # 5. Terraform Validate
@@ -83,4 +83,4 @@ runs:
     - name: Terraform Apply
       shell: bash
       if: ${{ inputs.auto-apply && steps.plan.outputs.exitcode == '2' }}
-      run: terraform apply -auto-approve tfplan
+      run: echo "HELLO" #terraform apply -auto-approve tfplan
