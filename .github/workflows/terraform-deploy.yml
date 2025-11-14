@@ -30,12 +30,11 @@ permissions:
 
 jobs:
   deploy:
-    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Set UPPER_ENV variable
         run: |
           echo "UPPER_ENV=$(echo '${{ inputs.environment }}' | tr '[:lower:]' '[:upper:]')" >> $GITHUB_ENV
