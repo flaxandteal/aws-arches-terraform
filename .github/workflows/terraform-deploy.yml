@@ -16,7 +16,7 @@ on:
         type: boolean
         description: 'Automatically apply the planned changes'
         required: true
-        default: false
+        default: true
       environment:
         type: choice
         options: [dev, stage, uat, prod]
