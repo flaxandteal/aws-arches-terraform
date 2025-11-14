@@ -92,8 +92,22 @@ jobs:
         with:
           fetch-depth: 0  
       
-      - name: Terraform Docs
-        uses: ./.github/actions/terraform/docs
+      - name: Generate Terraform Docs (root + all modules)
+        uses: terraform-docs/gh-actions@main
+        with:
+          working-dir: .
+          find-dir: .  # ← scans root AND all subdirs
+          config-file: .terraform-docs.yml
+          output-file: README.md
+          output-method: inject
+          git-push: "true"
+          git-commit-message: "chore: update terraform docs [skip ci]"
+          fail-on-diff: "false"           # don't fail if docs are outdated
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TERRAFORM_DOCS_TOKEN }}
+
+      # - name: Terraform Docs
+      #   uses: ./.github/actions/terraform/docs
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
