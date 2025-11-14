@@ -40,7 +40,15 @@ runs:
     - name: Terraform Init
       shell: bash
       run: |
-        echo "${{ secrets.prod_backend_config }}" > backend.tf
+        set -euo pipefail
+
+        if [ -z "${{ inputs.backend-file }}" ]; then
+          echo "ERROR: backend-file input is empty!"
+          echo "   → Expected secret name: AWS_BACKEND_CONFIG_$(echo '${{ inputs.environment }}' | tr '[:lower:]' '[:upper:]')"
+          exit 1
+        fi
+
+        echo "${{ inputs.backend-file }}" > backend.tf
         terraform init
 
     # ---------------------------------------------
