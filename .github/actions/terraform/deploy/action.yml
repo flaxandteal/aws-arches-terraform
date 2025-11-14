@@ -20,70 +20,70 @@ runs:
     - name: Get Terraform Version
       uses: ./.github/actions/terraform/version
 
-    # ---------------------------------------------
-    # 2. Setup Terraform
-    # ---------------------------------------------
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}
+    # # ---------------------------------------------
+    # # 2. Setup Terraform
+    # # ---------------------------------------------
+    # - name: Setup Terraform
+    #   uses: hashicorp/setup-terraform@v3
+    #   with:
+    #       terraform_version: ${{ steps.tf-version.outputs.version }}
 
-    # ---------------------------------------------
-    # 3. Terraform Quality Check - fmt & lint
-    # ---------------------------------------------
-    - name: Terraform Quality Check
-      uses: ./.github/actions/terraform/quality
+    # # ---------------------------------------------
+    # # 3. Terraform Quality Check - fmt & lint
+    # # ---------------------------------------------
+    # - name: Terraform Quality Check
+    #   uses: ./.github/actions/terraform/quality
   
-    # ---------------------------------------------
-    # 4. Terraform Init - Get env backend
-    # ---------------------------------------------
-    - name: Terraform Init
-      shell: bash
-      run: |
-        set -euo pipefail
-        if [ -z "backend.hcl" ]; then
-          echo "ERROR: backend-file-path is missing!"
-          exit 1
-        fi
+    # # ---------------------------------------------
+    # # 4. Terraform Init - Get env backend
+    # # ---------------------------------------------
+    # - name: Terraform Init
+    #   shell: bash
+    #   run: |
+    #     set -euo pipefail
+    #     if [ -z "backend.hcl" ]; then
+    #       echo "ERROR: backend-file-path is missing!"
+    #       exit 1
+    #     fi
 
-        terraform init
+    #     terraform init
 
-    # ---------------------------------------------
-    # 5. Terraform Validate
-    # --------------------------------------------- 
-    - name: Terraform Validate
-      shell: bash
-      run: terraform validate
+    # # ---------------------------------------------
+    # # 5. Terraform Validate
+    # # --------------------------------------------- 
+    # - name: Terraform Validate
+    #   shell: bash
+    #   run: terraform validate
 
-    # ---------------------------------------------
-    # 6. Terraform Plan       
-    # ---------------------------------------------
-    - name: Terraform Plan
-      id: plan
-      shell: bash
-      run: |
-        terraform plan \
-          -var-file="${{ inputs.tfvars-file }}" \
-          -out=tfplan \
-          -detailed-exitcode
-        echo "exitcode=$?" >> $GITHUB_OUTPUT
+    # # ---------------------------------------------
+    # # 6. Terraform Plan       
+    # # ---------------------------------------------
+    # - name: Terraform Plan
+    #   id: plan
+    #   shell: bash
+    #   run: |
+    #     terraform plan \
+    #       -var-file="${{ inputs.tfvars-file }}" \
+    #       -out=tfplan \
+    #       -detailed-exitcode
+    #     echo "exitcode=$?" >> $GITHUB_OUTPUT
 
-    # ---------------------------------------------
-    # 7. Terraform Show Plan
-    # ---------------------------------------------
-    - name: Show Plan
-      if: steps.plan.outputs.exitcode != '0'
-      shell: bash
-      run: terraform show -no-color tfplan
+    # # ---------------------------------------------
+    # # 7. Terraform Show Plan
+    # # ---------------------------------------------
+    # - name: Show Plan
+    #   if: steps.plan.outputs.exitcode != '0'
+    #   shell: bash
+    #   run: terraform show -no-color tfplan
 
-    - name: Upload Plan
-      uses: actions/upload-artifact@v4
-      with:
-        name: tfplan-${{ inputs.environment }}
-        path: tfplan
-        retention-days: 30
+    # - name: Upload Plan
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: tfplan-${{ inputs.environment }}
+    #     path: tfplan
+    #     retention-days: 30
 
-    - name: Terraform Apply
-      shell: bash
-      if: ${{ inputs.auto-apply && steps.plan.outputs.exitcode == '2' }}
-      run: echo "HELLO" #terraform apply -auto-approve tfplan
+    # - name: Terraform Apply
+    #   shell: bash
+    #   if: ${{ inputs.auto-apply && steps.plan.outputs.exitcode == '2' }}
+    #   run: echo "HELLO" #terraform apply -auto-approve tfplan
