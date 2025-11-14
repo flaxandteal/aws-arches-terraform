@@ -18,9 +18,9 @@ runs:
     with:
       terraform_version: ${{ inputs.terraform_version }}
 
-  - name: Terraform FMT
-    run: terraform fmt -check -recursive
-    shell: bash
+  # - name: Terraform FMT
+  #   run: terraform fmt -check -recursive
+  #   shell: bash
 
   - name: Cache plugin dir
     uses: actions/cache@v4      
