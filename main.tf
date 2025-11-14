@@ -29,7 +29,7 @@ module "common" {
   source = "./modules/common"
 
   name        = var.name
-  common_tags = var.common_tags
+  common_tags     = var.common_tags
   extra_tags  = var.extra_tags
 }
 
