@@ -6,14 +6,11 @@ inputs:
     required: true
   tfvars-file:
     required: true
-  backend-file:
+  backend-file-path:
     required: true
   auto-apply:
     type: boolean
-    default: true
-  working-directory:
-    required: true
-    default: 'main'
+    default: false
 
 runs:
   using: "composite"
@@ -33,16 +30,25 @@ runs:
           terraform_version: ${{ steps.tf-version.outputs.version }}
         
     # ---------------------------------------------
-    # 4. Terraform Init
+    # 4. Terraform Init - Get env backend
     # ---------------------------------------------
     - name: Terraform Init
       shell: bash
       run: |
-        terraform init \
-          -backend-config="${{ inputs.backend-file }}"
+        set -euo pipefail
+        if [ -z "backend.hcl" ]; then
+          echo "ERROR: backend-file-path is missing!"
+          exit 1
+        fi
+
+        terraform init
 
     # Apply
     - name: Terraform Destroy
       run: terraform destroy -auto-approve -var-file=dev.tfvars
       shell: bash
       #working-directory: ./environments/${{ steps.set-env.outputs.environment }}
+    - name: Terraform Apply
+      shell: bash
+      if: ${{ inputs.auto-apply }}
+      run: terraform apply -auto-approve tfplan

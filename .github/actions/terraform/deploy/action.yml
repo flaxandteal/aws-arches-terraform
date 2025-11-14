@@ -86,4 +86,4 @@ runs:
     - name: Terraform Apply
       shell: bash
       if: ${{ inputs.auto-apply && steps.plan.outputs.exitcode == '2' }}
-      run: echo "HELLO" #terraform apply -auto-approve tfplan
+      run: terraform apply -auto-approve tfplan

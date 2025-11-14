@@ -4,11 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       auto-apply:
-        type: choice
-        options: [true, false]
+        type: boolean
         description: 'Automatically apply the planned changes'
         required: true
-        default: 'false'
+        default: false
       environment:
         type: choice
         options: [dev, stage, uat, prod]
@@ -33,10 +32,44 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
          
+      - name: Get environment backend file from secret
+        id: backend
+        run: |
+          set -euo pipefail
+         
+          ORIG_ENV="${{ inputs.environment || 'DEV' }}"
+          ENV=$(echo "$ORIG_ENV" | tr '[:lower:]' '[:upper:]')
+
+          echo "Selected environment: $ENV"
+          echo "Looking for secret: TERRAFORM_BACKEND_$ENV"
+
+          SECRET_VAR="TERRAFORM_BACKEND_$ENV"
+          
+          if [ -z "${!SECRET_VAR:-}" ]; then
+            echo "Error: Secret TERRAFORM_BACKEND_$ENV not found or empty!" >&2
+            exit 1
+          fi
+
+          mkdir -p backend
+          BACKEND_FILE="backend/${ENV,,}.hcl"   # creates backend/dev.hcl, backend/stage.hcl etc.
+          
+          echo "${!SECRET_VAR}" > "$BACKEND_FILE"
+          echo "Backend config written to $BACKEND_FILE"
+
+          echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
+        env:
+          TERRAFORM_BACKEND_DEV:   ${{ secrets.TERRAFORM_BACKEND_DEV }}
+          TERRAFORM_BACKEND_STAGE: ${{ secrets.TERRAFORM_BACKEND_STAGE }}
+          TERRAFORM_BACKEND_UAT:   ${{ secrets.TERRAFORM_BACKEND_UAT }}
+          TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}
+
       - name: Terraform Destroy
         uses: ./.github/actions/terraform/destroy
         with:
-          environment: dev
-          tfvars-file: dev.tfvars
-          backend-file: dev.backend.tfvars
-          auto-apply: true
+          environment: ${{ inputs.environment || 'dev' }}
+          tfvars-file: ${{ inputs.environment || 'dev' }}.tfvars
+          backend-file-path: ${{ steps.backend.outputs.path }}
+          auto-apply: ${{ inputs.auto-apply || false }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
