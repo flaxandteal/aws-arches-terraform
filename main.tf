@@ -28,7 +28,7 @@ provider "aws" {
 module "common" {
   source = "./modules/common"
 
-  name        = var.name
+  name            = var.name
   common_tags = var.common_tags
   extra_tags  = var.extra_tags
 }
