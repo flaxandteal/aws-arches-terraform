@@ -24,7 +24,8 @@ on:
         default: 'dev'
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write #docs
   security-events: write
   deployments: write
 
@@ -34,6 +35,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Get environment backend file from secret
         id: backend
@@ -80,7 +84,7 @@ jobs:
   render-terraform-docs:      
     name: Terraform Docs
     needs: deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest    
     # Run only on pull request merges to main
     #if github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.base_ref == 'refs/heads/main'
     steps:
@@ -91,4 +95,6 @@ jobs:
       
       - name: Terraform Docs
         uses: ./.github/actions/terraform/docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
