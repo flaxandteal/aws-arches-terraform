@@ -19,7 +19,7 @@ on:
         default: false
       environment:
         type: choice
-        options: [DEV, STAGE, UAT, PROD]
+        options: [dev, stage, uat, prod]
         required: true
         default: 'DEV'
 
@@ -36,12 +36,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Get environment backend file from secret
-        id: backend                            # ← this gives us steps.backend.outputs
+        id: backend
         run: |
           set -euo pipefail
-
-          # This is now the actual value from the dropdown (DEV, STAGE, etc.)
-          ENV="${{ inputs.environment || 'DEV' }}"
+         
+          ORIG_ENV="${{ inputs.environment || 'DEV' }}"
+          ENV=$(echo "$ORIG_ENV" | tr '[:lower:]' '[:upper:]')
 
           echo "Selected environment: $ENV"
           echo "Looking for secret: TERRAFORM_BACKEND_$ENV"
