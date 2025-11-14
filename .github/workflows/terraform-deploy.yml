@@ -60,7 +60,12 @@ jobs:
           echo "Backend config written to $BACKEND_FILE"
 
           echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
-          
+        env:
+          TERRAFORM_BACKEND_DEV:   ${{ secrets.TERRAFORM_BACKEND_DEV }}
+          TERRAFORM_BACKEND_STAGE: ${{ secrets.TERRAFORM_BACKEND_STAGE }}
+          TERRAFORM_BACKEND_UAT:   ${{ secrets.TERRAFORM_BACKEND_UAT }}
+          TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}
+
       - name: Terraform Check, Plan & Apply
         uses: ./.github/actions/terraform/deploy
         with:
