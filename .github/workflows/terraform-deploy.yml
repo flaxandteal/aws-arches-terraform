@@ -32,23 +32,16 @@ jobs:
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Choose the correct backend config based on environment
-        id: select_backend
+      - name: Set UPPER_ENV variable
         run: |
-          echo "Using backend configuration for environment: ${{ inputs.environment }}"
-          backend_secret="AWS_BACKEND_CONFIG_${{ inputs.environment | upper }}"
-          echo "Using secret: $backend_secret"
-          echo "BACKEND_CONFIG=${{ secrets[backend_secret] }}" >> $GITHUB_ENV
+          echo "UPPER_ENV=$(echo '${{ inputs.environment }}' | tr '[:lower:]' '[:upper:]')" >> $GITHUB_ENV
 
       - name: Terraform Check, Plan & Apply
         uses: ./.github/actions/terraform/deploy
         with:
           environment: ${{ inputs.environment }}
           tfvars-file: ${{ inputs.environment }}.tfvars
-          backend-file: ${BACKEND_CONFIG}
+          backend-file: ${{ secrets[format('AWS_BACKEND_CONFIG_{0}', env.UPPER_ENV)] }}
           auto-apply: ${{ inputs.auto-apply }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
