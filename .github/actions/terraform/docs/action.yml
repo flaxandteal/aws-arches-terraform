@@ -21,7 +21,8 @@ runs:
     - name: ⬇️ Checkout PR branch
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
 
     - name: 📦 Install dependencies
       shell: bash
