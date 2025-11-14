@@ -22,11 +22,13 @@ runs:
   #   run: terraform fmt -check -recursive
   #   shell: bash
 
-  - name: Cache plugin dir
+- name: Cache plugin dir
     uses: actions/cache@v4      
     with:
       path: ~/.tflint.d/plugins
-      key: ${{ matrix.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
+      key: tflint-plugins-${{ runner.os }}-${{ hashFiles('.tflint.hcl') }}
+      restore-keys: |
+        tflint-plugins-${{ runner.os }}-
 
   - name: Setup TFLint
     uses: terraform-linters/setup-tflint@v4      
@@ -40,9 +42,6 @@ runs:
   - name: Init TFLint
     run: tflint --init
     shell: bash
-    env:
-      # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
-      GITHUB_TOKEN: ${{ github.token }}
 
   - name: Run TFLint
     run: tflint -f compact

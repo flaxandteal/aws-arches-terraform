@@ -79,6 +79,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           
   render-terraform-docs:      
     name: Terraform Docs
@@ -108,4 +109,4 @@ jobs:
           git-commit-message: "chore: update terraform docs [skip ci]"
           fail-on-diff: "false"           # don't fail if docs are outdated
         env:
-          GITHUB_TOKEN: ${{ secrets.TERRAFORM_DOCS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
