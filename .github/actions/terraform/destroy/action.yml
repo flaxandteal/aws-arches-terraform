@@ -43,12 +43,7 @@ runs:
 
         terraform init
 
-    # Apply
+    # Destroy
     - name: Terraform Destroy
       run: terraform destroy -auto-approve -var-file=dev.tfvars
       shell: bash
-      #working-directory: ./environments/${{ steps.set-env.outputs.environment }}
-    - name: Terraform Apply
-      shell: bash
-      if: ${{ inputs.auto-apply }}
-      run: terraform apply -auto-approve tfplan
