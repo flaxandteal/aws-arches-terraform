@@ -5,7 +5,7 @@ inputs:
     required: true
   tfvars-file:
     required: true
-  backend-file:
+  backend-file-path:
     required: true
   auto-apply:
     type: boolean
@@ -41,15 +41,11 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        echo "ENV: ${{ inputs.environment }}""
-        echo "VARS: ${{ inputs.tfvars-file }}""
-        echo "BACKEND: ${{ inputs.backend-file }}"
-        if [ -z "${{ inputs.backend-file }}" ]; then
-          echo "ERROR: backend-file input is empty - secret may not exist!"
+        if [ -z "backend.hcl" ]; then
+          echo "ERROR: backend-file-path is missing!"
           exit 1
         fi
 
-        echo "${{ inputs.backend-file }}" > backend.tf
         terraform init
 
     # ---------------------------------------------
