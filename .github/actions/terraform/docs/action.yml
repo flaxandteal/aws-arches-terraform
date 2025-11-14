@@ -22,7 +22,7 @@ runs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.TERRAFORM_DOCS_TOKEN }}  # ← FIX #1: Use PAT
+        token: ${{ secrets.GH_TOKEN }}
 
     - name: 📦 Install dependencies
       shell: bash
@@ -40,7 +40,7 @@ runs:
         git-push: true
         git-commit-message: "chore: update terraform docs"
       env:
-        GITHUB_TOKEN: ${{ secrets.TERRAFORM_DOCS_TOKEN }}  # ← FIX #2: Use PAT
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  
 
     - name: 🔁 Generate Terraform Docs for All Modules
       shell: bash
