@@ -41,10 +41,10 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-
+        echo "${{ inputs.environment }} !!!"
+        echo "${{ inputs.backend-file }}"
         if [ -z "${{ inputs.backend-file }}" ]; then
           echo "ERROR: backend-file input is empty - secret may not exist!"
-          echo "   → Expected secret name: AWS_BACKEND_CONFIG_$(echo '${{ inputs.environment }}' | tr '[:lower:]' '[:upper:]')"
           exit 1
         fi
 
