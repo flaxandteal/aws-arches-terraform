@@ -21,8 +21,8 @@ runs:
     - name: ⬇️ Checkout PR branch
       uses: actions/checkout@v4
       with:
-          fetch-depth: 0
-          token: ${{ secrets.GH_TOKEN }}
+        fetch-depth: 0
+        token: ${{ secrets.TERRAFORM_DOCS_TOKEN }}  # ← FIX #1: Use PAT
 
     - name: 📦 Install dependencies
       shell: bash
@@ -39,6 +39,8 @@ runs:
         output-method: inject
         git-push: true
         git-commit-message: "chore: update terraform docs"
+      env:
+        GITHUB_TOKEN: ${{ secrets.TERRAFORM_DOCS_TOKEN }}  # ← FIX #2: Use PAT
 
     - name: 🔁 Generate Terraform Docs for All Modules
       shell: bash
@@ -60,4 +62,6 @@ runs:
               echo -e "\n<!-- BEGIN_TF_DOCS -->\n$(cat "$dir/README.md.tmp")\n<!-- END_TF_DOCS -->" >> "$dir/README.md"
             fi
 
-            rm -f "$dir/README.md.tmp" "$dir/README.md.base" "$dir/README.md.new" 
+            rm -f "$dir/README.md.tmp" "$dir/README.md.base" "$dir/README.md.new"  # ← FIX #3: Complete line
+          fi
+        done
