@@ -108,4 +108,4 @@ jobs:
           git-commit-message: "chore: update terraform docs [skip ci]"
           fail-on-diff: "false"           # don't fail if docs are outdated
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TERRAFORM_DOCS_TOKEN }}
