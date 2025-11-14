@@ -82,10 +82,14 @@ jobs:
           
   render-terraform-docs:      
     name: Terraform Docs
-    # needs: deploy
+    needs: deploy
     runs-on: ubuntu-latest    
     # Run only on pull request merges to main
-    #if github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.base_ref == 'refs/heads/main'
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged &&
+      github.event.pull_request.base.ref == 'main'
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -105,9 +109,3 @@ jobs:
           fail-on-diff: "false"           # don't fail if docs are outdated
         env:
           GITHUB_TOKEN: ${{ secrets.TERRAFORM_DOCS_TOKEN }}
-
-      # - name: Terraform Docs
-      #   uses: ./.github/actions/terraform/docs
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
