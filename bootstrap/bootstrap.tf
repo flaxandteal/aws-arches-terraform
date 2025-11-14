@@ -500,16 +500,12 @@ output "kms_key_arn" {
 
 output "backend_config" {
   value       = <<EOT
-terraform {
-  backend "s3" {
-    bucket         = "${local.state_bucket.bucket}"
-    key            = "global/terraform.tfstate"
-    region         = "${var.region}"
-    encrypt        = true
-    kms_key_id     = "${aws_kms_key.tfstate.arn}"
-    dynamodb_table = "${local.lock_table.name}"
-  }
-}
+bucket         = "${local.state_bucket.bucket}"
+key            = "global/terraform.tfstate"
+region         = "${var.region}"
+encrypt        = true
+kms_key_id     = "${aws_kms_key.tfstate.arn}"
+dynamodb_table = "${local.lock_table.name}"
 EOT
   description = "Copy into your root modules"
 }
