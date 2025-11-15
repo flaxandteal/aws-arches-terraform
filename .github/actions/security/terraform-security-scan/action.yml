@@ -19,8 +19,8 @@ runs:
       run: terraform init -backend-config="${{ inputs.backend-file }}"
 
     # Static scans
-    - uses: ./.github/actions/trivy-static
-    - uses: ./.github/actions/tfsec-scan
+    - uses: ./.github/actions/security/trivy-static
+    - uses: ./.github/actions/security/tfsec-scan
 
     # Plan + dynamic scan
     - name: Terraform Plan
@@ -28,4 +28,4 @@ runs:
       run: |
         terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
 
-    - uses: ./.github/actions/trivy-plan
+    - uses: ./.github/actions/security/trivy-plan
