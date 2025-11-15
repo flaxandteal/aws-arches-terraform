@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Full Security Scan
-        uses: ./.github/actions/terraform-security-scan
+        uses: ./.github/actions/security/terraform-security-scan
         with:
             environment: dev
             tfvars-file: dev.tfvars
