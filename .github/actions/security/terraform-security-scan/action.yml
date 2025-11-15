@@ -1,0 +1,31 @@
+name: "Terraform Security Scan (All)"
+description: "Runs Trivy (static + plan) + tfsec"
+inputs:
+  tfvars-file:
+    required: true
+  environment:
+    required: true
+  backend-file:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init
+      shell: bash
+      run: terraform init -backend-config="${{ inputs.backend-file }}"
+
+    # Static scans
+    - uses: ./.github/actions/trivy-static
+    - uses: ./.github/actions/tfsec-scan
+
+    # Plan + dynamic scan
+    - name: Terraform Plan
+      shell: bash
+      run: |
+        terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
+
+    - uses: ./.github/actions/trivy-plan

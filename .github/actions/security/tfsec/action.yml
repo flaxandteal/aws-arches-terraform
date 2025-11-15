@@ -18,12 +18,11 @@ runs:
       uses: aquasecurity/tfsec-action@v1.0.3
       continue-on-error: true
       with:
-        working-directory: ${{ inputs.path }}
         format: json
         output: tfsec-results.json
-        soft-fail: false                     # ← FAIL on any finding
-        severity: CRITICAL,HIGH,MEDIUM,LOW   # ← scan all
-        config-file: .tfsec.yml              # optional
+        soft-fail: false 
+        severity: CRITICAL,HIGH,MEDIUM,LOW 
+        config-file: .tfsec.yml #optional
 
     # -------------------------------------------------
     # 2. Count HIGH + CRITICAL issues

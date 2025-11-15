@@ -1,26 +1,16 @@
 name: "Trivy Static Scan"
 description: "Scans Terraform source files with Trivy (all severities, fail on any)"
 
-inputs:
-  path:
-    default: "."
-    required: false
-
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
     - name: Trivy Static Scan
       id: trivy
       continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: fs
-        scan-ref: ${{ inputs.path }}
+        scan-ref: '.'
         format: json
         output: trivy-static.json
         severity: CRITICAL,HIGH,MEDIUM,LOW

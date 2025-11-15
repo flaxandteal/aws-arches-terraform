@@ -14,10 +14,10 @@ runs:
       continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: config
-        scan-ref: ${{ inputs.tfplan-path }}
-        format: json
-        output: trivy-plan.json
+        scan-type: terraformplan
+        scan-ref: 'tfplan'
+        format: template
+        output: trivy-plan.json, trivy-plan.sarif
         severity: CRITICAL,HIGH,MEDIUM,LOW
         exit-code: '1'                 # fail on *any* finding
         cache-dir: .trivy-cache
