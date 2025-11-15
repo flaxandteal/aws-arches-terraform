@@ -11,12 +11,24 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Get Terraform Version
+      uses: ./.github/actions/terraform/version
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+      with:
+          terraform_version: ${{ steps.tf-version.outputs.version }}
 
     - name: Terraform Init
       shell: bash
-      run: terraform init -backend-config="${{ inputs.backend-file }}"
+      run: |
+        set -euo pipefail
+        if [ -z "backend.hcl" ]; then
+          echo "ERROR: backend-file-path is missing!"
+          exit 1
+        fi
+
+        terraform init
 
     # Static scans
     - uses: ./.github/actions/security/trivy-static
@@ -24,8 +36,11 @@ runs:
 
     # Plan + dynamic scan
     - name: Terraform Plan
+      id: plan
       shell: bash
       run: |
-        terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
+        terraform plan \
+          -var-file="${{ inputs.tfvars-file }}" \
+          -json > tfplan.json
 
     - uses: ./.github/actions/security/trivy-plan
