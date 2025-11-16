@@ -47,7 +47,7 @@ runs:
         severity: CRITICAL,HIGH,MEDIUM,LOW
 
     # Plan
-     - name: Terraform Plan (JSON)
+    - name: Terraform Plan (JSON)
       shell: bash
       run: terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
 
