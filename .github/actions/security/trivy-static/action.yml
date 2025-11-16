@@ -1,58 +1,81 @@
-name: "Trivy Static Scan"
-description: "Scans Terraform source files with Trivy (all severities, fail on any)"
+# .github/actions/security/terraform-security-scan/action.yml
+# ... (same inputs as before)
 
 runs:
   using: "composite"
   steps:
-    - name: Trivy Static Scan (pretty print + fail)
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: config
-        format: template
-        template: "@contrib/terraform.tpl"
-        severity: CRITICAL,HIGH,MEDIUM,LOW
-        exit-code: '1'
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
 
-    - name: Trivy Static Scan
-      id: trivy
+    - name: Terraform Init
+      run: terraform init -backend-config="${{ inputs.backend-file-path }}"
+
+    # ── Static Scan (replaces tfsec) ──────────────────────────────────
+    - name: Trivy Static Scan → Table (pretty log)
+      id: static-table
       continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: fs
-        scan-ref: '.'
-        format: json
-        output: trivy-static.json
+        scan-type: config
+        format: table
         severity: CRITICAL,HIGH,MEDIUM,LOW
-        exit-code: '1'                 # fail on *any* finding
-        cache-dir: .trivy-cache
+        exit-code: '1'
 
-    - name: Count HIGH+CRITICAL
-      id: count
+    - name: Trivy Static Scan → SARIF
       if: always()
-      run: |
-        CNT=$(jq -r '
-          .Results[].Vulnerabilities // [] |
-          map(select(.Severity == "CRITICAL" or .Severity == "HIGH")) |
-          length
-        ' trivy-static.json 2>/dev/null || echo 0)
-        echo "high_critical=$CNT" >> $GITHUB_OUTPUT
-      shell: bash
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: config
+        format: sarif
+        output: trivy-static.sarif
+        severity: CRITICAL,HIGH,MEDIUM,LOW
 
-    - name: Count ALL
-      id: total
+    # ── Plan + Dynamic Scan ───────────────────────────────────────────
+    - name: Terraform Plan (JSON)
+      run: terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
+
+    - name: Trivy Plan Scan → Table (pretty log)
+      id: plan-table
+      continue-on-error: true
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: terraformplan
+        scan-ref: tfplan.json
+        format: table
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'
+
+    - name: Trivy Plan Scan → SARIF
       if: always()
-      run: |
-        TOTAL=$(jq -r '
-          .Results[].Vulnerabilities // [] |
-          length
-        ' trivy-static.json 2>/dev/null || echo 0)
-        echo "total=$TOTAL" >> $GITHUB_OUTPUT
-      shell: bash
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: terraformplan
+        scan-ref: tfplan.json
+        format: sarif
+        output: trivy-plan.sarif
+        severity: CRITICAL,HIGH,MEDIUM,LOW
 
-    - name: Upload static results
+    # ── Upload SARIF to GitHub Security Tab ───────────────────────────
+    - name: Upload Static SARIF
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-static.sarif
+
+    - name: Upload Plan SARIF
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-plan.sarif
+
+    # ── Upload Human-Readable Artifacts (optional but nice) ───────────
+    - name: Upload Trivy Logs as Artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: trivy-static-${{ github.run_id }}-${{ github.job }}
-        path: trivy-static.json
+        name: trivy-scan-results-${{ github.run_number }}
+        path: |
+          trivy-static.sarif
+          trivy-plan.sarif
+          tfplan.json
         retention-days: 30

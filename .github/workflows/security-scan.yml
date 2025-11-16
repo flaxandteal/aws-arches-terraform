@@ -38,31 +38,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get environment backend file from secret
+      - name: Create backend config from secret
         id: backend
         run: |
           set -euo pipefail
-         
-          ORIG_ENV="${{ inputs.environment || 'DEV' }}"
-          ENV=$(echo "$ORIG_ENV" | tr '[:lower:]' '[:upper:]')
+          ENV=$(echo "${{ inputs.environment || 'dev' }}" | tr '[:lower:]' '[:upper:]')
+          SECRET_NAME="TERRAFORM_BACKEND_$ENV"
 
-          echo "Selected environment: $ENV"
-          echo "Looking for secret: TERRAFORM_BACKEND_$ENV"
-
-          SECRET_VAR="TERRAFORM_BACKEND_$ENV"
-          
-          if [ -z "${!SECRET_VAR:-}" ]; then
-            echo "Error: Secret TERRAFORM_BACKEND_$ENV not found or empty!" >&2
+          if [ -z "${!SECRET_NAME:-}" ]; then
+            echo "Secret $SECRET_NAME is missing or empty!" >&2
             exit 1
           fi
 
-          mkdir -p backend
-          BACKEND_FILE="backend.hcl"   # creates backend.hcl
-          
-          echo "${!SECRET_VAR}" > "$BACKEND_FILE"
-          echo "Backend config written to $BACKEND_FILE"
+          echo "${!SECRET_NAME}" > backend.hcl
+          echo "Backend config written to backend.hcl"
 
-          echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
+          echo "path=backend.hcl" >> "$GITHUB_OUTPUT"
         env:
           TERRAFORM_BACKEND_DEV:   ${{ secrets.TERRAFORM_BACKEND_DEV }}
           TERRAFORM_BACKEND_STAGE: ${{ secrets.TERRAFORM_BACKEND_STAGE }}

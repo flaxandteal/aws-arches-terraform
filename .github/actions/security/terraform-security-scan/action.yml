@@ -1,46 +1,55 @@
 name: "Terraform Security Scan (All)"
-description: "Runs Trivy (static + plan)"
+description: "Runs Trivy static + plan scan"
+
 inputs:
   tfvars-file:
     required: true
   environment:
     required: true
-  backend-file-path:
+  backend-file-path:          # ← now matches exactly what you pass
     required: true
     default: 'backend.hcl'
+  auto-apply:                # ← now accepted (even if unused for now)
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
   steps:
-    - name: Get Terraform Version
-      uses: ./.github/actions/terraform/version
-
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
-      with:
-          terraform_version: ${{ steps.tf-version.outputs.version }}
 
-    - name: Terraform Init
+    - name: Terraform Init with Backend
       shell: bash
       run: |
         set -euo pipefail
-        if [ -z "backend.hcl" ]; then
-          echo "ERROR: backend-file-path is missing!"
+        BACKEND_FILE="${{ inputs.backend-file-path }}"
+        
+        if [ ! -f "$BACKEND_FILE" ]; then
+          echo "Backend config file not found: $BACKEND_FILE" >&2
           exit 1
         fi
+        
+        echo "Initializing Terraform with backend config: $BACKEND_FILE"
+        terraform init -backend-config="$BACKEND_FILE"
 
-        terraform init
+    - name: Trivy Static Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: config
+        format: table
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'
 
-    # Static scans
-    - uses: ./.github/actions/security/trivy-static
-
-    # Plan + dynamic scan
-    - name: Terraform Plan
-      id: plan
-      shell: bash
+    - name: Terraform Plan (JSON)
       run: |
-        terraform plan \
-          -var-file="${{ inputs.tfvars-file }}" \
-          -json > tfplan.json
+        terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
 
-    - uses: ./.github/actions/security/trivy-plan
+    - name: Trivy Plan Scan (pretty + fail)
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: terraformplan
+        scan-ref: tfplan.json
+        format: table
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'
