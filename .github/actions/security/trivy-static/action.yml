@@ -1,5 +1,18 @@
 # .github/actions/security/terraform-security-scan/action.yml
-# ... (same inputs as before)
+name: "Terraform Security Scan (All)"
+description: "Runs Trivy static + plan scan"
+
+inputs:
+  tfvars-file:
+    required: true
+  environment:
+    required: true
+  backend-file-path:
+    required: true
+    default: 'backend.hcl'
+  auto-apply:
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -7,10 +20,19 @@ runs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform Init
-      run: terraform init -backend-config="${{ inputs.backend-file-path }}"
+    - name: Terraform Init with Backend
+      shell: bash
+      run: |
+        set -euo pipefail
+        BACKEND_FILE="${{ inputs.backend-file-path }}"
+        if [ ! -f "$BACKEND_FILE" ]; then
+          echo "Backend config file not found: $BACKEND_FILE" >&2
+          exit 1
+        fi
+        echo "Initializing with backend: $BACKEND_FILE"
+        terraform init -backend-config="$BACKEND_FILE"
 
-    # ── Static Scan (replaces tfsec) ──────────────────────────────────
+    # ── Static Scan ──
     - name: Trivy Static Scan → Table (pretty log)
       id: static-table
       continue-on-error: true
@@ -30,9 +52,12 @@ runs:
         output: trivy-static.sarif
         severity: CRITICAL,HIGH,MEDIUM,LOW
 
-    # ── Plan + Dynamic Scan ───────────────────────────────────────────
+    # ── Plan + Dynamic Scan ──
     - name: Terraform Plan (JSON)
-      run: terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
+      shell: bash           # ← THIS WAS MISSING
+      run: |
+        set -euo pipefail
+        terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
 
     - name: Trivy Plan Scan → Table (pretty log)
       id: plan-table
@@ -55,27 +80,52 @@ runs:
         output: trivy-plan.sarif
         severity: CRITICAL,HIGH,MEDIUM,LOW
 
-    # ── Upload SARIF to GitHub Security Tab ───────────────────────────
-    - name: Upload Static SARIF
+    # ── Upload to GitHub Security Tab ──
+    - name: Upload SARIF Results
       if: always()
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: trivy-static.sarif
-
-    - name: Upload Plan SARIF
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: trivy-plan.sarif
-
-    # ── Upload Human-Readable Artifacts (optional but nice) ───────────
-    - name: Upload Trivy Logs as Artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: trivy-scan-results-${{ github.run_number }}
-        path: |
+        sarif_file: |
           trivy-static.sarif
           trivy-plan.sarif
-          tfplan.json
-        retention-days: 30
+
+    # ── Optional: Auto-apply ──
+    - name: Terraform Apply (if requested)
+      if: inputs.auto-apply == 'true'
+      shell: bash
+      run: terraform apply -auto-approve -input=false
+
+#Go to your repo → Settings → Secrets and variables → Actions
+# Add a new secret:
+# Name: ROCKET_CHAT_WEBHOOK
+# Value: Your Rocket.Chat incoming webhook URL (e.g. https://chat.yourcompany.com/hooks/xxxxxxxxxxxxxxxxx)
+    # ── Rocket.Chat Alert on Failure ──────────────────────────────────
+    # - name: Send Rocket.Chat Alert on Failure
+    #   if: failure() || steps.static-table.outcome == 'failure' || steps.plan-table.outcome == 'failure'
+    #   env:
+    #     ROCKET_CHAT_WEBHOOK: ${{ secrets.ROCKET_CHAT_WEBHOOK }}   # Put your webhook URL in Secrets
+    #   run: |
+    #     RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    #     BRANCH="${{ github.ref_name }}"
+    #     ENV="${{ inputs.environment || 'dev' }}"
+
+    #     curl -X POST "$ROCKET_CHAT_WEBHOOK" \
+    #       -H "Content-Type: application/json" \
+    #       -d '{
+    #         "text": "Terraform Security Scan FAILED",
+    #         "attachments": [
+    #           {
+    #             "title": "Security issues found in Terraform code",
+    #             "title_link": "'"$RUN_URL"'",
+    #             "color": "#B22222",
+    #             "fields": [
+    #               { "title": "Repository", "value": "${{ github.repository }}", "short": true },
+    #               { "title": "Branch", "value": "'"$BRANCH"'", "short": true },
+    #               { "title": "Environment", "value": "'"$ENV"'", "short": true },
+    #               { "title": "Triggered by", "value": "${{ github.actor }}", "short": true }
+    #             ],
+    #             "footer": "GitHub Actions • Terraform + Trivy",
+    #             "ts": '"$(date +%s)"'
+    #           }
+    #         ]
+    #       }'
