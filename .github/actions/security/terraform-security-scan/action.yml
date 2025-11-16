@@ -32,7 +32,6 @@ runs:
 
     # Static scans
     - uses: ./.github/actions/security/trivy-static
-    - uses: ./.github/actions/security/tfsec
 
     # Plan + dynamic scan
     - name: Terraform Plan

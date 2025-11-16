@@ -9,29 +9,53 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Trivy Plan Scan
-      id: trivy
+    # JSON scan for counts & artifacts
+    - name: Trivy Plan Scan (JSON)
+      id: trivy-json
       continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: terraformplan
-        scan-ref: 'tfplan'
-        format: template
-        output: trivy-plan.json, trivy-plan.sarif
+        scan-ref: ${{ inputs.tfplan-path }}
+        format: json
+        output: trivy-plan.json
         severity: CRITICAL,HIGH,MEDIUM,LOW
-        exit-code: '1'                 # fail on *any* finding
+        exit-code: '1'               
         cache-dir: .trivy-cache
+
+    # SARIF scan for GitHub Code Scanning
+    - name: Trivy Plan Scan (SARIF)
+      id: trivy-sarif
+      continue-on-error: true
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: terraformplan
+        scan-ref: ${{ inputs.tfplan-path }}
+        format: sarif
+        output: trivy-plan.sarif
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'               
+        cache-dir: .trivy-cache
+        limit-severities-for-sarif: true  # Respect severity filter in SARIF
+
+    # Optional: Upload SARIF to GitHub Security tab
+    # - name: Upload SARIF
+    #   if: always()
+    #   uses: github/codeql-action/upload-sarif@v3
+    #   with:
+    #     sarif_file: trivy-plan.sarif
 
     - name: Count HIGH+CRITICAL
       id: count
       if: always()
       run: |
         CNT=$(jq -r '
-          .Results[].Vulnerabilities // [] |
+          [ .Results[].Misconfigurations // [] ] |
           map(select(.Severity == "CRITICAL" or .Severity == "HIGH")) |
           length
         ' trivy-plan.json 2>/dev/null || echo 0)
         echo "high_critical=$CNT" >> $GITHUB_OUTPUT
+        echo "HIGH+CRITICAL plan issues: $CNT" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Count ALL
@@ -39,16 +63,25 @@ runs:
       if: always()
       run: |
         TOTAL=$(jq -r '
-          .Results[].Vulnerabilities // [] |
+          [ .Results[].Misconfigurations // [] ] |
           length
         ' trivy-plan.json 2>/dev/null || echo 0)
         echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        echo "Total plan issues: $TOTAL" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
-    - name: Upload plan results
+    - name: Upload plan results (JSON)
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: trivy-plan-${{ github.run_id }}-${{ github.job }}
         path: trivy-plan.json
+        retention-days: 30
+
+    - name: Upload plan results (SARIF)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-plan-sarif-${{ github.run_id }}-${{ github.job }}
+        path: trivy-plan.sarif
         retention-days: 30
