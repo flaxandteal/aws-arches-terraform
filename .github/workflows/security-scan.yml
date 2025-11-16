@@ -57,7 +57,7 @@ jobs:
           fi
 
           mkdir -p backend
-          BACKEND_FILE="backend/${ENV,,}.hcl"   # creates backend/dev.hcl, backend/stage.hcl etc.
+          BACKEND_FILE="backend.hcl"   # creates backend.hcl
           
           echo "${!SECRET_VAR}" > "$BACKEND_FILE"
           echo "Backend config written to $BACKEND_FILE"
