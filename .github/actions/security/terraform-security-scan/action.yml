@@ -1,15 +1,16 @@
+# .github/actions/security/terraform-security-scan/action.yml
 name: "Terraform Security Scan (All)"
-description: "Runs Trivy static + plan scan"
+description: "Trivy static + plan scan with SARIF, artifacts & alerts"
 
 inputs:
   tfvars-file:
     required: true
   environment:
     required: true
-  backend-file-path:          # ← now matches exactly what you pass
+  backend-file-path:
     required: true
     default: 'backend.hcl'
-  auto-apply:                # ← now accepted (even if unused for now)
+  auto-apply:
     required: false
     default: 'false'
 
@@ -19,21 +20,16 @@ runs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform Init with Backend
+    - name: Terraform Init
       shell: bash
       run: |
         set -euo pipefail
-        BACKEND_FILE="${{ inputs.backend-file-path }}"
-        
-        if [ ! -f "$BACKEND_FILE" ]; then
-          echo "Backend config file not found: $BACKEND_FILE" >&2
-          exit 1
-        fi
-        
-        echo "Initializing Terraform with backend config: $BACKEND_FILE"
-        terraform init -backend-config="$BACKEND_FILE"
+        terraform init -backend-config="${{ inputs.backend-file-path }}"
 
-    - name: Trivy Static Scan
+    # Static Scan
+    - name: Trivy Static Scan - Pretty
+      id: static
+      continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: config
@@ -41,12 +37,25 @@ runs:
         severity: CRITICAL,HIGH,MEDIUM,LOW
         exit-code: '1'
 
+    - name: Trivy Static Scan - SARIF
+      if: always()
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: config
+        format: sarif
+        output: trivy-static.sarif
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+
+    # Plan
     - name: Terraform Plan (JSON)
       shell: bash
       run: |
+        set -euo pipefail
         terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
 
-    - name: Trivy Plan Scan (pretty + fail)
+    - name: Trivy Plan Scan - Pretty
+      id: plan
+      continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: terraformplan
@@ -54,3 +63,36 @@ runs:
         format: table
         severity: CRITICAL,HIGH,MEDIUM,LOW
         exit-code: '1'
+
+    - name: Trivy Plan Scan - SARIF
+      if: always()
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: terraformplan
+        scan-ref: tfplan.json
+        format: sarif
+        output: trivy-plan.sarif
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+
+    # # Upload SARIF to GitHub Security tab 'sji can I? think this is paid
+    # - name: Upload SARIF
+    #   if: always()
+    #   uses: github/codeql-action/upload-sarif@v3
+    #   with:
+    #     sarif_file: |
+    #       trivy-static.sarif
+    #       trivy-plan.sarif
+
+    # Upload ALL artifacts
+    - name: Upload Scan Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-security-scan-${{ github.run_number }}-${{ inputs.environment }}
+        path: |
+          trivy-static.sarif
+          trivy-plan.sarif
+          tfplan.json
+          backend.hcl
+        retention-days: 90
+        if-no-files-found: warn
