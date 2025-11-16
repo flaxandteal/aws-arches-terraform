@@ -87,7 +87,7 @@ jobs:
     # Run only on pull request merges to main
     if: |
       github.event_name == 'pull_request' &&
-      github.event.action == 'closed' &&
+      github.event.action == 'closed' &&yup, gotta drop -kids are awaiting
       github.event.pull_request.merged &&
       github.event.pull_request.base.ref == 'main'
     steps:
