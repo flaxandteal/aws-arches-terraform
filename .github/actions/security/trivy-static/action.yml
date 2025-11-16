@@ -4,6 +4,15 @@ description: "Scans Terraform source files with Trivy (all severities, fail on a
 runs:
   using: "composite"
   steps:
+    - name: Trivy Static Scan (pretty print + fail)
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: config
+        format: template
+        template: "@contrib/terraform.tpl"
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'
+
     - name: Trivy Static Scan
       id: trivy
       continue-on-error: true

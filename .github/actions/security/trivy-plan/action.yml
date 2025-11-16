@@ -9,34 +9,33 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # JSON scan for counts & artifacts
-    - name: Trivy Plan Scan (JSON)
-      id: trivy-json
-      continue-on-error: true
+    - name: Trivy Plan Scan – Pretty log output
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: terraformplan
-        scan-ref: ${{ inputs.tfplan-path }}
+        scan-ref: tfplan
+        format: table
+        severity: CRITICAL,HIGH,MEDIUM,LOW
+        exit-code: '1'
+
+    - name: Trivy Plan Scan – JSON + SARIF for artifacts
+      uses: aquasecurity/trivy-action@master
+      continue-on-error: true   # we already failed above if needed
+      with:
+        scan-type: terraformplan
+        scan-ref: tfplan
         format: json
         output: trivy-plan.json
         severity: CRITICAL,HIGH,MEDIUM,LOW
-        exit-code: '1'               
-        cache-dir: .trivy-cache
 
-    # SARIF scan for GitHub Code Scanning
-    - name: Trivy Plan Scan (SARIF)
-      id: trivy-sarif
-      continue-on-error: true
+    - name: Trivy Plan Scan – SARIF for GitHub Security tab
       uses: aquasecurity/trivy-action@master
+      continue-on-error: true
       with:
         scan-type: terraformplan
-        scan-ref: ${{ inputs.tfplan-path }}
+        scan-ref: tfplan
         format: sarif
         output: trivy-plan.sarif
-        severity: CRITICAL,HIGH,MEDIUM,LOW
-        exit-code: '1'               
-        cache-dir: .trivy-cache
-        limit-severities-for-sarif: true  # Respect severity filter in SARIF
 
     # Optional: Upload SARIF to GitHub Security tab
     # - name: Upload SARIF
