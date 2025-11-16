@@ -47,17 +47,14 @@ runs:
         severity: CRITICAL,HIGH,MEDIUM,LOW
 
     # Plan
-    - name: Terraform Plan (JSON)
+     - name: Terraform Plan (JSON)
       shell: bash
-      run: |
-        set -euo pipefail
-        terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
+      run: terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
 
     - name: Trivy Plan Scan - Pretty
-      id: plan
-      continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
+        image-ref: aquasec/trivy:0.56.2
         scan-type: terraformplan
         scan-ref: tfplan.json
         format: table
@@ -68,6 +65,7 @@ runs:
       if: always()
       uses: aquasecurity/trivy-action@master
       with:
+        image-ref: aquasec/trivy:0.56.2
         scan-type: terraformplan
         scan-ref: tfplan.json
         format: sarif
