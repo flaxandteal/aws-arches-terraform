@@ -23,7 +23,8 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        terraform init -backend-config="${{ inputs.backend-file-path }}"
+        terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
+        terraform providers
 
     # ========================
     # Static Trivy Scan
