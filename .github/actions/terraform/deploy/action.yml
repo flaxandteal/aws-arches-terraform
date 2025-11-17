@@ -41,12 +41,14 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        if [ -z "backend.hcl" ]; then
-          echo "ERROR: backend-file-path is missing!"
+        cat ${{ inputs.backend-file-path }}
+        if [ -z ${{ inputs.backend-file-path }} ]; then
+          echo "ERROR: backend file is missing!"
+          echo ${{ inputs.backend-file-path }}
           exit 1
         fi
-
-        terraform init
+        terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
+        terraform providers
 
     # ---------------------------------------------
     # 5. Terraform Validate
