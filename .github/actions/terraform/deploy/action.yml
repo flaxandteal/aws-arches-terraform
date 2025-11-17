@@ -60,7 +60,6 @@ runs:
       id: plan
       shell: bash
       run: |
-        terraform import 'module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"]' alias/eks/catalina-dev
         terraform plan \
           -var-file="${{ inputs.tfvars-file }}" \
           -out=tfplan \
