@@ -68,7 +68,7 @@ jobs:
         with:
           environment: ${{ inputs.environment || 'dev' }}
           tfvars-file: ${{ inputs.environment || 'dev' }}.tfvars
-          backend-file-path: ${{ github.workspace }}/${{ steps.backend.outputs.path }}
+          backend-file-path: ${{ steps.backend.outputs.path }}
           auto-apply: ${{ inputs.auto-apply || false }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

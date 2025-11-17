@@ -41,11 +41,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        if [ -z ${{ inputs.backend-file-path }} ]; then
-          echo "ERROR: backend file is missing!"
-          echo ${{ inputs.backend-file-path }}
-          exit 1
-        fi
+        echo "Initializing Terraform with backend: ${{ inputs.backend-file-path }}"
         terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
         terraform providers
 
