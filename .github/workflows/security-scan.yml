@@ -14,7 +14,7 @@ on:
         required: true
         default: 'dev'
 
-  push:
+  #push:
   #   branches: [ main ]
   #   paths:
   #     - '**/*.tf'
