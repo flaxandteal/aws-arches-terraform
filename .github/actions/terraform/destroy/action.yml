@@ -43,5 +43,5 @@ runs:
 
     # Destroy
     - name: Terraform Destroy
-      run: terraform destroy -auto-approve tfplan
+      run: terraform destroy -auto-approve -var-file=${{ inputs.tfvars-file }}
       shell: bash
