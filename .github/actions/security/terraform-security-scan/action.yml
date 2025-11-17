@@ -21,7 +21,7 @@ runs:
 
     - name: Terraform Init
       shell: bash
-      working-directory: ${{ github.workspace }}
+      working-directory: ${{ GITHUB_WORKSPACE }}
       run: |
         set -euo pipefail
 
