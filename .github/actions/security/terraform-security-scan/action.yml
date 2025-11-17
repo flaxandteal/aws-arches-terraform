@@ -54,9 +54,8 @@ runs:
     - name: Trivy Plan Scan - Pretty
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: aquasec/trivy:0.56.2
-        scan-type: terraformplan
-        scan-ref: tfplan.json
+        scan-type: config
+        input: tfplan.json
         format: table
         severity: CRITICAL,HIGH,MEDIUM,LOW
         exit-code: '1'
@@ -66,8 +65,8 @@ runs:
       uses: aquasecurity/trivy-action@master
       with:
         image-ref: aquasec/trivy:0.56.2
-        scan-type: terraformplan
-        scan-ref: tfplan.json
+        scan-type: config
+        input: tfplan.json
         format: sarif
         output: trivy-plan.sarif
         severity: CRITICAL,HIGH,MEDIUM,LOW
