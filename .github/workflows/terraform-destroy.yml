@@ -14,14 +14,17 @@ on:
         required: true
         default: 'dev'
 
-  push:
-
 permissions:
   contents: read
   security-events: write #sji check these
   deployments: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "workflow_dispatch works"
+
   terraform-destroy:
     name: Terraform Destroy
     runs-on: ubuntu-latest    # check environment for prod branch sji
