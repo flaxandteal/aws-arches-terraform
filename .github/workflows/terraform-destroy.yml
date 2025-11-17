@@ -1,7 +1,6 @@
 name: Terraform Destroy
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       auto-apply:
@@ -14,6 +13,8 @@ on:
         options: [dev, stage, uat, prod]
         required: true
         default: 'dev'
+
+  push:
 
 permissions:
   contents: read
