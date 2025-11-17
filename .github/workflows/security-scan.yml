@@ -1,4 +1,4 @@
-name: Terraform Security Scan (Trivy + tfsec)
+name: Terraform Security Scan
 
 on:
   workflow_dispatch:
