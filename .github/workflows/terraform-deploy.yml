@@ -33,44 +33,36 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Create backend config from secret (Debug)
+      - name: Create backend config from secret
         id: backend
         run: |
           set -euo pipefail
-          set -x  # debug all commands
           ENV_INPUT="${{ inputs.environment }}"
-          ENV_INPUT="${ENV_INPUT:-dev}"
+          ENV_INPUT="${ENV_INPUT:-dev}"   # <-- default for push
 
           ENV_UPPER=$(echo "$ENV_INPUT" | tr '[:lower:]' '[:upper:]')
           SECRET_KEY="TERRAFORM_BACKEND_${ENV_UPPER}"
-
-          echo "Using environment: $ENV_INPUT"
-          echo "Looking for secret key: $SECRET_KEY"
 
           if [ -z "${!SECRET_KEY:-}" ]; then
             echo "Error: Secret $SECRET_KEY is missing or empty." >&2
             exit 1
           fi
 
-          BACKEND_FILE="$GITHUB_WORKSPACE/backend.hcl"
-          echo "${!SECRET_KEY}" > "$BACKEND_FILE"
-          echo "Backend file written at $BACKEND_FILE"
+          echo "${!SECRET_KEY}" > backend.hcl
+          echo "Backend config created for $ENV_INPUT."
 
-          ls -l "$GITHUB_WORKSPACE"
-          cat "$BACKEND_FILE"  # Only for debugging; remove later
-
-          echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
+          echo "path=backend.hcl" >> "$GITHUB_OUTPUT"
         env:
           TERRAFORM_BACKEND_DEV:   ${{ secrets.TERRAFORM_BACKEND_DEV }}
           TERRAFORM_BACKEND_STAGE: ${{ secrets.TERRAFORM_BACKEND_STAGE }}
           TERRAFORM_BACKEND_UAT:   ${{ secrets.TERRAFORM_BACKEND_UAT }}
-          TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}
-
+          TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}      
+          
       - name: Terraform Check, Plan & Apply
         uses: ./.github/actions/terraform/deploy
         with:

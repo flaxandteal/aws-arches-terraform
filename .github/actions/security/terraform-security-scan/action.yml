@@ -16,8 +16,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Get Terraform Version
+      uses: ./.github/actions/terraform/version
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ steps.tf-version.outputs.version }}
 
     - name: Terraform Init
       shell: bash
