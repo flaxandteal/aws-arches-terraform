@@ -16,6 +16,8 @@ terraform {
       version = "~> 1.19"
     }
   }
+
+  backend "s3" {}
 }
 
 provider "aws" {
