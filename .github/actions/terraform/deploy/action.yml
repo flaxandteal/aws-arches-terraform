@@ -11,10 +11,6 @@ inputs:
     type: boolean
     default: false
 
-defaults:
-  run:
-    working-directory: ${{ github.workspace }}
-
 runs:
   using: "composite"
   steps:
