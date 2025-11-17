@@ -1,4 +1,3 @@
-# .github/actions/security/terraform-security-scan/action.yml
 name: "Terraform Security Scan (All)"
 description: "Trivy static + plan scan with SARIF, artifacts & alerts"
 
@@ -26,7 +25,9 @@ runs:
         set -euo pipefail
         terraform init -backend-config="${{ inputs.backend-file-path }}"
 
-    # Static Scan
+    # ========================
+    # Static Trivy Scan
+    # ========================
     - name: Trivy Static Scan - Pretty
       id: static
       continue-on-error: true
@@ -46,11 +47,18 @@ runs:
         output: trivy-static.sarif
         severity: CRITICAL,HIGH,MEDIUM,LOW
 
-    # Plan
+    # ========================
+    # Terraform Plan → JSON
+    # ========================
     - name: Terraform Plan (JSON)
       shell: bash
-      run: terraform plan -var-file="${{ inputs.tfvars-file }}" -json > tfplan.json
+      run: |
+        terraform plan -var-file="${{ inputs.tfvars-file }}" -out=tfplan
+        terraform show -json tfplan > tfplan.json
 
+    # ==========================
+    # Plan Trivy Scan (Dynamic)
+    # ==========================
     - name: Trivy Plan Scan - Pretty
       uses: aquasecurity/trivy-action@master
       with:
@@ -80,7 +88,9 @@ runs:
     #       trivy-static.sarif
     #       trivy-plan.sarif
 
-    # Upload ALL artifacts
+    # ========================
+    # Artifact Upload
+    # ========================
     - name: Upload Scan Artifacts
       if: always()
       uses: actions/upload-artifact@v4

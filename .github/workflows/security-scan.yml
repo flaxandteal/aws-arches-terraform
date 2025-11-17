@@ -42,16 +42,17 @@ jobs:
         id: backend
         run: |
           set -euo pipefail
-          ENV=$(echo "${{ inputs.environment || 'dev' }}" | tr '[:lower:]' '[:upper:]')
-          SECRET_NAME="TERRAFORM_BACKEND_$ENV"
+          ENV_INPUT="${{ inputs.environment }}"
+          ENV_UPPER=$(echo "$ENV_INPUT" | tr '[:lower:]' '[:upper:]')
+          SECRET_KEY="TERRAFORM_BACKEND_${ENV_UPPER}"
 
-          if [ -z "${!SECRET_NAME:-}" ]; then
-            echo "Secret $SECRET_NAME is missing or empty!" >&2
+          if [ -z "${!SECRET_KEY:-}" ]; then
+            echo "Error: Secret $SECRET_KEY is missing or empty." >&2
             exit 1
           fi
 
-          echo "${!SECRET_NAME}" > backend.hcl
-          echo "Backend config written to backend.hcl"
+          echo "${!SECRET_KEY}" > backend.hcl
+          echo "Backend config created for $ENV_INPUT."
 
           echo "path=backend.hcl" >> "$GITHUB_OUTPUT"
         env:
