@@ -41,8 +41,14 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        BACKEND_PATH="${{ inputs.backend-file-path }}"
+        if [ ! -f "$BACKEND_PATH" ]; then
+          echo "ERROR: Backend file not found at $BACKEND_PATH"
+          exit 1
+        fi
         echo "Initializing Terraform with backend: ${{ inputs.backend-file-path }}"
-        terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
+        terraform init -upgrade -backend-config="$BACKEND_PATH"
+
         terraform providers
 
     # ---------------------------------------------
