@@ -43,6 +43,8 @@ jobs:
         run: |
           set -euo pipefail
           ENV_INPUT="${{ inputs.environment }}"
+          ENV_INPUT="${ENV_INPUT:-dev}"   # <-- default for push
+
           ENV_UPPER=$(echo "$ENV_INPUT" | tr '[:lower:]' '[:upper:]')
           SECRET_KEY="TERRAFORM_BACKEND_${ENV_UPPER}"
 
