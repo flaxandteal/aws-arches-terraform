@@ -24,7 +24,8 @@ runs:
       working-directory: ${{ GITHUB_WORKSPACE }}
       run: |
         set -euo pipefail
-
+        ls -la
+        pwd
         # Trim whitespace/newlines from the input path
         BACKEND_PATH="${{ inputs.backend-file-path }}"
         BACKEND_PATH="$(echo "$BACKEND_PATH" | tr -d '\r\n')"
