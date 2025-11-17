@@ -13,7 +13,6 @@ on:
         options: [dev, stage, uat, prod]
         required: true
         default: 'dev'
-  push:
 
 permissions:
   contents: read
@@ -21,61 +20,56 @@ permissions:
   deployments: write
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  terraform-destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest    # check environment for prod branch sji
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
     steps:
-      - run: echo "workflow_dispatch works"
 
-  # terraform-destroy:
-  #   name: Terraform Destroy
-  #   runs-on: ubuntu-latest    # check environment for prod branch sji
-  #   env:
-  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-  #   steps:
-
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
          
-  #     - name: Get environment backend file from secret
-  #       id: backend
-  #       run: |
-  #         set -euo pipefail
+      - name: Get environment backend file from secret
+        id: backend
+        run: |
+          set -euo pipefail
          
-  #         ORIG_ENV="${{ inputs.environment || 'DEV' }}"
-  #         ENV=$(echo "$ORIG_ENV" | tr '[:lower:]' '[:upper:]')
+          ORIG_ENV="${{ inputs.environment || 'DEV' }}"
+          ENV=$(echo "$ORIG_ENV" | tr '[:lower:]' '[:upper:]')
 
-  #         echo "Selected environment: $ENV"
-  #         echo "Looking for secret: TERRAFORM_BACKEND_$ENV"
+          echo "Selected environment: $ENV"
+          echo "Looking for secret: TERRAFORM_BACKEND_$ENV"
 
-  #         SECRET_VAR="TERRAFORM_BACKEND_$ENV"
+          SECRET_VAR="TERRAFORM_BACKEND_$ENV"
           
-  #         if [ -z "${!SECRET_VAR:-}" ]; then
-  #           echo "Error: Secret TERRAFORM_BACKEND_$ENV not found or empty!" >&2
-  #           exit 1
-  #         fi
+          if [ -z "${!SECRET_VAR:-}" ]; then
+            echo "Error: Secret TERRAFORM_BACKEND_$ENV not found or empty!" >&2
+            exit 1
+          fi
 
-  #         mkdir -p backend
-  #         BACKEND_FILE="backend/${ENV,,}.hcl"   # creates backend/dev.hcl, backend/stage.hcl etc.
+          mkdir -p backend
+          BACKEND_FILE="backend/${ENV,,}.hcl"   # creates backend/dev.hcl, backend/stage.hcl etc.
           
-  #         echo "${!SECRET_VAR}" > "$BACKEND_FILE"
-  #         echo "Backend config written to $BACKEND_FILE"
+          echo "${!SECRET_VAR}" > "$BACKEND_FILE"
+          echo "Backend config written to $BACKEND_FILE"
 
-  #         echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
-  #       env:
-  #         TERRAFORM_BACKEND_DEV:   ${{ secrets.TERRAFORM_BACKEND_DEV }}
-  #         TERRAFORM_BACKEND_STAGE: ${{ secrets.TERRAFORM_BACKEND_STAGE }}
-  #         TERRAFORM_BACKEND_UAT:   ${{ secrets.TERRAFORM_BACKEND_UAT }}
-  #         TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}
+          echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
+        env:
+          TERRAFORM_BACKEND_DEV:   ${{ secrets.TERRAFORM_BACKEND_DEV }}
+          TERRAFORM_BACKEND_STAGE: ${{ secrets.TERRAFORM_BACKEND_STAGE }}
+          TERRAFORM_BACKEND_UAT:   ${{ secrets.TERRAFORM_BACKEND_UAT }}
+          TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}
 
-  #     - name: Terraform Destroy
-  #       uses: ./.github/actions/terraform/destroy
-  #       with:
-  #         environment: ${{ inputs.environment || 'dev' }}
-  #         tfvars-file: ${{ inputs.environment || 'dev' }}.tfvars
-  #         backend-file-path: ${{ steps.backend.outputs.path }}
-  #         auto-apply: ${{ inputs.auto-apply || false }}
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Terraform Destroy
+        uses: ./.github/actions/terraform/destroy
+        with:
+          environment: ${{ inputs.environment || 'dev' }}
+          tfvars-file: ${{ inputs.environment || 'dev' }}.tfvars
+          backend-file-path: ${{ steps.backend.outputs.path }}
+          auto-apply: ${{ inputs.auto-apply || false }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

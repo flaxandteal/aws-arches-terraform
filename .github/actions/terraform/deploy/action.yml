@@ -84,4 +84,8 @@ runs:
     - name: Terraform Apply
       shell: bash
       #if: ${{ inputs.auto-apply == true && steps.plan.outputs.exitcode == '2' }}
-      run: terraform apply -auto-approve tfplan
+      run: |
+        terraform import aws_iam_openid_connect_provider.github \
+          arn:aws:iam::catalina-dev-github-oidc:oidc-provider/token.actions.githubusercontent.com
+        terraform import module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"] alias/eks/catalina-dev
+        terraform apply -auto-approve tfplan
