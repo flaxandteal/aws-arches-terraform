@@ -85,5 +85,5 @@ runs:
       shell: bash
       #if: ${{ inputs.auto-apply == true && steps.plan.outputs.exitcode == '2' }}
       run: |
-        terraform import module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"] alias/eks/catalina-dev
+        terraform import 'module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"]' alias/eks/catalina-dev
         terraform apply -auto-approve tfplan
