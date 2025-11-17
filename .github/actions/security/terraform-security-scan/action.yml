@@ -21,30 +21,11 @@ runs:
 
     - name: Terraform Init
       shell: bash
-      working-directory: ${{ GITHUB_WORKSPACE }}
       run: |
         set -euo pipefail
-        ls -la
-        pwd
-        # Trim whitespace/newlines from the input path
-        BACKEND_PATH="${{ inputs.backend-file-path }}"
-        BACKEND_PATH="$(echo "$BACKEND_PATH" | tr -d '\r\n')"
-
-        echo "Initializing Terraform with backend: '$BACKEND_PATH'"
-
-        # Double-check that the file exists
-        if [ ! -f "$BACKEND_PATH" ]; then
-          echo "ERROR: Backend file not found at '$BACKEND_PATH'"
-          ls -l "$(dirname "$BACKEND_PATH")"
-          exit 1
-        fi
-
-        # Initialize Terraform with the backend
-        terraform init -upgrade -backend-config="$BACKEND_PATH"
-
-        # Show providers to confirm
+        echo "Initializing Terraform with backend: ${{ inputs.backend-file-path }}"
+        terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
         terraform providers
-
 
     # ========================
     # Static Trivy Scan

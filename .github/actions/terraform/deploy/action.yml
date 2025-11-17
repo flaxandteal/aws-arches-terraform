@@ -39,8 +39,11 @@ runs:
     # ---------------------------------------------
     - name: Terraform Init
       shell: bash
+      working-directory: ${{ GITHUB_WORKSPACE }}
       run: |
         set -euo pipefail
+        ls -la
+        pwd
         BACKEND_PATH="${{ inputs.backend-file-path }}"
         if [ ! -f "$BACKEND_PATH" ]; then
           echo "ERROR: Backend file not found at $BACKEND_PATH"
