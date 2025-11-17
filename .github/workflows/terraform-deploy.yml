@@ -53,10 +53,12 @@ jobs:
             exit 1
           fi
 
-          echo "${!SECRET_KEY}" > backend.hcl
-          echo "Backend config created for $ENV_INPUT."
+          BACKEND_FILE="$GITHUB_WORKSPACE/backend.hcl"
+          echo "${!SECRET_KEY}" > "$BACKEND_FILE"
+          echo "Backend config created for $ENV_INPUT at $BACKEND_FILE."
 
-          echo "path=backend.hcl" >> "$GITHUB_OUTPUT"
+          # Pass absolute path to action
+          echo "path=$BACKEND_FILE" >> "$GITHUB_OUTPUT"
         env:
           TERRAFORM_BACKEND_DEV:   ${{ secrets.TERRAFORM_BACKEND_DEV }}
           TERRAFORM_BACKEND_STAGE: ${{ secrets.TERRAFORM_BACKEND_STAGE }}
