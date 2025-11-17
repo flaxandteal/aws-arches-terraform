@@ -38,7 +38,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get environment backend file from secret
+      - name: Create backend config from secret
         id: backend
         run: |
           set -euo pipefail

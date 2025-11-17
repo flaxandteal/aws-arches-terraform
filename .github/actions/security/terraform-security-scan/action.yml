@@ -23,7 +23,6 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        cat ${{ inputs.backend-file-path }}
         if [ -z ${{ inputs.backend-file-path }} ]; then
           echo "ERROR: backend file is missing!"
           echo ${{ inputs.backend-file-path }}
