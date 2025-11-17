@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.0"  # ← Required by EKS module v21+
+      version = "~> 6.0" # ← Required by EKS module v21+
     }
     helm = {
       source  = "hashicorp/helm"
