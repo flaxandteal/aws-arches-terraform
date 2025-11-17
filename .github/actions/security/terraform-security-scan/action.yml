@@ -23,6 +23,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        cat ${{ inputs.backend-file-path }}
         terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
         terraform providers
 
