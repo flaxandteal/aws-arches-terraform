@@ -16,13 +16,13 @@ runs:
   using: "composite"
   steps:
     # ---------------------------------------------
-    # 1. Get Terraform Version
+    # Terraform Version
     # ---------------------------------------------
     - name: Get Terraform Version
       uses: ./.github/actions/terraform/version
 
     # ---------------------------------------------
-    # 2. Setup Terraform
+    # Setup Terraform
     # ---------------------------------------------
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -30,7 +30,7 @@ runs:
           terraform_version: ${{ steps.tf-version.outputs.version }}
   
     # ---------------------------------------------
-    # 3. Terraform Init - Get env backend
+    # Terraform Init (Using Env backend)
     # ---------------------------------------------
     - name: Terraform Init
       shell: bash
@@ -41,7 +41,9 @@ runs:
         terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
         terraform providers
 
-    # Destroy
+    # ---------------------------------------------
+    # Terraform Destroy
+    # ---------------------------------------------
     - name: Terraform Destroy
       run: terraform destroy -auto-approve -var-file=${{ inputs.tfvars-file }}
       shell: bash

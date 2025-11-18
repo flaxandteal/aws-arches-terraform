@@ -15,13 +15,13 @@ runs:
   using: "composite"
   steps:
     # ---------------------------------------------
-    # 1. Get Terraform Version
+    # Terraform Version
     # ---------------------------------------------
     - name: Get Terraform Version
       uses: ./.github/actions/terraform/version
 
     # ---------------------------------------------
-    # 2. Setup Terraform
+    # Setup Terraform
     # ---------------------------------------------
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -29,13 +29,13 @@ runs:
           terraform_version: ${{ steps.tf-version.outputs.version }}
 
     # ---------------------------------------------
-    # 3. Terraform Quality Check - fmt & lint
+    # Terraform Quality Check - fmt & lint
     # ---------------------------------------------
-    #- name: Terraform Quality Check
-    #  uses: ./.github/actions/terraform/quality
+    - name: Terraform Quality Check
+      uses: ./.github/actions/terraform/quality
 
     # ---------------------------------------------
-    # 4. Terraform Init - Get env backend
+    # Terraform Init - Get env backend
     # ---------------------------------------------
     - name: Terraform Init
       shell: bash
@@ -47,14 +47,14 @@ runs:
         terraform providers
 
     # ---------------------------------------------
-    # 5. Terraform Validate
+    # Terraform Validate
     # --------------------------------------------- 
     - name: Terraform Validate
       shell: bash
       run: terraform validate
 
     # ---------------------------------------------
-    # 6. Terraform Plan       
+    # Terraform Plan       
     # ---------------------------------------------
     - name: Terraform Plan
       id: plan
@@ -65,25 +65,25 @@ runs:
           -out=tfplan \
           -detailed-exitcode
         echo "exitcode=$?" >> $GITHUB_OUTPUT
-#sji todo - lock false remove for release
+#sji todoremove
 # terraform import 'module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"]' alias/eks/catalina-dev
     # ---------------------------------------------
-    # 7. Terraform Show Plan
+    # Terraform Show Plan
     # ---------------------------------------------
     - name: Show Plan
       if: steps.plan.outputs.exitcode != '0'
       shell: bash
       run: terraform show -no-color tfplan
 
-    # - name: Upload Plan
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: tfplan-${{ inputs.environment }}
-    #     path: tfplan
-    #     retention-days: 30
+    - name: Upload Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan-${{ inputs.environment }}
+        path: tfplan
+        retention-days: 30
 
-    # - name: Terraform Apply
-    #   shell: bash
-    #   if: ${{ inputs.auto-apply }}
-    #   run: |
-    #     terraform apply -auto-approve tfplan
+    - name: Terraform Apply
+      shell: bash
+      if: ${{ inputs.auto-apply == true }}
+      run: |
+        terraform apply -auto-approve tfplan
