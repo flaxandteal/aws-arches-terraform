@@ -10,9 +10,9 @@ region = "eu-north-1"
 name   = "catalina-dev"
 
 common_tags = {
-  Project    = "catalina"
-  ManagedBy  = "Terraform"
-  CostCenter = "IT"
+  Project     = "catalina"
+  ManagedBy   = "Terraform"
+  CostCenter  = "IT"
   Environment = "Development"
   Owner       = "FlaxAndTeal"
 }

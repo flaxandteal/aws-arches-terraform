@@ -14,7 +14,7 @@ locals {
 resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
 
-  force_destroy = var.force_destroy  # false in prod, true in dev/stage/uat
+  force_destroy = var.force_destroy # false in prod, true in dev/stage/uat
 
   tags = merge(var.tags, {
     Name        = local.bucket_name
@@ -27,7 +27,7 @@ resource "aws_s3_bucket" "this" {
 # --------------------------------------------------------------------------
 resource "aws_s3_bucket_versioning" "this" {
   bucket = aws_s3_bucket.this.id
-#   depends_on = [aws_s3_bucket.this]  
+  #   depends_on = [aws_s3_bucket.this]  
 
   versioning_configuration {
     status = "Enabled"
@@ -63,7 +63,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
 
     transition {
       days          = var.lifecycle_transition_days
-      storage_class = var.lifecycle_storage_class 
+      storage_class = var.lifecycle_storage_class
     }
 
     # expire non-current versions after X days sji todo??
@@ -82,7 +82,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
 # Block Public Access
 # --------------------------------------------------------------------------
 resource "aws_s3_bucket_public_access_block" "this" {
-  bucket     = aws_s3_bucket.this.id
+  bucket = aws_s3_bucket.this.id
   #depends_on = [aws_s3_bucket.this]
 
   block_public_acls       = true
@@ -97,7 +97,7 @@ resource "aws_s3_bucket_public_access_block" "this" {
 resource "aws_s3_bucket_logging" "this" {
   count = var.enable_logging ? 1 : 0
 
-  bucket        = aws_s3_bucket.this.id
+  bucket = aws_s3_bucket.this.id
   #depends_on    = [aws_s3_bucket.this]
   target_bucket = var.logging_bucket
   target_prefix = "logs/s3/${local.bucket_name}/"
