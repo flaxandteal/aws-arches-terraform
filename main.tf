@@ -32,8 +32,8 @@ provider "aws" {
 }
 
 locals {
-  name         = "${var.name_prefix}-${var.environment}"
-  cluster_name = "${var.name_prefix}-${var.environment}"
+  name = "${var.name_prefix}-${var.environment}"
+  #cluster_name = "${var.name_prefix}-${var.environment}"
 }
 
 # --------------------------------------------------------------------------
