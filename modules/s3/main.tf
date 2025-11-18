@@ -55,24 +55,21 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 # --------------------------------------------------------------------------
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
   bucket = aws_s3_bucket.this.id
-  #depends_on = [aws_s3_bucket.this]
 
   rule {
-    id     = "transition-to-${lower(var.lifecycle_storage_class)}" # GLACIER_IR, DEEP_ARCHIVE, etc.
+    id     = "transition-to-${lower(var.lifecycle_storage_class)}"
     status = "Enabled"
+
+    filter {
+      prefix = "" # applies to all
+    }
 
     transition {
       days          = var.lifecycle_transition_days
       storage_class = var.lifecycle_storage_class
     }
 
-    # expire non-current versions after X days sji todo??
-    noncurrent_version_transition {
-      noncurrent_days = 30
-      storage_class   = var.lifecycle_storage_class
-    }
-
-    # clean up incomplete multipart uploads sji todo??
+    # cleanups
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }

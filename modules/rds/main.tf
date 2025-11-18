@@ -1,8 +1,5 @@
 # modules/rds/main.tf
 
-# Standard RDS PostgreSQL – Multi-AZ capable, encrypted, private subnets
-# Native password management
-
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 6.9.0"
@@ -36,8 +33,6 @@ module "rds" {
 
   apply_immediately = true
 
-  performance_insights_enabled = true
-
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-${var.environment}-rds"
   })
@@ -65,6 +60,3 @@ resource "aws_security_group" "rds" {
     Name = "${var.name_prefix}-${var.environment}-rds-sg"
   })
 }
-
-output "endpoint" { value = module.rds.db_instance_endpoint }
-output "security_group_id" { value = aws_security_group.rds.id }

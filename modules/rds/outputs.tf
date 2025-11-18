@@ -1,18 +1,14 @@
-output "db_endpoint" {
-  value = local.is_serverless ? (
-    try(module.rds_aurora[0].cluster_endpoint, "")
-    ) : (
-    try(module.rds_standard[0].db_instance_endpoint, "")
-  )
-  description = "RDS endpoint (host:port)"
+output "endpoint" {
+  description = "RDS instance endpoint"
+  value       = module.rds.db_instance_endpoint
 }
 
-output "db_secret_arn" {
-  value       = aws_secretsmanager_secret.db_credentials.arn
-  description = "Secrets Manager secret ARN"
-}
-
-output "db_security_group_id" {
+output "security_group_id" {
+  description = "Security group ID attached to RDS"
   value       = aws_security_group.rds.id
-  description = "Security group ID for RDS"
+}
+
+output "instance_id" {
+  description = "RDS instance identifier"
+  value       = module.rds.db_instance_id
 }
