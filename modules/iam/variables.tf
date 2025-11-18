@@ -1,20 +1,20 @@
-variable "name" {
+variable "name_prefix" {
+  description = "Prefix for IAM role names (e.g. catalina-arches)"
   type        = string
-  description = "Cluster / environment name (used as prefix)"
 }
 
-variable "common_tags" {
-  type        = map(string)
-  default     = {}
-  description = "Tags applied to all resources"
+variable "environment" {
+  description = "Environment name – used for scoping and tagging"
+  type        = string
 }
 
 variable "github_repo" {
+  description = "GitHub repository in owner/repo format (e.g. flaxandteal/catalina-arches)"
   type        = string
-  description = "GitHub repo in the form owner/repo"
 }
 
-variable "region" {
-  type        = string
-  description = "AWS region"
+variable "tags" {
+  description = "Common tags to apply"
+  type        = map(string)
+  default     = {}
 }

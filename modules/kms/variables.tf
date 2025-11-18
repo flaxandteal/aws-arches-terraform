@@ -1,13 +1,7 @@
-variable "name" {
-  type = string
-}
+variable "name" { type = string }
+variable "tags" { type = map(string) }
 
-variable "common_tags" {
-  type    = map(string)
-  default = {}
-}
-
-variable "node_iam_role_name" {
-  type        = string
-  description = "Name of the EKS node IAM role"
+variable "eks_node_role_arns" {
+  description = "List of EKS node IAM role ARNs (passed from EKS module)"
+  type        = list(string)
 }

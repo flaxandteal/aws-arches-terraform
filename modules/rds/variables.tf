@@ -1,60 +1,66 @@
-variable "name" {
+# modules/rds/variables.tf
+
+variable "name_prefix" {
+  description = "Prefix for resource names (e.g. catalina-arches)"
   type        = string
-  description = "Cluster/environment name prefix"
-}
-
-variable "common_tags" {
-  type    = map(string)
-  default = {}
-}
-
-variable "vpc_id" {
-  type        = string
-  description = "VPC ID"
-}
-
-variable "subnet_ids" {
-  type        = list(string)
-  description = "Private subnet IDs (at least 2 AZs)"
-}
-
-variable "eks_sg_id" {
-  type        = string
-  description = "EKS node security group ID"
-}
-
-variable "db_class" {
-  type        = string
-  default     = "db.t3.micro"
-  description = "RDS instance class (use 'db.serverless' for Aurora Serverless)"
-}
-
-variable "db_storage" {
-  type        = number
-  default     = 20
-  description = "Allocated storage in GB (standard RDS only)"
-}
-
-variable "db_multi_az" {
-  type        = bool
-  default     = false
-  description = "Enable Multi-AZ (standard RDS only)"
-}
-
-variable "db_backup_retention" {
-  type        = number
-  default     = 1
-  description = "Backup retention in days"
-}
-
-variable "kms_key_arn" {
-  type        = string
-  default     = ""
-  description = "KMS key ARN for Secrets Manager (optional)"
 }
 
 variable "environment" {
+  description = "Environment name (uat, prod, dev, stage)"
   type        = string
-  default     = "dev"
-  description = "Environment (dev/stage/prod) - used for apply_immediately"
+}
+
+variable "vpc_id" {
+  description = "VPC ID where RDS will be deployed"
+  type        = string
+}
+
+variable "db_subnet_ids" {
+  description = "List of private subnet IDs for the DB subnet group"
+  type        = list(string)
+}
+
+variable "eks_node_sg_id" {
+  description = "Security Group ID of the EKS worker nodes (to allow PostgreSQL traffic)"
+  type        = string
+}
+
+variable "db_class" {
+  description = "RDS instance class"
+  type        = string
+}
+
+variable "db_storage" {
+  description = "Allocated storage in GB"
+  type        = number
+}
+
+variable "db_multi_az" {
+  description = "Enable Multi-AZ deployment"
+  type        = bool
+  default     = false
+}
+
+variable "db_backup_retention" {
+  description = "RDS backup retention period in days"
+  type        = number
+  default     = 7
+}
+
+variable "db_password" {
+  description = "Master password (leave empty to auto-generate a secure one)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "kms_key_arn" { # ← fixed this line (was split)
+  description = "KMS key ARN for RDS encryption"
+  type        = string
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {}
 }

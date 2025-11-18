@@ -1,89 +1,157 @@
+# root/variables.tf
+
+# Vvariables used by root main.tf and modules
+
 # --------------------------------------------------------------------------
 # Common
 # --------------------------------------------------------------------------
 variable "environment" {
-  description = "dev, stage, uat or prod"
+  description = "Environment name (dev, stage, uat, prod)"
   type        = string
 }
 
 variable "name_prefix" {
-  default = "arches"
-  type    = string
+  description = "Prefix for all resource names (e.g. catalina-arches)"
+  type        = string
+  default     = "catalina-arches"
 }
 
-variable "region" { type = string }
-#variable "name" { type = string }
+variable "region" {
+  description = "AWS region"
+  type        = string
+  default     = "eu-north-1"
+}
 
 variable "common_tags" {
-  type    = map(string)
-  default = {}
+  description = "Common tags applied to all resources"
+  type        = map(string)
+  default     = {}
 }
 
 variable "extra_tags" {
-  type    = map(string)
-  default = {}
+  description = "Extra tags merged via cloudposse/label"
+  type        = map(string)
+  default     = {}
+}
+
+variable "github_repo" {
+  description = "GitHub repository in owner/repo format (e.g. flaxandteal/catalina-arches)"
+  type        = string
+}
+
+variable "eks_admin_principal_arn" {
+  description = "ARN of IAM principal that gets cluster-admin (usually terraform-deployer user/role)"
+  type        = string
 }
 
 # --------------------------------------------------------------------------
 # VPC
 # --------------------------------------------------------------------------
-variable "vpc_cidr" { type = string }
-variable "vpc_azs" { type = list(string) }
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC"
+  type        = string
+}
 
-variable "app_subnet_cidrs" { type = list(string) }
-variable "db_subnet_cidrs" { type = list(string) }
+variable "vpc_azs" {
+  description = "List of Availability Zones"
+  type        = list(string)
+}
+
+variable "app_subnet_cidrs" {
+  description = "CIDR blocks for application (EKS node) private subnets"
+  type        = list(string)
+}
+
+variable "db_subnet_cidrs" {
+  description = "CIDR blocks for isolated database subnets"
+  type        = list(string)
+}
+
+variable "intra_subnet_cidrs" {
+  description = "Optional dedicated CIDR blocks for EKS control plane (intra subnets). Leave empty to reuse app subnets"
+  type        = list(string)
+  default     = []
+}
 
 # --------------------------------------------------------------------------
 # EKS
 # --------------------------------------------------------------------------
-variable "eks_admin_principal_arn" { type = string }
-
-variable "cluster_version" { type = string }
-
-variable "clusters" {
-  type = object({
-    instance_type      = string
-    desired_size       = number
-    min_size           = number
-    max_size           = number
-    log_retention_days = number
-  })
+variable "cluster_version" {
+  description = "Kubernetes version for EKS cluster"
+  type        = string
+  default     = "1.30"
 }
 
-variable "github_repo" { type = string }
+variable "node_instance_type" {
+  description = "EC2 instance type for worker nodes"
+  type        = string
+  default     = "m6i.large"
+}
 
-# --------------------------------------------------------------------------
-# s3
-# --------------------------------------------------------------------------
-variable "lifecycle_transition_days" {
-  description = "Days before transitioning S3 objects"
+variable "node_min_size" {
+  description = "Minimum number of worker nodes"
   type        = number
 }
 
-variable "lifecycle_storage_class" {
-  description = "S3 lifecycle storage class"
-  type        = string
+variable "node_max_size" {
+  description = "Maximum number of worker nodes"
+  type        = number
+}
+
+variable "node_desired_size" {
+  description = "Desired number of worker nodes"
+  type        = number
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention for EKS control plane"
+  type        = number
+  default     = 30
 }
 
 # --------------------------------------------------------------------------
 # RDS
 # --------------------------------------------------------------------------
 variable "db_class" {
-  type    = string
-  default = "db.t3.micro"
+  description = "RDS instance class"
+  type        = string
 }
 
 variable "db_storage" {
-  type    = number
-  default = 20
+  description = "Initial allocated storage in GB"
+  type        = number
 }
 
 variable "db_multi_az" {
-  type    = bool
-  default = false
+  description = "Enable Multi-AZ for RDS"
+  type        = bool
+  default     = false
 }
 
 variable "db_backup_retention" {
-  type    = number
-  default = 1
+  description = "RDS backup retention period in days"
+  type        = number
+  default     = 7
+}
+
+variable "db_password" {
+  description = "RDS master password (leave empty to auto-generate)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+# --------------------------------------------------------------------------
+# S3
+# --------------------------------------------------------------------------
+variable "lifecycle_transition_days" {
+  description = "Days before transitioning objects to cheaper storage class"
+  type        = number
+  default     = 30
+}
+
+variable "lifecycle_storage_class" {
+  description = "Storage class for lifecycle transition (GLACIER_IR, DEEP_ARCHIVE, etc.)"
+  type        = string
+  default     = "GLACIER_IR"
 }
