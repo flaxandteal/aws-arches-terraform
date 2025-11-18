@@ -20,7 +20,7 @@ module "eks" {
   # FULLY PRIVATE – no public access allowed
   # ==================================================================
   endpoint_private_access = true
-  endpoint_public_access = false
+  endpoint_public_access  = false
 
   # Optional: dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = var.control_plane_subnet_ids

@@ -22,8 +22,8 @@ module "rds" {
   password = var.db_password != "" ? var.db_password : random_password.master[0].result
   port     = 5432
 
-  multi_az = var.db_multi_az
-  publicly_accessible = false
+  multi_az               = var.db_multi_az
+  publicly_accessible    = false
   vpc_security_group_ids = [aws_security_group.rds.id]
   subnet_ids             = var.db_subnet_ids
 
