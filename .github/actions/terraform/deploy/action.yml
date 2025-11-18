@@ -33,15 +33,6 @@ runs:
     # ---------------------------------------------
     - name: Terraform Quality Check
       uses: ./.github/actions/terraform/quality
-  
-    # TEMP! releases lock file for tfstate fuck ups
-    #find in console/dynamodb/lock table/Explore table items (top right)
-    - name: Release stale lock (works every time)
-      shell: bash
-      run: |
-        echo "Forcing unlock of any stale lock – safe if none exists"
-        terraform force-unlock -force aa9f093f-3969-0aa3-6009-4d8ab564d8ae || true
-      continue-on-error: true
 
     # ---------------------------------------------
     # 4. Terraform Init - Get env backend
@@ -54,6 +45,15 @@ runs:
         echo "Initializing Terraform with backend: ${{ inputs.backend-file-path }}"
         terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
         terraform providers
+
+    # TEMP! releases lock file for tfstate fuck ups
+    #find in console/dynamodb/lock table/Explore table items (top right)
+    - name: Release stale lock (works every time)
+      shell: bash
+      run: |
+        echo "Forcing unlock of any stale lock – safe if none exists"
+        terraform force-unlock -force aa9f093f-3969-0aa3-6009-4d8ab564d8ae || true
+      continue-on-error: true
 
     # ---------------------------------------------
     # 5. Terraform Validate
