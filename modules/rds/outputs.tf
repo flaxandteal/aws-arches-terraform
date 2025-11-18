@@ -29,7 +29,7 @@ output "resource_id" {
   value       = module.rds.db_instance_resource_id
 }
 
-output "security_group_id" {
-  description = "Security group attached to RDS"
-  value       = aws_security_group.rds.id
-}
+# output "security_group_id" {
+#   description = "Security group attached to RDS"
+#   value       = aws_security_group.rds.id
+# }

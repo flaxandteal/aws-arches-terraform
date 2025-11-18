@@ -44,19 +44,19 @@ resource "random_password" "master" {
   special = false
 }
 
-resource "aws_security_group" "rds" {
-  name   = "${var.name_prefix}-${var.environment}-rds-sg"
-  vpc_id = var.vpc_id
+# resource "aws_security_group" "rds" {
+#   name   = "${var.name_prefix}-${var.environment}-rds-sg"
+#   vpc_id = var.vpc_id
 
-  ingress {
-    description     = "PostgreSQL from EKS nodes"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [var.eks_node_sg_id]
-  }
+#   ingress {
+#     description     = "PostgreSQL from EKS nodes"
+#     from_port       = 5432
+#     to_port         = 5432
+#     protocol        = "tcp"
+#     security_groups = [var.eks_node_sg_id]
+#   }
 
-  tags = merge(var.tags, {
-    Name = "${var.name_prefix}-${var.environment}-rds-sg"
-  })
-}
+#   tags = merge(var.tags, {
+#     Name = "${var.name_prefix}-${var.environment}-rds-sg"
+#   })
+# }
