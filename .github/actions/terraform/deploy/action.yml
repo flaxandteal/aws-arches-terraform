@@ -52,7 +52,7 @@ runs:
       shell: bash
       run: |
         echo "Forcing unlock of any stale lock – safe if none exists"
-        terraform force-unlock -force 6acb84e7-9254-b296-3600-4e15ad9e475b || true
+        terraform force-unlock -force 2bdc9b74-55fb-751b-201c-1fa08baa1ba2 || true
       continue-on-error: true
 
     # ---------------------------------------------

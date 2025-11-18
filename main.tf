@@ -119,7 +119,6 @@ module "eks" {
 
   tags = module.labels.tags
 
-  depends_on = [module.vpc]
 }
 
 # =============================================================================
@@ -133,7 +132,6 @@ module "iam" {
   github_repo = var.github_repo
   tags        = module.labels.tags
 
-  depends_on = [module.eks]
 }
 
 # =============================================================================
@@ -157,7 +155,6 @@ module "rds" {
 
   tags = module.labels.tags
 
-  depends_on = [module.eks]
 }
 
 # =============================================================================
