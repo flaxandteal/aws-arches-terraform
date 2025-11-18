@@ -48,12 +48,12 @@ runs:
 
     # TEMP! releases lock file for tfstate fuck ups
     #find in console/dynamodb/lock table/Explore table items (top right)
-    - name: Release stale lock (works every time)
-      shell: bash
-      run: |
-        echo "Forcing unlock of any stale lock – safe if none exists"
-        terraform force-unlock -force 2bdc9b74-55fb-751b-201c-1fa08baa1ba2 || true
-      continue-on-error: true
+    # - name: Release stale lock (works every time)
+    #   shell: bash
+    #   run: |
+    #     echo "Forcing unlock of any stale lock – safe if none exists"
+    #     terraform force-unlock -force 2bdc9b74-55fb-751b-201c-1fa08baa1ba2 || true
+    #   continue-on-error: true
 
     # ---------------------------------------------
     # 5. Terraform Validate
