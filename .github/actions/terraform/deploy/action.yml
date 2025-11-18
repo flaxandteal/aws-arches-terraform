@@ -44,7 +44,7 @@ runs:
         ls -la
         echo "Initializing Terraform with backend: ${{ inputs.backend-file-path }}"
         terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
-        terraform providers
+      #terraform providers
 
     # TEMP! releases lock file for tfstate fuck ups
     #find in console/dynamodb/lock table/Explore table items (top right)
