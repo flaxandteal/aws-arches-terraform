@@ -60,7 +60,7 @@ locals {
 module "vpc" {
   source = "./modules/vpc"
 
-  name = module.common.name
+  name = local.name
   tags = module.labels.tags
 
   cidr = var.vpc_cidr
