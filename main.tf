@@ -109,6 +109,19 @@ module "s3" {
   tags = module.labels.tags
 }
 
+# =============================================================================
+# 4. IAM – GitHub OIDC
+# =============================================================================
+module "iam" {
+  source = "./modules/iam"
+
+  name_prefix = var.name_prefix
+  environment = var.environment
+  github_repo = var.github_repo
+  tags        = module.labels.tags
+
+}
+
 # # =============================================================================
 # # 3. EKS – our clean wrapper
 # # =============================================================================
@@ -134,19 +147,6 @@ module "s3" {
 #   log_retention_days      = var.log_retention_days
 
 #   tags = module.labels.tags
-
-# }
-
-# # =============================================================================
-# # 4. IAM – GitHub OIDC
-# # =============================================================================
-# module "iam" {
-#   source = "./modules/iam"
-
-#   name_prefix = var.name_prefix
-#   environment = var.environment
-#   github_repo = var.github_repo
-#   tags        = module.labels.tags
 
 # }
 
