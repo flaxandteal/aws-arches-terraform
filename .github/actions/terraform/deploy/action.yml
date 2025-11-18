@@ -38,14 +38,27 @@ runs:
     - name: Force-release any stale DynamoDB lock
       shell: bash
       run: |
-        # Try to grab the current lock info (fails gracefully if none)
-        LOCK_INFO=$(terraform state lock info 2>/dev/null || true)
-        if echo "$LOCK_INFO" | grep -q "Lock Info"; then
-          LOCK_ID=$(echo "$LOCK_INFO" | grep -i '^ID:' | awk '{print $2}')
-          echo "Releasing stale lock $LOCK_ID"
-          terraform force-unlock -force "$LOCK_ID" || true
+        set -euo pipefail
+
+        # Parse the state file path from the backend config that was just written
+        STATE_BUCKET=$(grep 'bucket' backend.hcl | awk -F'"' '{print $2}')
+        STATE_KEY=$(grep 'key' backend.hcl | awk -F'"' '{print $2}')
+        STATE_REGION=$(grep 'region' backend.hcl | awk -F'"' '{print $2}')
+
+        echo "Looking for lock in s3://$STATE_BUCKET/$STATE_KEY"
+
+        # Download the current lock info from DynamoDB via the Terraform state file trick
+        LOCK_ID=$(aws dynamodb get-item \
+          --table-name terraform-locks \
+          --key "{\"LockID\": {\"S\": \"$STATE_BUCKET/$STATE_KEY/md5\"}}" \
+          --region "$STATE_REGION" \
+          --query "Item.Info.S" --output text 2>/dev/null || true)
+
+        if [ -n "$LOCK_ID" ]; then
+          echo "Found stale lock $LOCK_ID – releasing it"
+          terraform force-unlock -force "$LOCK_ID"
         else
-          echo "No stale lock found"
+          echo "No stale lock found – proceeding"
         fi
       continue-on-error: true   # never fails the job
 
