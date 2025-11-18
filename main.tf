@@ -22,30 +22,75 @@ terraform {
 
 provider "aws" {
   region = var.region
+
+  default_tags {
+    tags = merge(var.common_tags, {
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    })
+  }
+}
+
+locals {
+  name         = "${var.name_prefix}-${var.environment}"
+  cluster_name = "${var.name_prefix}-${var.environment}"
 }
 
 # --------------------------------------------------------------------------
-# Common 
+# Labelc
 # --------------------------------------------------------------------------
-module "common" {
-  source = "./modules/common"
+module "labels" {
+  source  = "cloudposse/label/null"
+  version = "0.25.0"
 
-  name        = var.name
-  common_tags = var.common_tags
-  extra_tags  = var.extra_tags
+  namespace   = "catalina"
+  environment = var.environment
+  name        = "arches"
+  delimiter   = "-"
+
+  tags = var.extra_tags
 }
+
+# # --------------------------------------------------------------------------
+# # Common 
+# # --------------------------------------------------------------------------
+# module "common" {
+#   source = "./modules/common"
+
+#   name        = var.name
+#   common_tags = var.common_tags
+#   extra_tags  = var.extra_tags
+# }
 
 # --------------------------------------------------------------------------
 # VPC
 # --------------------------------------------------------------------------
+# module "vpc" {
+#   source = "./modules/vpc"
+
+#   name        = module.common.name
+#   common_tags = module.common.common_tags
+
+#   cidr = var.vpc_cidr
+#   azs  = var.vpc_azs
+# }
 module "vpc" {
-  source = "./modules/vpc"
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.13.0"
 
-  name        = module.common.name
-  common_tags = module.common.common_tags
-
+  name = local.name
   cidr = var.vpc_cidr
-  azs  = var.vpc_azs
+
+  azs              = var.vpc_azs
+  private_subnets  = var.app_subnet_cidrs
+  database_subnets = var.db_subnet_cidrs
+
+  enable_nat_gateway = false
+  create_igw         = false
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = module.labels.tags
 }
 
 # --------------------------------------------------------------------------
@@ -104,14 +149,26 @@ module "kms" {
 # --------------------------------------------------------------------------
 # s3
 # --------------------------------------------------------------------------
+# module "s3" {
+#   source = "./modules/s3"
+#   name   = module.common.name
+
+#   lifecycle_transition_days = var.lifecycle_transition_days
+#   lifecycle_storage_class   = var.lifecycle_storage_class
+#   s3_kms_key_arn            = module.kms.s3_kms_key_arn
+#   common_tags               = module.common.common_tags
+# }
+
 module "s3" {
   source = "./modules/s3"
-  name   = module.common.name
 
+  name                      = local.name
+  environment = var.environment
+  s3_kms_key_arn            = module.kms.s3_kms_key_arn
   lifecycle_transition_days = var.lifecycle_transition_days
   lifecycle_storage_class   = var.lifecycle_storage_class
-  s3_kms_key_arn            = module.kms.s3_kms_key_arn
-  common_tags               = module.common.common_tags
+
+  tags = module.labels.tags
 }
 
 # --------------------------------------------------------------------------

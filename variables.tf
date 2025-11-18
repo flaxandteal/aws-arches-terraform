@@ -1,6 +1,16 @@
 # --------------------------------------------------------------------------
 # Common
 # --------------------------------------------------------------------------
+variable "environment" {
+  description = "dev, stage, uat or prod"
+  type        = string
+}
+
+variable "name_prefix" {
+  default = "arches"
+  type    = string
+}
+
 variable "region" { type = string }
 variable "name" { type = string }
 
@@ -19,6 +29,9 @@ variable "extra_tags" {
 # --------------------------------------------------------------------------
 variable "vpc_cidr" { type = string }
 variable "vpc_azs" { type = list(string) }
+
+variable "app_subnet_cidrs" { type = list(string) }
+variable "db_subnet_cidrs"  { type = list(string) }
 
 # --------------------------------------------------------------------------
 # EKS
