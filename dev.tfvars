@@ -27,9 +27,9 @@ extra_tags = {
 vpc_cidr = "10.20.0.0/16"
 vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 
-# Smaller subnets – dev doesn't need 3 AZs
-app_subnet_cidrs = ["10.20.1.0/24", "10.20.2.0/24"]
-db_subnet_cidrs  = ["10.20.11.0/24", "10.20.12.0/24"]
+# # Smaller subnets – dev doesn't need 3 AZs
+# app_subnet_cidrs = ["10.20.1.0/24", "10.20.2.0/24"]
+# db_subnet_cidrs  = ["10.20.11.0/24", "10.20.12.0/24"]
 
 # --------------------------------------------------------------------------
 # EKS

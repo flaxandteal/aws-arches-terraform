@@ -57,17 +57,17 @@ variable "vpc_azs" {
   type        = list(string)
 }
 
-variable "app_subnet_cidrs" {
-  description = "CIDR blocks for application (EKS node) private subnets"
-  type        = list(string)
-  default     = []
-}
+# variable "app_subnet_cidrs" {
+#   description = "CIDR blocks for application (EKS node) private subnets"
+#   type        = list(string)
+#   default     = []
+# }
 
-variable "db_subnet_cidrs" {
-  description = "CIDR blocks for isolated database subnets"
-  type        = list(string)
-  default     = []
-}
+# variable "db_subnet_cidrs" {
+#   description = "CIDR blocks for isolated database subnets"
+#   type        = list(string)
+#   default     = []
+# }
 
 variable "intra_subnet_cidrs" {
   description = "Optional dedicated CIDR blocks for EKS control plane (intra subnets). Leave empty to reuse app subnets"
