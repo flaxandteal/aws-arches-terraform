@@ -9,11 +9,11 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0" # Latest stable as of Nov 2025
 
-  name    = local.cluster_name
+  name               = local.cluster_name
   kubernetes_version = var.cluster_version
 
-  vpc_id          = var.vpc_id
-  subnet_ids      = var.private_subnet_ids
+  vpc_id     = var.vpc_id
+  subnet_ids = var.private_subnet_ids
 
   # ==================================================================
   # FULLY PRIVATE – no public access allowed
@@ -99,7 +99,7 @@ module "eks" {
   # Logging & tagging
   # ==================================================================
   cloudwatch_log_group_retention_in_days = var.log_retention_days
-  enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  enabled_log_types                      = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = merge(var.tags, {
     "GitHubRepo"  = var.github_repo

@@ -54,7 +54,7 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "kms_key_arn" { 
+variable "kms_key_arn" {
   description = "KMS key ARN for RDS encryption"
   type        = string
 }

@@ -9,7 +9,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.15.0"
+      version = "~> 6.0"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -59,8 +59,7 @@ locals {
 # 1. VPC – official module (correct outputs!)
 # =============================================================================
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 6.5"
+  source = "terraform-aws-modules/vpc/aws"
 
   name = local.name
   cidr = var.vpc_cidr
