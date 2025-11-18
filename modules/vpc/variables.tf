@@ -1,19 +1,21 @@
+# ./modules/vpc/variables.tf
 variable "name" {
   type        = string
-  description = "Environment name"
+  description = "Full cluster name (e.g. arches-prod)"
 }
 
 variable "cidr" {
   type        = string
-  description = "VPC CIDR"
+  description = "VPC CIDR block"
 }
 
 variable "azs" {
   type        = list(string)
-  description = "Availability zones"
+  description = "List of availability zones"
 }
 
 variable "tags" {
-  type    = map(string)
-  default = {}
+  type        = map(string)
+  default     = {}
+  description = "Extra tags to add on top of the ones from the label module"
 }

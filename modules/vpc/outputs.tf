@@ -1,15 +1,16 @@
-output "vpc_id" {
-  value = module.vpc.vpc_id
-}
-
 output "private_subnet_ids" {
-  value = module.vpc.private_subnets
-}
-
-output "control_plane_subnet_ids" {
-  value = module.vpc.private_subnets # same as private for EKS
+  description = "IDs of the private subnets (the first 3 private blocks created)"
+  value       = module.vpc.private_subnet_ids
 }
 
 output "public_subnet_ids" {
-  value = module.vpc.public_subnets
+  value = module.vpc.public_subnet_ids
+}
+
+output "private_route_table_ids" {
+  value = module.vpc.private_route_table_ids
+}
+
+output "vpc_id" {
+  value = module.vpc.vpc_id
 }
