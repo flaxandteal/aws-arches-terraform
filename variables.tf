@@ -73,85 +73,85 @@ variable "intra_subnet_cidrs" {
   default     = []
 }
 
-# --------------------------------------------------------------------------
-# EKS
-# --------------------------------------------------------------------------
-variable "cluster_version" {
-  description = "Kubernetes version for EKS cluster"
-  type        = string
-  default     = "1.30"
-}
+# # --------------------------------------------------------------------------
+# # EKS
+# # --------------------------------------------------------------------------
+# variable "cluster_version" {
+#   description = "Kubernetes version for EKS cluster"
+#   type        = string
+#   default     = "1.30"
+# }
 
-variable "node_instance_type" {
-  description = "EC2 instance type for worker nodes"
-  type        = string
-  default     = "m6i.large"
-}
+# variable "node_instance_type" {
+#   description = "EC2 instance type for worker nodes"
+#   type        = string
+#   default     = "m6i.large"
+# }
 
-variable "node_min_size" {
-  description = "Minimum number of worker nodes"
-  type        = number
-}
+# variable "node_min_size" {
+#   description = "Minimum number of worker nodes"
+#   type        = number
+# }
 
-variable "node_max_size" {
-  description = "Maximum number of worker nodes"
-  type        = number
-}
+# variable "node_max_size" {
+#   description = "Maximum number of worker nodes"
+#   type        = number
+# }
 
-variable "node_desired_size" {
-  description = "Desired number of worker nodes"
-  type        = number
-}
+# variable "node_desired_size" {
+#   description = "Desired number of worker nodes"
+#   type        = number
+# }
 
-variable "log_retention_days" {
-  description = "CloudWatch log retention for EKS control plane"
-  type        = number
-  default     = 30
-}
+# variable "log_retention_days" {
+#   description = "CloudWatch log retention for EKS control plane"
+#   type        = number
+#   default     = 30
+# }
 
-# --------------------------------------------------------------------------
-# RDS
-# --------------------------------------------------------------------------
-variable "db_class" {
-  description = "RDS instance class"
-  type        = string
-}
+# # --------------------------------------------------------------------------
+# # RDS
+# # --------------------------------------------------------------------------
+# variable "db_class" {
+#   description = "RDS instance class"
+#   type        = string
+# }
 
-variable "db_storage" {
-  description = "Initial allocated storage in GB"
-  type        = number
-}
+# variable "db_storage" {
+#   description = "Initial allocated storage in GB"
+#   type        = number
+# }
 
-variable "db_multi_az" {
-  description = "Enable Multi-AZ for RDS"
-  type        = bool
-  default     = false
-}
+# variable "db_multi_az" {
+#   description = "Enable Multi-AZ for RDS"
+#   type        = bool
+#   default     = false
+# }
 
-variable "db_backup_retention" {
-  description = "RDS backup retention period in days"
-  type        = number
-  default     = 7
-}
+# variable "db_backup_retention" {
+#   description = "RDS backup retention period in days"
+#   type        = number
+#   default     = 7
+# }
 
-variable "db_password" {
-  description = "RDS master password (leave empty to auto-generate)"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
+# variable "db_password" {
+#   description = "RDS master password (leave empty to auto-generate)"
+#   type        = string
+#   default     = ""
+#   sensitive   = true
+# }
 
-# --------------------------------------------------------------------------
-# S3
-# --------------------------------------------------------------------------
-variable "lifecycle_transition_days" {
-  description = "Days before transitioning objects to cheaper storage class"
-  type        = number
-  default     = 30
-}
+# # --------------------------------------------------------------------------
+# # S3
+# # --------------------------------------------------------------------------
+# variable "lifecycle_transition_days" {
+#   description = "Days before transitioning objects to cheaper storage class"
+#   type        = number
+#   default     = 30
+# }
 
-variable "lifecycle_storage_class" {
-  description = "Storage class for lifecycle transition (GLACIER_IR, DEEP_ARCHIVE, etc.)"
-  type        = string
-  default     = "GLACIER_IR"
-}
+# variable "lifecycle_storage_class" {
+#   description = "Storage class for lifecycle transition (GLACIER_IR, DEEP_ARCHIVE, etc.)"
+#   type        = string
+#   default     = "GLACIER_IR"
+# }
