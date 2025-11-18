@@ -36,6 +36,7 @@ runs:
   
     # TEMP! releases lock file for tfstate fuck ups
     - name: Force-release any stale DynamoDB lock
+      shell: bash
       run: |
         # Try to grab the current lock info (fails gracefully if none)
         LOCK_INFO=$(terraform state lock info 2>/dev/null || true)
