@@ -1,5 +1,6 @@
 # modules/eks/main.tf
-# Fully private EKS cluster – exactly as per your architecture doc
+
+# Fully private EKS cluster
 
 locals {
   cluster_name = "${var.name_prefix}-${var.environment}"
@@ -7,7 +8,7 @@ locals {
 data "aws_region" "current" {}
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0" # Latest stable as of Nov 2025
+  version = "~> 21.0"
 
   name               = local.cluster_name
   kubernetes_version = var.cluster_version
@@ -18,14 +19,14 @@ module "eks" {
   # ==================================================================
   # FULLY PRIVATE – no public access allowed
   # ==================================================================
-  #endpoint_private_access = true
-  endpoint_public_access = true #sji todo
+  endpoint_private_access = true
+  endpoint_public_access = false
 
   # Optional: dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = var.control_plane_subnet_ids
 
   # ==================================================================
-  # Access – admin via IAM principal (terraform-deployer user/role)
+  # Access – admin via IAM principal (terraform-deployer)
   # ==================================================================
   access_entries = {
     admin = {
@@ -64,7 +65,7 @@ module "eks" {
   }
 
   # ==================================================================
-  # Node Group – single managed group (ARM or x86)
+  # Node Group
   # ==================================================================
   eks_managed_node_groups = {
     main = {
@@ -75,10 +76,10 @@ module "eks" {
       max_size     = var.node_max_size
       desired_size = var.node_desired_size
 
-      ami_type                   = "AL2023_ARM_64_STANDARD" #var.node_ami_type # e.g. AL2023_ARM_64_STANDARD
+      ami_type                   = var.node_ami_type # AL2023_ARM_64_STANDARD
       enable_bootstrap_user_data = true
 
-      # Encrypted root volume with your KMS key
+      # Encrypted root volume with KMS key
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
@@ -91,7 +92,7 @@ module "eks" {
           }
         }
       }
-      depends_on = ["vpc-cni"]
+      #depends_on = ["vpc-cni"]
     }
   }
 

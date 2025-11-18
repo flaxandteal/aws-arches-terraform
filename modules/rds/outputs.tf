@@ -21,7 +21,7 @@ output "arn" {
 
 output "identifier" {
   description = "The RDS instance identifier (same as name)"
-  value       = module.rds.db_instance_identifier # ← this is the correct attribute
+  value       = module.rds.db_instance_identifier
 }
 
 output "resource_id" {

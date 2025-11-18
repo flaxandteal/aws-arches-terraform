@@ -15,7 +15,7 @@ module "rds" {
   allocated_storage     = var.db_storage
   max_allocated_storage = var.db_storage * 3
   storage_encrypted     = true
-  kms_key_id            = var.kms_key_arn != "" ? var.kms_key_arn : null #sji maybe
+  kms_key_id            = var.kms_key_arn
 
   db_name  = "arches"
   username = "postgres"
@@ -23,13 +23,13 @@ module "rds" {
   port     = 5432
 
   multi_az = var.db_multi_az
-  #publicly_accessible = false
+  publicly_accessible = false
   vpc_security_group_ids = [aws_security_group.rds.id]
   subnet_ids             = var.db_subnet_ids
 
   backup_retention_period = var.db_backup_retention
-  skip_final_snapshot     = true  #var.environment != "prod"
-  deletion_protection     = false #var.environment == "prod"
+  skip_final_snapshot     = var.environment != "prod"
+  deletion_protection     = var.environment == "prod"
 
   apply_immediately = true
 
@@ -57,7 +57,6 @@ resource "aws_security_group" "rds" {
     to_port         = 5432
     protocol        = "tcp"
     security_groups = var.eks_node_sg_id != "" ? [var.eks_node_sg_id] : []
-    cidr_blocks     = var.eks_node_sg_id != "" ? [] : [var.vpc_cidr] # fallback to whole VPC
   }
 
   tags = merge(var.tags, {
