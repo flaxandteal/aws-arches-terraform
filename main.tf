@@ -152,25 +152,25 @@ module "s3" {
 # =============================================================================
 # 5. RDS
 # =============================================================================
-# module "rds" {
-#   source = "./modules/rds"
+module "rds" {
+  source = "./modules/rds"
 
-#   name_prefix    = var.name_prefix
-#   environment    = var.environment
-#   vpc_id         = module.vpc.vpc_id
-#   db_subnet_ids  = module.vpc.database_subnets
-#  # eks_node_sg_id = module.eks.node_security_group_id
+  name_prefix    = var.name_prefix
+  environment    = var.environment
+  vpc_id         = module.vpc.vpc_id
+  db_subnet_ids  = module.vpc.database_subnets
+ # eks_node_sg_id = module.eks.node_security_group_id
 
-#   db_class            = var.db_class
-#   db_storage          = var.db_storage
-#   db_multi_az         = var.db_multi_az
-#   db_backup_retention = var.db_backup_retention
-#   db_password         = var.db_password
-#   kms_key_arn         = module.kms.rds_kms_key_arn
+  db_class            = var.db_class
+  db_storage          = var.db_storage
+  db_multi_az         = var.db_multi_az
+  db_backup_retention = var.db_backup_retention
+  db_password         = var.db_password
+  kms_key_arn         = module.kms.rds_kms_key_arn
 
-#   tags = module.labels.tags
+  tags = module.labels.tags
 
-# }
+}
 
 # =============================================================================
 # 7. VPC Endpoints – fully private
