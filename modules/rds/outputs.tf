@@ -1,16 +1,16 @@
 # modules/rds/outputs.tf
 output "endpoint" {
-  description = "The connection endpoint for the RDS instance"
+  description = "RDS instance endpoint (host:port)"
   value       = module.rds.db_instance_endpoint
 }
 
 output "address" {
-  description = "The hostname of the RDS instance"
+  description = "RDS instance hostname only"
   value       = module.rds.db_instance_address
 }
 
 output "port" {
-  description = "The database port"
+  description = "Database port"
   value       = module.rds.db_instance_port
 }
 
@@ -19,17 +19,17 @@ output "arn" {
   value       = module.rds.db_instance_arn
 }
 
-output "id" {
-  description = "The RDS instance ID (identifier)"
-  value       = module.rds.db_instance_id
-}
-
-output "security_group_id" {
-  description = "Security group ID attached to the RDS instance"
-  value       = aws_security_group.rds.id
+output "identifier" {
+  description = "The RDS instance identifier (same as name)"
+  value       = module.rds.db_instance_identifier # ← this is the correct attribute
 }
 
 output "resource_id" {
-  description = "The RDS Resource ID (useful for CloudWatch)"
+  description = "RDS Resource ID (for CloudWatch metrics)"
   value       = module.rds.db_instance_resource_id
+}
+
+output "security_group_id" {
+  description = "Security group attached to RDS"
+  value       = aws_security_group.rds.id
 }
