@@ -122,56 +122,56 @@ module "iam" {
 
 }
 
-# # =============================================================================
-# # 3. EKS – our clean wrapper
-# # =============================================================================
-# module "eks" {
-#   source = "./modules/eks"
-
-#   name_prefix     = var.name_prefix
-#   environment     = var.environment
-#   cluster_version = var.cluster_version
-
-#   vpc_id                   = module.vpc.vpc_id
-#   private_subnet_ids       = module.vpc.private_subnets
-#   control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets
-
-#   node_instance_type = var.node_instance_type
-#   node_min_size      = var.node_min_size
-#   node_max_size      = var.node_max_size
-#   node_desired_size  = var.node_desired_size
-
-#   ebs_kms_key_arn         = module.kms.ebs_kms_key_arn
-#   eks_admin_principal_arn = var.eks_admin_principal_arn
-#   github_repo             = var.github_repo
-#   log_retention_days      = var.log_retention_days
-
-#   tags = module.labels.tags
-
-# }
-
 # =============================================================================
-# 5. RDS
+# 3. EKS – our clean wrapper
 # =============================================================================
-module "rds" {
-  source = "./modules/rds"
+module "eks" {
+  source = "./modules/eks"
 
-  name_prefix    = var.name_prefix
-  environment    = var.environment
-  vpc_id         = module.vpc.vpc_id
-  db_subnet_ids  = module.vpc.database_subnets
- # eks_node_sg_id = module.eks.node_security_group_id
+  name_prefix     = var.name_prefix
+  environment     = var.environment
+  cluster_version = var.cluster_version
 
-  db_class            = var.db_class
-  db_storage          = var.db_storage
-  db_multi_az         = var.db_multi_az
-  db_backup_retention = var.db_backup_retention
-  db_password         = var.db_password
-  kms_key_arn         = module.kms.rds_kms_key_arn
+  vpc_id                   = module.vpc.vpc_id
+  private_subnet_ids       = module.vpc.private_subnets
+  control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets
+
+  node_instance_type = var.node_instance_type
+  node_min_size      = var.node_min_size
+  node_max_size      = var.node_max_size
+  node_desired_size  = var.node_desired_size
+
+  ebs_kms_key_arn         = module.kms.ebs_kms_key_arn
+  eks_admin_principal_arn = var.eks_admin_principal_arn
+  github_repo             = var.github_repo
+  log_retention_days      = var.log_retention_days
 
   tags = module.labels.tags
 
 }
+
+# =============================================================================
+# 5. RDS
+# =============================================================================
+# module "rds" {
+#   source = "./modules/rds"
+
+#   name_prefix    = var.name_prefix
+#   environment    = var.environment
+#   vpc_id         = module.vpc.vpc_id
+#   db_subnet_ids  = module.vpc.database_subnets
+#  # eks_node_sg_id = module.eks.node_security_group_id
+
+#   db_class            = var.db_class
+#   db_storage          = var.db_storage
+#   db_multi_az         = var.db_multi_az
+#   db_backup_retention = var.db_backup_retention
+#   db_password         = var.db_password
+#   kms_key_arn         = module.kms.rds_kms_key_arn
+
+#   tags = module.labels.tags
+
+# }
 
 # # =============================================================================
 # # 7. VPC Endpoints – fully private
