@@ -160,7 +160,6 @@ module "rds" {
   vpc_id         = module.vpc.vpc_id
   db_subnet_ids  = module.vpc.database_subnets
   eks_node_sg_id = module.eks.node_security_group_id
-  vpc_cidr       = module.vpc.vpc_cidr_block
 
   db_class            = var.db_class
   db_storage          = var.db_storage
