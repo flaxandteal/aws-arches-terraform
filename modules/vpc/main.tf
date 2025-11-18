@@ -20,7 +20,7 @@ module "vpc" {
   single_nat_gateway = true
 
   tags = merge(var.tags, {
-    Name        = var.name
+    Name = var.name
   })
 
   # Tag subnets for load balancers
