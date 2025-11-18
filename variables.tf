@@ -60,11 +60,13 @@ variable "vpc_azs" {
 variable "app_subnet_cidrs" {
   description = "CIDR blocks for application (EKS node) private subnets"
   type        = list(string)
+  default = []
 }
 
 variable "db_subnet_cidrs" {
   description = "CIDR blocks for isolated database subnets"
   type        = list(string)
+  default = []
 }
 
 variable "intra_subnet_cidrs" {
