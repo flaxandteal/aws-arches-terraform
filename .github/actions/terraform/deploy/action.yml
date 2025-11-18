@@ -43,6 +43,7 @@ runs:
           LOCK_ID=$(echo "$LOCK_INFO" | grep ID | awk '{print $2}')
           echo "Releasing stale lock $LOCK_ID"
           terraform force-unlock -force $LOCK_ID || true
+          echo "STATE UNLOCKED"
         fi
       continue-on-error: true
 
