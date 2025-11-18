@@ -160,7 +160,7 @@ module "rds" {
   environment    = var.environment
   vpc_id         = module.vpc.vpc_id
   db_subnet_ids  = module.vpc.database_subnets
-  eks_node_sg_id = module.eks.node_security_group_id
+ # eks_node_sg_id = module.eks.node_security_group_id
 
   db_class            = var.db_class
   db_storage          = var.db_storage
