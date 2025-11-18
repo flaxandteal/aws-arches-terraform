@@ -179,31 +179,62 @@ module "s3" {
 # =============================================================================
 # 7. VPC Endpoints – fully private
 # =============================================================================
-module "vpc_endpoints" {
-  source  = "terraform-aws-modules/vpc-endpoints/aws"
-  version = "~> 5.0"
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id       = module.vpc.vpc_id
+  service_name = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids = module.vpc.private_route_table_ids
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
-
-  endpoints = {
-    s3 = {
-      service         = "s3"
-      service_type    = "Gateway"
-      route_table_ids = flatten([module.vpc.private_route_table_ids])
-    }
-    ecr_api     = { service = "ecr.api", private_dns_enabled = true }
-    ecr_dkr     = { service = "ecr.dkr", private_dns_enabled = true }
-    ssm         = { service = "ssm", private_dns_enabled = true }
-    ssmmessages = { service = "ssmmessages", private_dns_enabled = true }
-    ec2messages = { service = "ec2messages", private_dns_enabled = true }
-    sts         = { service = "sts", private_dns_enabled = true }
-    kms         = { service = "kms", private_dns_enabled = true }
-    logs        = { service = "logs", private_dns_enabled = true }
-  }
-
-  security_group_ids = [module.eks.node_security_group_id]
-  tags               = module.labels.tags
-
-  depends_on = [module.eks]
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-s3"
+  })
 }
+
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${var.region}.ecr.api"
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = module.vpc.private_subnets
+  security_group_ids = [module.eks.node_security_group_id]
+  private_dns_enabled = true
+
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-ecr-api"
+  })
+}
+
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${var.region}.ecr.dkr"
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = module.vpc.private_subnets
+  security_group_ids = [module.eks.node_security_group_id]
+  private_dns_enabled = true
+
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-ecr-dkr"
+  })
+}
+
+# # Add the rest only if you really need them (most clusters work fine with just S3 + ECR)
+# resource "aws_vpc_endpoint" "ssm" {
+#   vpc_id            = module.vpc.vpc_id
+#   service_name      = "com.amazonaws.${var.region}.ssm"
+#   vpc_endpoint_type = "Interface"
+#   subnet_ids        = module.vpc.private_subnets
+#   security_group_ids = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
+#   tags = module.labels.tags
+# }
+
+# resource "aws_vpc_endpoint" "ssmmessages" {
+#   vpc_id            = module.vpc.vpc_id
+#   service_name      = "com.amazonaws.${var.region}.ssmmessages"
+#   vpc_endpoint_type = "Interface"
+# :subnet_ids        = module.vpc.private_subnets
+#   security_group_ids = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
+#   tags = module.labels.tags
+# }
+
+# # (add sts, kms, logs the same way if you want – optional for most setups)
