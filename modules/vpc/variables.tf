@@ -13,7 +13,7 @@ variable "azs" {
   description = "Availability zones"
 }
 
-variable "common_tags" {
+variable "tags" {
   type    = map(string)
   default = {}
 }

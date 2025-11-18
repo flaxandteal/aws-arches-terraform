@@ -19,11 +19,9 @@ module "vpc" {
   enable_nat_gateway = true
   single_nat_gateway = true
 
-  tags = merge(
-    var.common_tags,
-    local.tags,
-    { "kubernetes.io/cluster/${var.name}" = "shared" }
-  )
+  tags = merge(var.tags, {
+    Name        = var.name
+  })
 
   # Tag subnets for load balancers
   private_subnet_tags = {

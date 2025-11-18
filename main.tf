@@ -60,8 +60,8 @@ locals {
 module "vpc" {
   source = "./modules/vpc"
 
-  name        = module.common.name
-  common_tags = module.common.common_tags
+  name = module.common.name
+  tags = module.labels.tags
 
   cidr = var.vpc_cidr
   azs  = var.vpc_azs
