@@ -47,7 +47,7 @@ runs:
       shell: bash
       run: |
         echo "Forcing unlock of any stale lock – safe if none exists"
-        terraform force-unlock -force 757cbb16-b681-2ce3-30e8-50307432f999 || true
+        terraform force-unlock -force f0021d2f-ae21-a931-d920-6e69965c6ea0 || true
       continue-on-error: true
     # Destroy
     - name: Terraform Destroy
