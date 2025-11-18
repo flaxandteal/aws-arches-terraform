@@ -22,13 +22,13 @@ module "rds" {
   password = var.db_password != "" ? var.db_password : random_password.master[0].result
   port     = 5432
 
-  multi_az            = var.db_multi_az
+  multi_az = var.db_multi_az
   #publicly_accessible = false
   vpc_security_group_ids = [aws_security_group.rds.id]
-  subnet_ids = var.db_subnet_ids
+  subnet_ids             = var.db_subnet_ids
 
   backup_retention_period = var.db_backup_retention
-  skip_final_snapshot     = true #var.environment != "prod"
+  skip_final_snapshot     = true  #var.environment != "prod"
   deletion_protection     = false #var.environment == "prod"
 
   apply_immediately = true
@@ -51,14 +51,14 @@ resource "aws_security_group" "rds" {
   name   = "${var.name_prefix}-${var.environment}-rds-sg"
   vpc_id = var.vpc_id
 
-    ingress {
+  ingress {
     description     = "PostgreSQL from EKS nodes"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups  = var.eks_node_sg_id != "" ? [var.eks_node_sg_id] : []
-    cidr_blocks     = var.eks_node_sg_id != "" ? [] : [var.vpc_cidr]   # fallback to whole VPC
-  }  
+    security_groups = var.eks_node_sg_id != "" ? [var.eks_node_sg_id] : []
+    cidr_blocks     = var.eks_node_sg_id != "" ? [] : [var.vpc_cidr] # fallback to whole VPC
+  }
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-${var.environment}-rds-sg"

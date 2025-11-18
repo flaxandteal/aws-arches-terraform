@@ -46,14 +46,14 @@ runs:
         terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
         terraform providers
 
-    # TEMP! releases lock file for tfstate fuck ups
-    #find in console/dynamodb/lock table/Explore table items (top right)
-    - name: Release stale lock (works every time)
-      shell: bash
-      run: |
-        echo "Forcing unlock of any stale lock – safe if none exists"
-        terraform force-unlock -force 32eef10f-4b62-c186-b632-8e534cb8d091 || true
-      continue-on-error: true
+    # # TEMP! releases lock file for tfstate fuck ups
+    # #find in console/dynamodb/lock table/Explore table items (top right)
+    # - name: Release stale lock (works every time)
+    #   shell: bash
+    #   run: |
+    #     echo "Forcing unlock of any stale lock – safe if none exists"
+    #     terraform force-unlock -force 32eef10f-4b62-c186-b632-8e534cb8d091 || true
+    #   continue-on-error: true
 
     # ---------------------------------------------
     # 5. Terraform Validate

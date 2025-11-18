@@ -155,12 +155,13 @@ module "s3" {
 module "rds" {
   source = "./modules/rds"
 
-  name_prefix    = var.name_prefix
-  environment    = var.environment
-  
+  name_prefix = var.name_prefix
+  environment = var.environment
+
   vpc_id         = module.vpc.vpc_id
   db_subnet_ids  = module.vpc.database_subnets
- # eks_node_sg_id = module.eks.node_security_group_id
+  eks_node_sg_id = module.eks.node_security_group_id
+  vpc_cidr       = module.vpc.vpc_cidr_block
 
   db_class            = var.db_class
   db_storage          = var.db_storage
