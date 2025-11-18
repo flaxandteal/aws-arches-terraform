@@ -135,6 +135,7 @@ variable "db_class" {
 variable "db_storage" {
   description = "Initial allocated storage in GB"
   type        = number
+  default     = 20
 }
 
 variable "db_multi_az" {

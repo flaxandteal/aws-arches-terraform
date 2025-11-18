@@ -8,6 +8,7 @@ variable "name_prefix" {
 variable "environment" {
   description = "Environment name (uat, prod, dev, stage)"
   type        = string
+  default     = "dev"
 }
 
 variable "vpc_id" {
