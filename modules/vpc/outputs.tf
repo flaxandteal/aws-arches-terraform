@@ -5,7 +5,7 @@ output "vpc_id" {
 }
 
 output "private_subnet_ids" {
-  description = "List of private subnet IDs (for EKS, RDS, VPC endpoints, etc.)"
+  description = "List of private subnet IDs – use this everywhere (EKS, RDS, VPC endpoints)"
   value       = module.vpc.private_subnets
 }
 
@@ -15,7 +15,7 @@ output "public_subnet_ids" {
 }
 
 output "private_route_table_ids" {
-  description = "List of private route table IDs"
+  description = "List of private route table IDs (for S3/DynamoDB endpoints, etc.)"
   value       = module.vpc.private_route_table_ids
 }
 

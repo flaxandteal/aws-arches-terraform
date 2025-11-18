@@ -122,7 +122,7 @@ module "eks" {
   cluster_version = var.cluster_version
 
   vpc_id                   = module.vpc.vpc_id
-  private_subnet_ids       = module.vpc.private_subnets
+  private_subnet_ids       = module.vpc.private_subnet_ids
   control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets
 
   node_instance_type = var.node_instance_type
@@ -149,7 +149,7 @@ module "rds" {
   environment = var.environment
 
   vpc_id         = module.vpc.vpc_id
-  db_subnet_ids  = module.vpc.database_subnets
+  db_subnet_ids  = module.vpc.private_subnet_ids
   eks_node_sg_id = module.eks.node_security_group_id
 
   db_class            = var.db_class
@@ -180,7 +180,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   vpc_id              = module.vpc.vpc_id
   service_name        = "com.amazonaws.${var.region}.ecr.api"
   vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnets
+  subnet_ids          = module.vpc.private_subnet_ids
   security_group_ids  = [module.eks.node_security_group_id]
   private_dns_enabled = true
 
@@ -193,7 +193,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   vpc_id              = module.vpc.vpc_id
   service_name        = "com.amazonaws.${var.region}.ecr.dkr"
   vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnets
+  subnet_ids          = module.vpc.private_subnet_ids
   security_group_ids  = [module.eks.node_security_group_id]
   private_dns_enabled = true
 
