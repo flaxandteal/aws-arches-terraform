@@ -35,17 +35,18 @@ runs:
       uses: ./.github/actions/terraform/quality
   
     # TEMP! releases lock file for tfstate fuck ups
-    - name: Force-release any stale locks
-      shell: bash
+    - name: Force-release any stale DynamoDB lock
       run: |
+        # Try to grab the current lock info (fails gracefully if none)
         LOCK_INFO=$(terraform state lock info 2>/dev/null || true)
         if echo "$LOCK_INFO" | grep -q "Lock Info"; then
-          LOCK_ID=$(echo "$LOCK_INFO" | grep ID | awk '{print $2}')
+          LOCK_ID=$(echo "$LOCK_INFO" | grep -i '^ID:' | awk '{print $2}')
           echo "Releasing stale lock $LOCK_ID"
-          terraform force-unlock -force $LOCK_ID || true
-          echo "STATE UNLOCKED"
+          terraform force-unlock -force "$LOCK_ID" || true
+        else
+          echo "No stale lock found"
         fi
-      continue-on-error: true
+      continue-on-error: true   # never fails the job
 
     # ---------------------------------------------
     # 4. Terraform Init - Get env backend
