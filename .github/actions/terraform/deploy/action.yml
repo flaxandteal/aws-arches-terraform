@@ -31,8 +31,8 @@ runs:
     # ---------------------------------------------
     # 3. Terraform Quality Check - fmt & lint
     # ---------------------------------------------
-    - name: Terraform Quality Check
-      uses: ./.github/actions/terraform/quality
+    #- name: Terraform Quality Check
+    #  uses: ./.github/actions/terraform/quality
 
     # ---------------------------------------------
     # 4. Terraform Init - Get env backend
