@@ -84,10 +84,10 @@ module "vpc" {
 module "kms" {
   source = "./modules/kms"
 
-  name               = local.name
-  environment        = var.environment
-  eks_node_role_arns = [module.eks.node_iam_role_arn] # will be known after EKS
-  tags               = module.labels.tags
+  name        = local.name
+  environment = var.environment
+  #eks_node_role_arns = [module.eks.node_iam_role_arn] # will be known after EKS - nope! circular i think
+  tags = module.labels.tags
 
   # We handle the circular dependency cleanly with depends_on
   depends_on = [module.eks]
@@ -105,7 +105,7 @@ module "eks" {
 
   vpc_id                   = module.vpc.vpc_id
   private_subnet_ids       = module.vpc.private_subnets
-  control_plane_subnet_ids = var.intra_subnet_cidrs != [] ? var.intra_subnet_cidrs : module.vpc.private_subnets
+  control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets
 
   node_instance_type = var.node_instance_type
   node_min_size      = var.node_min_size

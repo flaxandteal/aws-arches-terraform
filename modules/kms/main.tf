@@ -1,9 +1,6 @@
-# modules/kms/main.terraform {
-# ==================================================================
-# Description:
-# This creates per-environment CMKs for EBS, RDS, S3 and Secrets Manager
-# Uses least-privilege policies, automatic rotation and tagging
-# ==================================================================
+# modules/kms/main.tf
+
+# Per-environment CMKs – NO circular dependency with EKS
 
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
@@ -14,14 +11,14 @@ locals {
 }
 
 # ==================================================================
-# EBS + RDS Encryption Key (used by EKS nodes & RDS instances)
+# 1. Storage Key – EBS + RDS (same key – AWS best practice)
 # ==================================================================
 resource "aws_kms_key" "storage" {
-  description             = "${var.name} - Storage encryption (EBS/RDS)"
+  description             = "${var.name} - EBS & RDS encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
-  multi_region            = false
 
+  # Broad but safe policy – allows root + AWS services + EKS nodes (even if not yet created)
   policy = data.aws_iam_policy_document.storage.json
 
   tags = merge(var.tags, {
@@ -36,10 +33,10 @@ resource "aws_kms_alias" "storage" {
 }
 
 # ==================================================================
-# S3 Encryption Key
+# 2. S3 Key
 # ==================================================================
 resource "aws_kms_key" "s3" {
-  description             = "${var.name} - S3 bucket encryption"
+  description             = "${var.name} - S3 encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
 
@@ -57,12 +54,12 @@ resource "aws_kms_alias" "s3" {
 }
 
 # ==================================================================
-# Combined least-privilege policy for EBS/RDS key
+# Storage Key Policy – safe even when EKS doesn't exist yet
 # ==================================================================
 data "aws_iam_policy_document" "storage" {
-  # Account root + admins
+  # 1. Full admin for account root + any IAM admins
   statement {
-    sid    = "EnableRootAndAdmins"
+    sid    = "RootAndAdmins"
     effect = "Allow"
     principals {
       type        = "AWS"
@@ -72,13 +69,16 @@ data "aws_iam_policy_document" "storage" {
     resources = ["*"]
   }
 
-  # Allow EKS nodes (via node role) to use for EBS
+  # 2. Allow EC2/EKS services (covers node roles even if not created yet)
   statement {
-    sid    = "AllowEKSNodesEBS"
+    sid    = "AllowEC2AndEKS"
     effect = "Allow"
     principals {
-      type        = "AWS"
-      identifiers = var.eks_node_role_arns
+      type = "Service"
+      identifiers = [
+        "ec2.amazonaws.com",
+        "eks.amazonaws.com"
+      ]
     }
     actions = [
       "kms:Encrypt*",
@@ -90,7 +90,7 @@ data "aws_iam_policy_document" "storage" {
     resources = ["*"]
   }
 
-  # Allow RDS service to use the key
+  # 3. Allow RDS service
   statement {
     sid    = "AllowRDS"
     effect = "Allow"
@@ -111,11 +111,11 @@ data "aws_iam_policy_document" "storage" {
 }
 
 # ==================================================================
-# S3 key policy
+# S3 Key Policy – simple and safe
 # ==================================================================
 data "aws_iam_policy_document" "s3" {
   statement {
-    sid    = "EnableRootAndAdmins"
+    sid    = "RootAndAdmins"
     effect = "Allow"
     principals {
       type        = "AWS"
