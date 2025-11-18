@@ -18,7 +18,8 @@ module "eks" {
   # FULLY PRIVATE – no public access allowed
   # ==================================================================
   cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = false
+  #cluster_endpoint_public_access  = false
+  cluster_endpoint_public_access = true #sji todo - moreve this!!!!!
 
   # Optional: dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = var.control_plane_subnet_ids

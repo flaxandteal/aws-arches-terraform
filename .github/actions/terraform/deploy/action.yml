@@ -73,7 +73,9 @@ runs:
           -var-file="${{ inputs.tfvars-file }}" \
           -out=tfplan \
           -detailed-exitcode
+          -lock=false
         echo "exitcode=$?" >> $GITHUB_OUTPUT
+#sji todo - lock false remove for release
 # terraform import 'module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"]' alias/eks/catalina-dev
     # ---------------------------------------------
     # 7. Terraform Show Plan
