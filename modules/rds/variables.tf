@@ -20,10 +20,10 @@ variable "db_subnet_ids" {
   type        = list(string)
 }
 
-# variable "eks_node_sg_id" {
-#   description = "Security Group ID of the EKS worker nodes (to allow PostgreSQL traffic)"
-#   type        = string
-# }
+variable "eks_node_sg_id" {
+  description = "Security Group ID of the EKS worker nodes (to allow PostgreSQL traffic)"
+  type        = string
+}
 
 variable "db_class" {
   description = "RDS instance class"
@@ -63,4 +63,8 @@ variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
   default     = {}
+}
+
+variable "vpc_cidr" {
+  type = string
 }

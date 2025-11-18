@@ -11,14 +11,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
-    helm = {
-      source  = "hashicorp/helm"
-      version = ">= 2.12"
-    }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.19"
-    }
+    # helm = {
+    #   source  = "hashicorp/helm"
+    #   version = ">= 2.12"
+    # }
+    # kubectl = {
+    #   source  = "gavinbunney/kubectl"
+    #   version = "~> 1.19"
+    # }
   }
 
   backend "s3" {} # config injected at runtime from GitHub secret
@@ -170,7 +170,6 @@ module "rds" {
   kms_key_arn         = module.kms.rds_kms_key_arn
 
   tags = module.labels.tags
-
 }
 
 # =============================================================================
