@@ -116,6 +116,7 @@ variable "node_max_size" {
 variable "node_desired_size" {
   description = "Desired number of worker nodes"
   type        = number
+  default     = 1
 }
 
 variable "log_retention_days" {
