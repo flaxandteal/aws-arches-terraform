@@ -33,6 +33,7 @@ variable "db_class" {
 variable "db_storage" {
   description = "Allocated storage in GB"
   type        = number
+  default     = 20
 }
 
 variable "db_multi_az" {
