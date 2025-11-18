@@ -1,27 +1,30 @@
 variable "name" {
-  description = "Name prefix for S3 bucket"
+  description = "Base name (e.g. catalina-arches-uat)"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name for tagging"
+  type        = string
+}
+
+variable "s3_kms_key_arn" {
+  description = "ARN of the KMS key used for SSE-KMS"
   type        = string
 }
 
 variable "lifecycle_transition_days" {
-  description = "Days before transitioning to Glacier"
-  type        = number
+  type    = number
+  default = 30
 }
 
 variable "lifecycle_storage_class" {
-  description = "Storage class for lifecycle transition"
-  type        = string
-  default     = "GLACIER"
-}
-
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
-  type        = map(string)
-}
-
-variable "s3_kms_key_arn" {
   type    = string
-  default = ""
+  default = "GLACIER_IR"
+  validation {
+    condition     = contains(["GLACIER_IR", "DEEP_ARCHIVE", "GLACIER"], var.lifecycle_storage_class)
+    error_message = "Must be GLACIER_IR, DEEP_ARCHIVE or GLACIER."
+  }
 }
 
 variable "enable_logging" {
@@ -32,4 +35,15 @@ variable "enable_logging" {
 variable "logging_bucket" {
   type    = string
   default = ""
+}
+
+variable "force_destroy" {
+  description = "Allow terraform destroy to empty and delete bucket (true for dev/stage, false for uat/prod"
+  type        = bool
+  default     = false
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
 }

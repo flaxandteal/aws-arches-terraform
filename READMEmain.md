@@ -38,13 +38,27 @@ Reliability: Multi-subnet in prod for multi-AZ.
 Cost Optimization: Smaller CIDRs in dev/stage.
 Operational Excellence: Modular code, workspace-based naming.
 
+
+Component,Key Requirements
+Single VPC,With private subnets only (no public subnets in F&T scope)
+Private subnets,Separate subnets for UAT and Production (can be in same AZs but tagged differently)
+Database subnet group,Separate private subnets for RDS (isolated from app subnets)
+EKS Cluster (UAT),"Fully private, private endpoint only, separate cluster"
+EKS Cluster (Production),"Fully private, private endpoint only, separate cluster"
+RDS PostgreSQL,"Multi-AZ, private, encrypted, in dedicated DB subnets"
+S3 buckets,"Versioning, KMS encryption, private only (via VPC endpoints)"
+VPC Endpoints (Gateway & Interface),"S3, ECR DKR, ECR API, SSM, SSMMessages, EC2Messages, STS, KMS, Logs, etc."
+KMS CMKs,"One per environment (or shared with strict policy), rotation enabled"
+IAM roles & policies,"OIDC for GitHub Actions, IRSA roles, scoped by tags/environment"
+Security Groups,"Restrictive rules (EKS → RDS, pods → S3/RDS, etc.)"
+Terraform backend,S3 + DynamoDB + KMS encryption
+
 # Repo Structure
 ```
 aws-arches-terraform/
 ├── bootstrap/
 │   ├── bootstrap.tf  # Defines S3 bucket and DynamoDB table to hold Terraform State
 │   └── terraform.tfstate  # Local state for bootstrap
-├── main-project/ # Main project
 ├── .terraform-version
 ├── main.tf
 ├── variables.tf
@@ -86,6 +100,16 @@ aws-arches-terraform/
 │   │   ├── variables.tf
 │   │   └── outputs.tf
 ```
+
+SJI TODO!!!!
+Migrate to OIDC (recommended for DOC compliance – removes AWS keys entirely)
+replace the env block with:
+YAML- name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GitHubActions-Terraform-${{ inputs.environment }}
+          aws-region: ap-southeast-2
+…and delete AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets.
 
 ## AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"

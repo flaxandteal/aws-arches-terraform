@@ -1,4 +1,9 @@
 # --------------------------------------------------------------------------
+# Environment
+# --------------------------------------------------------------------------
+environment = "dev"
+
+# --------------------------------------------------------------------------
 # Common 
 # --------------------------------------------------------------------------
 region = "eu-north-1"
@@ -8,6 +13,8 @@ common_tags = {
   Project    = "catalina"
   ManagedBy  = "Terraform"
   CostCenter = "IT"
+  Environment = "Development"
+  Owner       = "FlaxAndTeal"
 }
 
 extra_tags = {
@@ -19,6 +26,10 @@ extra_tags = {
 # --------------------------------------------------------------------------
 vpc_cidr = "10.20.0.0/16"
 vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
+
+# Smaller subnets – dev doesn't need 3 AZs
+app_subnet_cidrs = ["10.20.1.0/24", "10.20.2.0/24"]
+db_subnet_cidrs  = ["10.20.11.0/24", "10.20.12.0/24"]
 
 # --------------------------------------------------------------------------
 # EKS
@@ -39,9 +50,16 @@ github_repo = "https://github.com/flaxandteal/catalina-fluxcd"
 log_retention_days = 3
 
 # --------------------------------------------------------------------------
+# RDS – smallest possible
+# --------------------------------------------------------------------------
+db_class            = "db.t3.micro"
+db_multi_az         = false
+db_backup_retention = 1
+
+# --------------------------------------------------------------------------
 # s3
 # --------------------------------------------------------------------------
-lifecycle_transition_days = 30
+lifecycle_transition_days = 7
 lifecycle_storage_class   = "GLACIER"
 #enable_logging   = false
 #logging_bucket   = "catalina-dev-logs-bucket" 
