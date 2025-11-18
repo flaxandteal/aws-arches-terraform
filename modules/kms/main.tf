@@ -1,6 +1,5 @@
 # modules/kms/main.tf
-
-# Per-environment CMKs – NO circular dependency with EKS
+# NO CIRCULAR DEPENDENCY – works with EKS created AFTER KMS
 
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
@@ -11,14 +10,13 @@ locals {
 }
 
 # ==================================================================
-# 1. Storage Key – EBS + RDS (same key – AWS best practice)
+# Storage Key – EBS + RDS (one key for both)
 # ==================================================================
 resource "aws_kms_key" "storage" {
   description             = "${var.name} - EBS & RDS encryption"
   deletion_window_in_days = 10
   enable_key_rotation     = true
 
-  # Broad but safe policy – allows root + AWS services + EKS nodes (even if not yet created)
   policy = data.aws_iam_policy_document.storage.json
 
   tags = merge(var.tags, {
@@ -33,7 +31,7 @@ resource "aws_kms_alias" "storage" {
 }
 
 # ==================================================================
-# 2. S3 Key
+# S3 Key
 # ==================================================================
 resource "aws_kms_key" "s3" {
   description             = "${var.name} - S3 encryption"
@@ -54,10 +52,10 @@ resource "aws_kms_alias" "s3" {
 }
 
 # ==================================================================
-# Storage Key Policy – safe even when EKS doesn't exist yet
+# Storage key policy – SERVICE PRINCIPALS ONLY (no node ARN = no cycle)
 # ==================================================================
 data "aws_iam_policy_document" "storage" {
-  # 1. Full admin for account root + any IAM admins
+  # Root + IAM admins
   statement {
     sid    = "RootAndAdmins"
     effect = "Allow"
@@ -69,9 +67,9 @@ data "aws_iam_policy_document" "storage" {
     resources = ["*"]
   }
 
-  # 2. Allow EC2/EKS services (covers node roles even if not created yet)
+  # Allow EC2 & EKS services (covers ALL node roles automatically)
   statement {
-    sid    = "AllowEC2AndEKS"
+    sid    = "AllowEC2EKS"
     effect = "Allow"
     principals {
       type = "Service"
@@ -90,7 +88,7 @@ data "aws_iam_policy_document" "storage" {
     resources = ["*"]
   }
 
-  # 3. Allow RDS service
+  # Allow RDS service
   statement {
     sid    = "AllowRDS"
     effect = "Allow"
@@ -111,7 +109,7 @@ data "aws_iam_policy_document" "storage" {
 }
 
 # ==================================================================
-# S3 Key Policy – simple and safe
+# S3 key policy
 # ==================================================================
 data "aws_iam_policy_document" "s3" {
   statement {
@@ -126,7 +124,7 @@ data "aws_iam_policy_document" "s3" {
   }
 
   statement {
-    sid    = "AllowS3Service"
+    sid    = "AllowS3"
     effect = "Allow"
     principals {
       type        = "Service"

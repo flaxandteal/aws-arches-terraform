@@ -90,7 +90,7 @@ module "kms" {
   tags = module.labels.tags
 
   # We handle the circular dependency cleanly with depends_on
-  depends_on = [module.eks]
+  #depends_on = [module.eks]
 }
 
 # =============================================================================
