@@ -15,7 +15,7 @@ module "rds" {
   allocated_storage     = var.db_storage
   max_allocated_storage = var.db_storage * 3
   storage_encrypted     = true
-  kms_key_id            = var.kms_key_arn
+  kms_key_id            = var.kms_key_arn != "" ? var.kms_key_arn : null #sji maybe
 
   db_name  = "arches"
   username = "postgres"
@@ -23,13 +23,13 @@ module "rds" {
   port     = 5432
 
   multi_az            = var.db_multi_az
-  publicly_accessible = false
-  #vpc_security_group_ids = [aws_security_group.rds.id]
+  #publicly_accessible = false
+  vpc_security_group_ids = [aws_security_group.rds.id]
   subnet_ids = var.db_subnet_ids
 
   backup_retention_period = var.db_backup_retention
-  skip_final_snapshot     = var.environment != "prod"
-  deletion_protection     = var.environment == "prod"
+  skip_final_snapshot     = true #var.environment != "prod"
+  deletion_protection     = false #var.environment == "prod"
 
   apply_immediately = true
 
@@ -44,19 +44,29 @@ resource "random_password" "master" {
   special = false
 }
 
-# resource "aws_security_group" "rds" {
-#   name   = "${var.name_prefix}-${var.environment}-rds-sg"
-#   vpc_id = var.vpc_id
+# ------------------------------------------------------------------
+# Security Group
+# ------------------------------------------------------------------
+resource "aws_security_group" "rds" {
+  name   = "${var.name_prefix}-${var.environment}-rds-sg"
+  vpc_id = var.vpc_id
 
-#   ingress {
-#     description     = "PostgreSQL from EKS nodes"
-#     from_port       = 5432
-#     to_port         = 5432
-#     protocol        = "tcp"
-#     security_groups = [var.eks_node_sg_id]
-#   }
+  ingress {
+    description     = "PostgreSQL from EKS nodes"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    # security_groups = [var.eks_node_sg_id]
+  }
+  egress { #remove this section
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+  
 
-#   tags = merge(var.tags, {
-#     Name = "${var.name_prefix}-${var.environment}-rds-sg"
-#   })
-# }
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-${var.environment}-rds-sg"
+  })
+}
