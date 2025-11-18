@@ -11,14 +11,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
-    # helm = {
-    #   source  = "hashicorp/helm"
-    #   version = ">= 2.12"
-    # }
-    # kubectl = {
-    #   source  = "gavinbunney/kubectl"
-    #   version = "~> 1.19"
-    # }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.12"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.19"
+    }
   }
 
   backend "s3" {} # config injected at runtime from GitHub secret
@@ -56,7 +56,7 @@ locals {
 }
 
 # =============================================================================
-# 1. VPC – official module (correct outputs!)
+# 1. VPC
 # =============================================================================
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
@@ -67,7 +67,7 @@ module "vpc" {
   azs              = var.vpc_azs
   private_subnets  = var.app_subnet_cidrs   # ← EKS nodes
   database_subnets = var.db_subnet_cidrs    # ← RDS
-  intra_subnets    = var.intra_subnet_cidrs # ← optional control plane
+  intra_subnets    = var.intra_subnet_cidrs # ← control plane (optional)
 
   enable_nat_gateway   = false
   create_igw           = false
@@ -78,7 +78,7 @@ module "vpc" {
 }
 
 # =============================================================================
-# 4. IAM – GitHub OIDC
+# 4. IAM (GitHub OIDC etc)
 # =============================================================================
 module "iam" {
   source = "./modules/iam"
@@ -122,32 +122,32 @@ module "s3" {
 }
 
 # =============================================================================
-# 3. EKS – our clean wrapper
+# 3. EKS
 # =============================================================================
-# module "eks" {
-#   source = "./modules/eks"
+module "eks" {
+  source = "./modules/eks"
 
-#   name_prefix     = var.name_prefix
-#   environment     = var.environment
-#   cluster_version = var.cluster_version
+  name_prefix     = var.name_prefix
+  environment     = var.environment
+  cluster_version = var.cluster_version
 
-#   vpc_id                   = module.vpc.vpc_id
-#   private_subnet_ids       = module.vpc.private_subnets
-#   control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets
+  vpc_id                   = module.vpc.vpc_id
+  private_subnet_ids       = module.vpc.private_subnets
+  control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets
 
-#   node_instance_type = var.node_instance_type
-#   node_min_size      = var.node_min_size
-#   node_max_size      = var.node_max_size
-#   node_desired_size  = var.node_desired_size
+  node_instance_type = var.node_instance_type
+  node_min_size      = var.node_min_size
+  node_max_size      = var.node_max_size
+  node_desired_size  = var.node_desired_size
 
-#   ebs_kms_key_arn         = module.kms.ebs_kms_key_arn
-#   eks_admin_principal_arn = var.eks_admin_principal_arn
-#   github_repo             = var.github_repo
-#   log_retention_days      = var.log_retention_days
+  ebs_kms_key_arn         = module.kms.ebs_kms_key_arn
+  eks_admin_principal_arn = var.eks_admin_principal_arn
+  github_repo             = var.github_repo
+  log_retention_days      = var.log_retention_days
 
-#   tags = module.labels.tags
+  tags = module.labels.tags
 
-# }
+}
 
 # =============================================================================
 # 5. RDS
@@ -160,7 +160,7 @@ module "rds" {
 
   vpc_id         = module.vpc.vpc_id
   db_subnet_ids  = module.vpc.database_subnets
-  eks_node_sg_id = "" #module.eks.node_security_group_id
+  eks_node_sg_id = module.eks.node_security_group_id
   vpc_cidr       = module.vpc.vpc_cidr_block
 
   db_class            = var.db_class
@@ -176,42 +176,42 @@ module "rds" {
 # =============================================================================
 # 7. VPC Endpoints – fully private
 # =============================================================================
-# resource "aws_vpc_endpoint" "s3" {
-#   vpc_id            = module.vpc.vpc_id
-#   service_name      = "com.amazonaws.${var.region}.s3"
-#   vpc_endpoint_type = "Gateway"
-#   route_table_ids   = module.vpc.private_route_table_ids
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = module.vpc.private_route_table_ids
 
-#   tags = merge(module.labels.tags, {
-#     Name = "${local.name}-s3"
-#   })
-# }
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-s3"
+  })
+}
 
-# resource "aws_vpc_endpoint" "ecr_api" {
-#   vpc_id              = module.vpc.vpc_id
-#   service_name        = "com.amazonaws.${var.region}.ecr.api"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = module.vpc.private_subnets
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [module.eks.node_security_group_id]
+  private_dns_enabled = true
 
-#   tags = merge(module.labels.tags, {
-#     Name = "${local.name}-ecr-api"
-#   })
-# }
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-ecr-api"
+  })
+}
 
-# resource "aws_vpc_endpoint" "ecr_dkr" {
-#   vpc_id              = module.vpc.vpc_id
-#   service_name        = "com.amazonaws.${var.region}.ecr.dkr"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = module.vpc.private_subnets
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [module.eks.node_security_group_id]
+  private_dns_enabled = true
 
-#   tags = merge(module.labels.tags, {
-#     Name = "${local.name}-ecr-dkr"
-#   })
-# }
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-ecr-dkr"
+  })
+}
 
 # # Add the rest only if you really need them (most clusters work fine with just S3 + ECR)
 # resource "aws_vpc_endpoint" "ssm" {
