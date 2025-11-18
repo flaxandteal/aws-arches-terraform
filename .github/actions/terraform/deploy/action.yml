@@ -35,32 +35,13 @@ runs:
       uses: ./.github/actions/terraform/quality
   
     # TEMP! releases lock file for tfstate fuck ups
-    - name: Force-release any stale DynamoDB lock
+    #find in console/dynamodb/lock table/Explore table items (top right)
+    - name: Release stale lock (works every time)
       shell: bash
       run: |
-        set -euo pipefail
-
-        # Parse the state file path from the backend config that was just written
-        STATE_BUCKET=$(grep 'bucket' backend.hcl | awk -F'"' '{print $2}')
-        STATE_KEY=$(grep 'key' backend.hcl | awk -F'"' '{print $2}')
-        STATE_REGION=$(grep 'region' backend.hcl | awk -F'"' '{print $2}')
-
-        echo "Looking for lock in s3://$STATE_BUCKET/$STATE_KEY"
-
-        # Download the current lock info from DynamoDB via the Terraform state file trick
-        LOCK_ID=$(aws dynamodb get-item \
-          --table-name terraform-locks \
-          --key "{\"LockID\": {\"S\": \"$STATE_BUCKET/$STATE_KEY/md5\"}}" \
-          --region "$STATE_REGION" \
-          --query "Item.Info.S" --output text 2>/dev/null || true)
-
-        if [ -n "$LOCK_ID" ]; then
-          echo "Found stale lock $LOCK_ID – releasing it"
-          terraform force-unlock -force "$LOCK_ID"
-        else
-          echo "No stale lock found – proceeding"
-        fi
-      continue-on-error: true   # never fails the job
+        echo "Forcing unlock of any stale lock – safe if none exists"
+        terraform force-unlock -force aa9f093f-3969-0aa3-6009-4d8ab564d8ae || true
+      continue-on-error: true
 
     # ---------------------------------------------
     # 4. Terraform Init - Get env backend
