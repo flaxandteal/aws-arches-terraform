@@ -21,7 +21,7 @@ terraform {
     }
   }
 
-  backend "s3" {}   # config injected at runtime from GitHub secret
+  backend "s3" {} # config injected at runtime from GitHub secret
 }
 
 provider "aws" {
@@ -66,12 +66,12 @@ module "vpc" {
   cidr = var.vpc_cidr
 
   azs              = var.vpc_azs
-  private_subnets  = var.app_subnet_cidrs      # ← EKS nodes
-  database_subnets = var.db_subnet_cidrs       # ← RDS
-  intra_subnets    = var.intra_subnet_cidrs    # ← optional control plane
+  private_subnets  = var.app_subnet_cidrs   # ← EKS nodes
+  database_subnets = var.db_subnet_cidrs    # ← RDS
+  intra_subnets    = var.intra_subnet_cidrs # ← optional control plane
 
-  enable_nat_gateway = false
-  create_igw         = false
+  enable_nat_gateway   = false
+  create_igw           = false
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -86,7 +86,7 @@ module "kms" {
 
   name               = local.name
   environment        = var.environment
-  eks_node_role_arns = [module.eks.node_iam_role_arn]  # will be known after EKS
+  eks_node_role_arns = [module.eks.node_iam_role_arn] # will be known after EKS
   tags               = module.labels.tags
 
   # We handle the circular dependency cleanly with depends_on
@@ -99,18 +99,18 @@ module "kms" {
 module "eks" {
   source = "./modules/eks"
 
-  name_prefix             = var.name_prefix
-  environment             = var.environment
-  cluster_version         = var.cluster_version
+  name_prefix     = var.name_prefix
+  environment     = var.environment
+  cluster_version = var.cluster_version
 
-  vpc_id                  = module.vpc.vpc_id
-  private_subnet_ids      = module.vpc.private_subnets
+  vpc_id                   = module.vpc.vpc_id
+  private_subnet_ids       = module.vpc.private_subnets
   control_plane_subnet_ids = var.intra_subnet_cidrs != [] ? var.intra_subnet_cidrs : module.vpc.private_subnets
 
-  node_instance_type      = var.node_instance_type
-  node_min_size           = var.node_min_size
-  node_max_size           = var.node_max_size
-  node_desired_size       = var.node_desired_size
+  node_instance_type = var.node_instance_type
+  node_min_size      = var.node_min_size
+  node_max_size      = var.node_max_size
+  node_desired_size  = var.node_desired_size
 
   ebs_kms_key_arn         = module.kms.ebs_kms_key_arn
   eks_admin_principal_arn = var.eks_admin_principal_arn
@@ -188,18 +188,18 @@ module "vpc_endpoints" {
 
   endpoints = {
     s3 = {
-      service      = "s3"
-      service_type = "Gateway"
+      service         = "s3"
+      service_type    = "Gateway"
       route_table_ids = flatten([module.vpc.private_route_table_ids])
     }
-    ecr_api     = { service = "ecr.api",     private_dns_enabled = true }
-    ecr_dkr     = { service = "ecr.dkr",     private_dns_enabled = true }
-    ssm         = { service = "ssm",         private_dns_enabled = true }
+    ecr_api     = { service = "ecr.api", private_dns_enabled = true }
+    ecr_dkr     = { service = "ecr.dkr", private_dns_enabled = true }
+    ssm         = { service = "ssm", private_dns_enabled = true }
     ssmmessages = { service = "ssmmessages", private_dns_enabled = true }
     ec2messages = { service = "ec2messages", private_dns_enabled = true }
-    sts         = { service = "sts",         private_dns_enabled = true }
-    kms         = { service = "kms",         private_dns_enabled = true }
-    logs        = { service = "logs",        private_dns_enabled = true }
+    sts         = { service = "sts", private_dns_enabled = true }
+    kms         = { service = "kms", private_dns_enabled = true }
+    logs        = { service = "logs", private_dns_enabled = true }
   }
 
   security_group_ids = [module.eks.node_security_group_id]
