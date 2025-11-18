@@ -1,16 +1,24 @@
+# ./modules/vpc/outputs.tf
+output "vpc_id" {
+  description = "ID of the VPC"
+  value       = module.vpc.vpc_id
+}
+
 output "private_subnet_ids" {
-  description = "IDs of the private subnets (the first 3 private blocks created)"
-  value       = module.vpc.private_subnet_ids
+  description = "List of private subnet IDs (for EKS, RDS, VPC endpoints, etc.)"
+  value       = module.vpc.private_subnets
 }
 
 output "public_subnet_ids" {
-  value = module.vpc.public_subnet_ids
+  description = "List of public subnet IDs"
+  value       = module.vpc.public_subnets
 }
 
 output "private_route_table_ids" {
-  value = module.vpc.private_route_table_ids
+  description = "List of private route table IDs"
+  value       = module.vpc.private_route_table_ids
 }
 
-output "vpc_id" {
-  value = module.vpc.vpc_id
+output "vpc_cidr_block" {
+  value = module.vpc.vpc_cidr_block
 }
