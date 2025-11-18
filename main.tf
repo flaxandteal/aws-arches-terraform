@@ -93,6 +93,22 @@ module "kms" {
   #depends_on = [module.eks]
 }
 
+# =============================================================================
+# 6. S3
+# =============================================================================
+module "s3" {
+  source = "./modules/s3"
+
+  name                      = local.name
+  environment               = var.environment
+  s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  lifecycle_transition_days = var.lifecycle_transition_days
+  lifecycle_storage_class   = var.lifecycle_storage_class
+  force_destroy             = var.environment != "prod"
+
+  tags = module.labels.tags
+}
+
 # # =============================================================================
 # # 3. EKS – our clean wrapper
 # # =============================================================================
@@ -155,22 +171,6 @@ module "kms" {
 
 #   tags = module.labels.tags
 
-# }
-
-# # =============================================================================
-# # 6. S3
-# # =============================================================================
-# module "s3" {
-#   source = "./modules/s3"
-
-#   name                      = local.name
-#   environment               = var.environment
-#   s3_kms_key_arn            = module.kms.s3_kms_key_arn
-#   lifecycle_transition_days = var.lifecycle_transition_days
-#   lifecycle_storage_class   = var.lifecycle_storage_class
-#   force_destroy             = var.environment != "prod"
-
-#   tags = module.labels.tags
 # }
 
 # # =============================================================================

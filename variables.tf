@@ -73,6 +73,21 @@ variable "intra_subnet_cidrs" {
   default     = []
 }
 
+# --------------------------------------------------------------------------
+# S3
+# --------------------------------------------------------------------------
+variable "lifecycle_transition_days" {
+  description = "Days before transitioning objects to cheaper storage class"
+  type        = number
+  default     = 30
+}
+
+variable "lifecycle_storage_class" {
+  description = "Storage class for lifecycle transition (GLACIER_IR, DEEP_ARCHIVE, etc.)"
+  type        = string
+  default     = "GLACIER_IR"
+}
+
 # # --------------------------------------------------------------------------
 # # EKS
 # # --------------------------------------------------------------------------
@@ -139,19 +154,4 @@ variable "intra_subnet_cidrs" {
 #   type        = string
 #   default     = ""
 #   sensitive   = true
-# }
-
-# # --------------------------------------------------------------------------
-# # S3
-# # --------------------------------------------------------------------------
-# variable "lifecycle_transition_days" {
-#   description = "Days before transitioning objects to cheaper storage class"
-#   type        = number
-#   default     = 30
-# }
-
-# variable "lifecycle_storage_class" {
-#   description = "Storage class for lifecycle transition (GLACIER_IR, DEEP_ARCHIVE, etc.)"
-#   type        = string
-#   default     = "GLACIER_IR"
 # }
