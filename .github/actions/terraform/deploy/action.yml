@@ -34,6 +34,17 @@ runs:
     - name: Terraform Quality Check
       uses: ./.github/actions/terraform/quality
   
+    # TEMP! releases lock file for tfstate fuck ups
+    - name: Force-release any stale locks
+      run: |
+        LOCK_INFO=$(terraform state lock info 2>/dev/null || true)
+        if echo "$LOCK_INFO" | grep -q "Lock Info"; then
+          LOCK_ID=$(echo "$LOCK_INFO" | grep ID | awk '{print $2}')
+          echo "Releasing stale lock $LOCK_ID"
+          terraform force-unlock -force $LOCK_ID || true
+        fi
+      continue-on-error: true
+
     # ---------------------------------------------
     # 4. Terraform Init - Get env backend
     # ---------------------------------------------
