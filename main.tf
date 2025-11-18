@@ -78,20 +78,20 @@ module "vpc" {
   tags = module.labels.tags
 }
 
-# # =============================================================================
-# # 2. KMS
-# # =============================================================================
-# module "kms" {
-#   source = "./modules/kms"
+# =============================================================================
+# 2. KMS
+# =============================================================================
+module "kms" {
+  source = "./modules/kms"
 
-#   name        = local.name
-#   environment = var.environment
-#   #eks_node_role_arns = [module.eks.node_iam_role_arn] # will be known after EKS - nope! circular i think
-#   tags = module.labels.tags
+  name        = local.name
+  environment = var.environment
+  #eks_node_role_arns = [module.eks.node_iam_role_arn] # will be known after EKS - nope! circular i think
+  tags = module.labels.tags
 
-#   # We handle the circular dependency cleanly with depends_on
-#   #depends_on = [module.eks]
-# }
+  # We handle the circular dependency cleanly with depends_on
+  #depends_on = [module.eks]
+}
 
 # # =============================================================================
 # # 3. EKS – our clean wrapper
