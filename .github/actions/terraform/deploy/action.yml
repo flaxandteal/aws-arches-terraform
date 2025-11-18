@@ -84,15 +84,15 @@ runs:
       shell: bash
       run: terraform show -no-color tfplan
 
-    - name: Upload Plan
-      uses: actions/upload-artifact@v4
-      with:
-        name: tfplan-${{ inputs.environment }}
-        path: tfplan
-        retention-days: 30
+    # - name: Upload Plan
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: tfplan-${{ inputs.environment }}
+    #     path: tfplan
+    #     retention-days: 30
 
-    - name: Terraform Apply
-      shell: bash
-      if: ${{ inputs.auto-apply }}
-      run: |
-        terraform apply -auto-approve tfplan
+    # - name: Terraform Apply
+    #   shell: bash
+    #   if: ${{ inputs.auto-apply }}
+    #   run: |
+    #     terraform apply -auto-approve tfplan

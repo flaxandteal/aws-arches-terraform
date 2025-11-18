@@ -124,34 +124,34 @@ variable "lifecycle_storage_class" {
 #   default     = 30
 # }
 
-# # --------------------------------------------------------------------------
-# # RDS
-# # --------------------------------------------------------------------------
-# variable "db_class" {
-#   description = "RDS instance class"
-#   type        = string
-# }
+# --------------------------------------------------------------------------
+# RDS
+# --------------------------------------------------------------------------
+variable "db_class" {
+  description = "RDS instance class"
+  type        = string
+}
 
-# variable "db_storage" {
-#   description = "Initial allocated storage in GB"
-#   type        = number
-# }
+variable "db_storage" {
+  description = "Initial allocated storage in GB"
+  type        = number
+}
 
-# variable "db_multi_az" {
-#   description = "Enable Multi-AZ for RDS"
-#   type        = bool
-#   default     = false
-# }
+variable "db_multi_az" {
+  description = "Enable Multi-AZ for RDS"
+  type        = bool
+  default     = false
+}
 
-# variable "db_backup_retention" {
-#   description = "RDS backup retention period in days"
-#   type        = number
-#   default     = 7
-# }
+variable "db_backup_retention" {
+  description = "RDS backup retention period in days"
+  type        = number
+  default     = 7
+}
 
-# variable "db_password" {
-#   description = "RDS master password (leave empty to auto-generate)"
-#   type        = string
-#   default     = ""
-#   sensitive   = true
-# }
+variable "db_password" {
+  description = "RDS master password (leave empty to auto-generate)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

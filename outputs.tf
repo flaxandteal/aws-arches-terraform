@@ -9,4 +9,4 @@ output "github_actions_role_arn" { value = module.iam.github_actions_role_arn }
 #output "cluster_name" { value = module.eks.cluster_name }
 #output "cluster_endpoint" { value = module.eks.cluster_endpoint }
 #output "oidc_issuer_url" { value = module.eks.cluster_oidc_issuer_url }
-#output "rds_endpoint" { value = module.rds.endpoint }
+output "rds_endpoint" { value = module.rds.endpoint }
