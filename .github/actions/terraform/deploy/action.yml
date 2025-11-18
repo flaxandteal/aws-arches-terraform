@@ -36,6 +36,7 @@ runs:
   
     # TEMP! releases lock file for tfstate fuck ups
     - name: Force-release any stale locks
+      shell: bash
       run: |
         LOCK_INFO=$(terraform state lock info 2>/dev/null || true)
         if echo "$LOCK_INFO" | grep -q "Lock Info"; then
