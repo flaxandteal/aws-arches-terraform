@@ -79,6 +79,19 @@ module "vpc" {
 }
 
 # =============================================================================
+# 4. IAM – GitHub OIDC
+# =============================================================================
+module "iam" {
+  source = "./modules/iam"
+
+  name_prefix = var.name_prefix
+  environment = var.environment
+  github_repo = var.github_repo
+  tags        = module.labels.tags
+
+}
+
+# =============================================================================
 # 2. KMS
 # =============================================================================
 module "kms" {
@@ -107,19 +120,6 @@ module "s3" {
   force_destroy             = var.environment != "prod"
 
   tags = module.labels.tags
-}
-
-# =============================================================================
-# 4. IAM – GitHub OIDC
-# =============================================================================
-module "iam" {
-  source = "./modules/iam"
-
-  name_prefix = var.name_prefix
-  environment = var.environment
-  github_repo = var.github_repo
-  tags        = module.labels.tags
-
 }
 
 # =============================================================================
@@ -173,45 +173,45 @@ module "eks" {
 
 # }
 
-# # =============================================================================
-# # 7. VPC Endpoints – fully private
-# # =============================================================================
-# resource "aws_vpc_endpoint" "s3" {
-#   vpc_id            = module.vpc.vpc_id
-#   service_name      = "com.amazonaws.${var.region}.s3"
-#   vpc_endpoint_type = "Gateway"
-#   route_table_ids   = module.vpc.private_route_table_ids
+# =============================================================================
+# 7. VPC Endpoints – fully private
+# =============================================================================
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = module.vpc.private_route_table_ids
 
-#   tags = merge(module.labels.tags, {
-#     Name = "${local.name}-s3"
-#   })
-# }
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-s3"
+  })
+}
 
-# resource "aws_vpc_endpoint" "ecr_api" {
-#   vpc_id              = module.vpc.vpc_id
-#   service_name        = "com.amazonaws.${var.region}.ecr.api"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = module.vpc.private_subnets
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [module.eks.node_security_group_id]
+  private_dns_enabled = true
 
-#   tags = merge(module.labels.tags, {
-#     Name = "${local.name}-ecr-api"
-#   })
-# }
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-ecr-api"
+  })
+}
 
-# resource "aws_vpc_endpoint" "ecr_dkr" {
-#   vpc_id              = module.vpc.vpc_id
-#   service_name        = "com.amazonaws.${var.region}.ecr.dkr"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = module.vpc.private_subnets
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [module.eks.node_security_group_id]
+  private_dns_enabled = true
 
-#   tags = merge(module.labels.tags, {
-#     Name = "${local.name}-ecr-dkr"
-#   })
-# }
+  tags = merge(module.labels.tags, {
+    Name = "${local.name}-ecr-dkr"
+  })
+}
 
 # # Add the rest only if you really need them (most clusters work fine with just S3 + ECR)
 # resource "aws_vpc_endpoint" "ssm" {

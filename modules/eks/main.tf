@@ -7,19 +7,19 @@ locals {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.26.0" # Latest stable as of Nov 2025
+  version = "~> 21.0" # Latest stable as of Nov 2025
 
-  cluster_name    = local.cluster_name
-  cluster_version = var.cluster_version
+  name    = local.cluster_name
+  kubernetes_version = var.cluster_version
+
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
 
   # ==================================================================
   # FULLY PRIVATE – no public access allowed
   # ==================================================================
-  cluster_endpoint_private_access = true
-  #cluster_endpoint_public_access  = false
-  cluster_endpoint_public_access = true #sji todo - moreve this!!!!!
+  endpoint_private_access = true
+  endpoint_public_access  = true #sji todo
 
   # Optional: dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = var.control_plane_subnet_ids
@@ -27,11 +27,22 @@ module "eks" {
   # ==================================================================
   # Addons – only what you need
   # ==================================================================
-  cluster_addons = {
-    coredns            = { most_recent = true }
-    kube-proxy         = { most_recent = true }
-    vpc-cni            = { most_recent = true }
-    aws-ebs-csi-driver = { most_recent = true }
+  addons = {
+    vpc-cni = {
+      most_recent       = true
+      before_compute    = true
+      resolve_conflicts = "OVERWRITE"
+    }
+
+    coredns = {
+      most_recent       = true
+      resolve_conflicts = "OVERWRITE"
+    }
+
+    kube-proxy = {
+      most_recent       = true
+      resolve_conflicts = "OVERWRITE"
+    }
   }
 
   # ==================================================================
@@ -62,6 +73,7 @@ module "eks" {
           }
         }
       }
+      depends_on = ["vpc-cni"]
     }
   }
 
@@ -87,7 +99,7 @@ module "eks" {
   # Logging & tagging
   # ==================================================================
   cloudwatch_log_group_retention_in_days = var.log_retention_days
-  cluster_enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = merge(var.tags, {
     "GitHubRepo"  = var.github_repo
