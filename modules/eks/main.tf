@@ -19,7 +19,7 @@ module "eks" {
   # FULLY PRIVATE – no public access allowed
   # ==================================================================
   #endpoint_private_access = true
-  endpoint_public_access  = true #sji todo
+  endpoint_public_access = true #sji todo
 
   # Optional: dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = var.control_plane_subnet_ids
@@ -98,13 +98,13 @@ module "eks" {
   # ==================================================================
   # Logging & tagging
   # ==================================================================
-#   cloudwatch_log_group_retention_in_days = var.log_retention_days
-#   enabled_log_types                      = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  #   cloudwatch_log_group_retention_in_days = var.log_retention_days
+  #   enabled_log_types                      = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-#   tags = merge(var.tags, {
-#     "GitHubRepo"  = var.github_repo
-#     "Environment" = var.environment
-#   })
+  #   tags = merge(var.tags, {
+  #     "GitHubRepo"  = var.github_repo
+  #     "Environment" = var.environment
+  #   })
 }
 
 resource "null_resource" "delay_destroy" {
