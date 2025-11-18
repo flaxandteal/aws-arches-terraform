@@ -85,8 +85,8 @@ module "vpc" {
   private_subnets  = var.app_subnet_cidrs
   database_subnets = var.db_subnet_cidrs
 
-  enable_nat_gateway = false
-  create_igw         = false
+  enable_nat_gateway   = false
+  create_igw           = false
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -163,7 +163,7 @@ module "s3" {
   source = "./modules/s3"
 
   name                      = local.name
-  environment = var.environment
+  environment               = var.environment
   s3_kms_key_arn            = module.kms.s3_kms_key_arn
   lifecycle_transition_days = var.lifecycle_transition_days
   lifecycle_storage_class   = var.lifecycle_storage_class

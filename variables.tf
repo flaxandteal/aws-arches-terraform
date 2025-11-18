@@ -31,7 +31,7 @@ variable "vpc_cidr" { type = string }
 variable "vpc_azs" { type = list(string) }
 
 variable "app_subnet_cidrs" { type = list(string) }
-variable "db_subnet_cidrs"  { type = list(string) }
+variable "db_subnet_cidrs" { type = list(string) }
 
 # --------------------------------------------------------------------------
 # EKS
