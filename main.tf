@@ -180,10 +180,10 @@ module "s3" {
 # 7. VPC Endpoints – fully private
 # =============================================================================
 resource "aws_vpc_endpoint" "s3" {
-  vpc_id       = module.vpc.vpc_id
-  service_name = "com.amazonaws.${var.region}.s3"
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type = "Gateway"
-  route_table_ids = module.vpc.private_route_table_ids
+  route_table_ids   = module.vpc.private_route_table_ids
 
   tags = merge(module.labels.tags, {
     Name = "${local.name}-s3"
@@ -191,11 +191,11 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 resource "aws_vpc_endpoint" "ecr_api" {
-  vpc_id            = module.vpc.vpc_id
-  service_name      = "com.amazonaws.${var.region}.ecr.api"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = module.vpc.private_subnets
-  security_group_ids = [module.eks.node_security_group_id]
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [module.eks.node_security_group_id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, {
@@ -204,11 +204,11 @@ resource "aws_vpc_endpoint" "ecr_api" {
 }
 
 resource "aws_vpc_endpoint" "ecr_dkr" {
-  vpc_id            = module.vpc.vpc_id
-  service_name      = "com.amazonaws.${var.region}.ecr.dkr"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = module.vpc.private_subnets
-  security_group_ids = [module.eks.node_security_group_id]
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [module.eks.node_security_group_id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, {
