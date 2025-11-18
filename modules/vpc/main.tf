@@ -6,8 +6,8 @@ locals {
 # VPC + Subnets
 # --------------------------------------------------------------
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
 
   name = var.name
   cidr = var.cidr

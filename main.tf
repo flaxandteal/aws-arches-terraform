@@ -58,22 +58,13 @@ locals {
 # 1. VPC
 # =============================================================================
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source = "./modules/vpc"
 
-  name = local.name
+  name        = module.common.name
+  common_tags = module.common.common_tags
+
   cidr = var.vpc_cidr
-
-  azs              = var.vpc_azs
-  private_subnets  = var.app_subnet_cidrs   # ← EKS nodes
-  database_subnets = var.db_subnet_cidrs    # ← RDS
-  intra_subnets    = var.intra_subnet_cidrs # ← control plane (optional)
-
-  enable_nat_gateway   = false
-  create_igw           = false
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = module.labels.tags
+  azs  = var.vpc_azs
 }
 
 # =============================================================================
