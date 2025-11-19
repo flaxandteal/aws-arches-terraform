@@ -48,17 +48,38 @@ runs:
     #   run: terraform destroy -auto-approve -var-file=${{ inputs.tfvars-file }}
     #   shell: bash
 
+    # ---------------------------------------------
     # KMS cleanup
-    - name: Delete lingering KMS alias
-      shell: bash
-      run: aws kms delete-alias --alias-name alias/eks/catalina-dev || true
-
-    - name: Purge old KMS key (if in Pending Deletion)
-      shell: bash
+    # ---------------------------------------------
+    - name: Clean up old KMS alias + key (any region)
       run: |
-        KEY_ID=$(aws kms list-keys --query "Keys[?contains(KeyArn,'catalina-dev')].KeyId" --output text)
-        for id in $KEY_ID; do
-          echo "Scheduling immediate deletion of old key $id"
-          aws kms schedule-key-deletion --key-id $id --pending-window-in-days 7
-          aws kms cancel-key-deletion --key-id $id || true
+        # Grab the region the workflow is already using (same region Terraform/EKS is using
+        REGION="${AWS_REGION:-$(aws configure get region)}"
+        if [[ -z "$REGION" ]]; then
+          echo "Could not detect region – falling back to eu-north-1 (change if needed)"
+          REGION="eu-north-1"
+        fi
+        REGION="eu-north-1"
+        echo "Using region: $REGION"
+        
+        # 1. Delete the alias (instant, idempotent)
+        echo "Deleting KMS alias if it exists..."
+        aws kms delete-alias --region "$REGION" --alias-name alias/eks/catalina-dev || true
+
+        # 2. Find and cancel any pending-deletion key that contains catalina-dev in its description/ARN
+        echo "Looking for leftover catalina-dev KMS keys..."
+        KEY_IDS=$(aws kms list-keys --region "$REGION" --query "Keys[].KeyId" --output text)
+
+        for id in $KEY_IDS; do
+          # loop over every key in the account
+          ARN=$(aws kms describe-key --region "$REGION" --key-id "$id" --query 'KeyMetadata.KeyArn' --output text)
+          DESC=$(aws kms describe-key --region "$REGION" --key-id "$id" --query 'KeyMetadata.Description' --output text || echo "")
+
+          if [[ "$ARN" == *"catalina-dev"* ]] || [[ "$DESC" == *"catalina-dev"* ]]; then
+            echo "Found leftover key $id – cancelling pending deletion (if any) and re-enabling"
+            aws kms cancel-key-deletion --region "$REGION" --key-id "$id" --no-cli-pager || true
+            aws kms enable-key         --region "$REGION" --key-id "$id" --no-cli-pager || true
+          fi
         done
+
+        echo "KMS cleanup complete"     
