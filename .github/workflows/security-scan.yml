@@ -3,11 +3,6 @@ name: Terraform Security Scan
 on:
   workflow_dispatch:
     inputs:
-      auto-apply:
-        type: boolean
-        description: 'Automatically apply the planned changes'
-        required: true
-        default: false
       environment:
         type: choice
         options: [dev, stage, uat, prod]
