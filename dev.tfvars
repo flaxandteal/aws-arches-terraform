@@ -35,13 +35,11 @@ intra_subnet_cidrs = []
 eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer"
 cluster_version         = "1.34"
 
-clusters = {
-  instance_type      = "t4g.small"
-  desired_size       = 1
-  min_size           = 1
-  max_size           = 2
-  log_retention_days = 3
-}
+node_instance_type = "t4g.small"
+node_desired_size  = 1
+node_min_size      = 1
+node_max_size      = 2
+
 log_retention_days = 3
 
 github_repo = "https://github.com/flaxandteal/catalina-fluxcd"

@@ -125,10 +125,10 @@ module "eks" {
   private_subnet_ids       = module.vpc.private_subnet_ids
   control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets_ids
 
-  node_instance_type = var.clusters.instance_type
-  node_min_size      = var.clusters.min_size
-  node_max_size      = var.clusters.max_size
-  node_desired_size  = var.clusters.desired_size
+  node_instance_type = var.node_instance_type
+  node_min_size      = var.node_min_size
+  node_max_size      = var.node_max_size
+  node_desired_size  = var.node_desired_size
 
   ebs_kms_key_arn         = module.kms.ebs_kms_key_arn
   eks_admin_principal_arn = var.eks_admin_principal_arn
