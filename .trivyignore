@@ -1,0 +1,7 @@
+# Ignore vendor modules and example manifests
+**/.terraform/**
+**/examples/**
+**/.terraform.lock.hcl
+
+# Ignore EKS module examples (thesegive false positives)
+**/eks.eks/examples/**
