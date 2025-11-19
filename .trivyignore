@@ -1,7 +1,26 @@
-# Ignore vendor modules and example manifests
-**/.terraform/**
-**/examples/**
-**/.terraform.lock.hcl
+###############################
+# Ignore Terraform module cache
+###############################
+.terraform/**
+.terraform/modules/**
+.terraform/providers/**
 
-# Ignore EKS module examples (thesegive false positives)
+###############################################
+# Ignore module authors' example Kubernetes YAML
+###############################################
+**/examples/**
 **/eks.eks/examples/**
+**/eks/**/examples/**
+
+########################################
+# Ignore Kubernetes example deployments
+########################################
+**/deployment.yaml
+**/deploy/**
+
+###############################################
+# Ignore trivy scanning artifacts and tfplans
+###############################################
+tfplan.json
+
+bootstrap/**

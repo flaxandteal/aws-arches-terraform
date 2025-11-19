@@ -1,17 +1,12 @@
 # various
 workings
-workings/*
-**/workings/*
-/workings/*
 *-workspace
 multi-cloud-arches-terraform.code-workspace
 *infracost*
 session-manager-plugin.*
 
 # AWS files
-aws/*
-/aws/*
-**/aws/*
+aws
 
 # Local .terraform directories
 **/.terraform/*

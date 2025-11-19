@@ -40,6 +40,7 @@ runs:
       with:
         scan-type: config
         format: table
+        skip-dirs: .terraform
         severity: CRITICAL,HIGH,MEDIUM,LOW
         exit-code: '1'
 
@@ -49,6 +50,7 @@ runs:
       with:
         scan-type: config
         format: sarif
+        skip-dirs: .terraform
         output: trivy-static.sarif
         severity: CRITICAL,HIGH,MEDIUM,LOW
 
@@ -70,6 +72,7 @@ runs:
         scan-type: config
         input: tfplan.json
         format: table
+        skip-dirs: .terraform
         severity: CRITICAL,HIGH,MEDIUM,LOW
         exit-code: '1'
 
@@ -80,6 +83,7 @@ runs:
         scan-type: config
         input: tfplan.json
         format: sarif
+        skip-dirs: .terraform
         output: trivy-plan.sarif
         severity: CRITICAL,HIGH,MEDIUM,LOW
 
