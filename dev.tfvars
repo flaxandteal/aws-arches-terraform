@@ -6,19 +6,16 @@ environment = "dev"
 # --------------------------------------------------------------------------
 # Common 
 # --------------------------------------------------------------------------
-region = "eu-north-1"
-name   = "catalina-dev"
+region      = "eu-north-1"
+name_prefix = "catalina"
 
-common_tags = {
+extra_tags = {
   Project     = "catalina"
   ManagedBy   = "Terraform"
   CostCenter  = "IT"
   Environment = "Development"
   Owner       = "FlaxAndTeal"
-}
-
-extra_tags = {
-  Purpose = "development"
+  Purpose     = "development"
 }
 
 # --------------------------------------------------------------------------
@@ -27,6 +24,7 @@ extra_tags = {
 vpc_cidr = "10.20.0.0/16"
 vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 
+intra_subnet_cidrs = []
 # # Smaller subnets – dev doesn't need 3 AZs
 # app_subnet_cidrs = ["10.20.1.0/24", "10.20.2.0/24"]
 # db_subnet_cidrs  = ["10.20.11.0/24", "10.20.12.0/24"]
@@ -37,17 +35,13 @@ vpc_azs  = ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
 eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer"
 cluster_version         = "1.34"
 
-clusters = {
-  instance_type      = "t4g.small"
-  desired_size       = 1
-  min_size           = 1
-  max_size           = 2
-  log_retention_days = 3
-}
+instance_type      = "t4g.small"
+desired_size       = 1
+min_size           = 1
+max_size           = 2
+log_retention_days = 3
 
 github_repo = "https://github.com/flaxandteal/catalina-fluxcd"
-
-log_retention_days = 3
 
 # --------------------------------------------------------------------------
 # RDS – smallest possible
@@ -55,6 +49,9 @@ log_retention_days = 3
 db_class            = "db.t3.micro"
 db_multi_az         = false
 db_backup_retention = 1
+
+db_storage        = 20
+db_instance_class = "db.t3.micro"
 
 # --------------------------------------------------------------------------
 # s3
