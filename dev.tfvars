@@ -53,7 +53,7 @@ db_class            = "db.t3.micro"
 db_multi_az         = false
 db_backup_retention = 1
 
-db_storage        = 20
+db_storage = 20
 
 # --------------------------------------------------------------------------
 # s3
