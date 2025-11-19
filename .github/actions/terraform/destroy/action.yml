@@ -50,9 +50,11 @@ runs:
 
     # KMS cleanup
     - name: Delete lingering KMS alias
+      shell: bash
       run: aws kms delete-alias --alias-name alias/eks/catalina-dev || true
 
     - name: Purge old KMS key (if in Pending Deletion)
+      shell: bash
       run: |
         KEY_ID=$(aws kms list-keys --query "Keys[?contains(KeyArn,'catalina-dev')].KeyId" --output text)
         for id in $KEY_ID; do
