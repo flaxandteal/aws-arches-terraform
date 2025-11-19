@@ -18,7 +18,7 @@ extra_tags = {
   Purpose     = "development"
 }
 
-use_random_suffix = true  #set for testing only
+use_random_suffix = true #set for testing only
 
 # --------------------------------------------------------------------------
 # VPC 

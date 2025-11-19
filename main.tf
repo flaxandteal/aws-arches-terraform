@@ -89,7 +89,7 @@ module "kms" {
   name        = local.name
   environment = var.environment
   #eks_node_role_arns = [module.eks.node_iam_role_arn] # will be known after EKS - nope! circular i think
-  tags = module.labels.tags
+  tags              = module.labels.tags
   use_random_suffix = var.use_random_suffix
 
   # We handle the circular dependency cleanly with depends_on
