@@ -19,6 +19,7 @@ terraform {
       version = "~> 1.19"
     }
   }
+  experiments = [deprecation_warnings_suppression] #silence deprecated syntax outside our control
 
   backend "s3" {} # config injected at runtime from GitHub secret
 }
