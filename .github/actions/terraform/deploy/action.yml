@@ -63,7 +63,7 @@ runs:
         terraform plan \
           -input=false \
           -no-color \
-          -var-file="${{ inputs.tfvars-file }}" 
+          -var-file="${{ inputs.tfvars-file }}" \
           -out=tfplan
     # terraform plan \
     #   -var-file="${{ inputs.tfvars-file }}" \
