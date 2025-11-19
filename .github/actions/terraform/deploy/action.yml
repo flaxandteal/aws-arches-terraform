@@ -61,10 +61,15 @@ runs:
       shell: bash
       run: |
         terraform plan \
-          -var-file="${{ inputs.tfvars-file }}" \
-          -out=tfplan \
-          -detailed-exitcode
-        echo "exitcode=$?" >> $GITHUB_OUTPUT
+          -input=false \
+          -no-color \
+          -var-file="${{ inputs.tfvars-file }}" 
+          -out=tfplan
+    # terraform plan \
+    #   -var-file="${{ inputs.tfvars-file }}" \
+    #   -out=tfplan \
+    #   -detailed-exitcode
+    # echo "exitcode=$?" >> $GITHUB_OUTPUT
 #sji todoremove
 # terraform import 'module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"]' alias/eks/catalina-dev
     # ---------------------------------------------
