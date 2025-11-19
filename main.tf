@@ -123,7 +123,7 @@ module "eks" {
 
   vpc_id                   = module.vpc.vpc_id
   private_subnet_ids       = module.vpc.private_subnet_ids
-  control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets
+  control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnets_ids
 
   node_instance_type = var.node_instance_type
   node_min_size      = var.node_min_size

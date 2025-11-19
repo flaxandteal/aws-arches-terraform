@@ -84,6 +84,6 @@ runs:
 
     - name: Terraform Apply
       shell: bash
-      if: ${{ inputs.auto-apply == true }}
+      if: ${{ inputs.auto-apply }}
       run: |
         terraform apply -auto-approve tfplan
