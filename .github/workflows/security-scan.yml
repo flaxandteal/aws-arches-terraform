@@ -64,7 +64,7 @@ jobs:
           TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}        
 
       - name: Full Security Scan
-        uses: ./.github/actions/security/terraform-security-scan
+        uses: ./.github/actions/terraform-security-scan
         with:
           environment: ${{ inputs.environment || 'dev' }}
           tfvars-file: ${{ inputs.environment || 'dev' }}.tfvars

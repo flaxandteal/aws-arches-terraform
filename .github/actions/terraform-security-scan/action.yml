@@ -9,9 +9,6 @@ inputs:
   backend-file-path:
     required: true
     default: 'backend.hcl'
-  auto-apply:
-    required: false
-    default: 'false'
 
 runs:
   using: "composite"
