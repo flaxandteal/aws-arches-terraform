@@ -35,10 +35,13 @@ intra_subnet_cidrs = []
 eks_admin_principal_arn = "arn:aws:iam::034791378213:user/terraform-deployer"
 cluster_version         = "1.34"
 
-instance_type      = "t4g.small"
-desired_size       = 1
-min_size           = 1
-max_size           = 2
+clusters = {
+  instance_type      = "t4g.small"
+  desired_size       = 1
+  min_size           = 1
+  max_size           = 2
+  log_retention_days = 3
+}
 log_retention_days = 3
 
 github_repo = "https://github.com/flaxandteal/catalina-fluxcd"
@@ -51,7 +54,6 @@ db_multi_az         = false
 db_backup_retention = 1
 
 db_storage        = 20
-db_instance_class = "db.t3.micro"
 
 # --------------------------------------------------------------------------
 # s3
