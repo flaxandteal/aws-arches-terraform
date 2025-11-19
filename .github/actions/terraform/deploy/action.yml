@@ -65,11 +65,6 @@ runs:
           -no-color \
           -var-file="${{ inputs.tfvars-file }}" \
           -out=tfplan
-    # terraform plan \
-    #   -var-file="${{ inputs.tfvars-file }}" \
-    #   -out=tfplan \
-    #   -detailed-exitcode
-    # echo "exitcode=$?" >> $GITHUB_OUTPUT
 #sji todoremove
 # terraform import 'module.eks.module.eks.module.kms.aws_kms_alias.this["cluster"]' alias/eks/catalina-dev
     # ---------------------------------------------
@@ -89,6 +84,6 @@ runs:
 
     - name: Terraform Apply
       shell: bash
-      if: ${{ inputs.auto-apply }}
+      if: ${{ inputs.auto-apply == 'true' }}
       run: |
         terraform apply -auto-approve tfplan

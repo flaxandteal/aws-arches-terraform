@@ -1,12 +1,15 @@
 # modules/kms/main.tf
-# NO CIRCULAR DEPENDENCY – works with EKS created AFTER KMS
-
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
 locals {
   account_id = data.aws_caller_identity.current.account_id
   partition  = data.aws_partition.current.partition
+  kms_suffix = var.use_random_suffix ? "-${random_id.kms_suffix.hex}" : ""
+}
+
+resource "random_id" "kms_suffix" { #used for testing only since KMS keys of same name cannot be created repeatedly
+  byte_length = 2
 }
 
 # ==================================================================
@@ -26,7 +29,7 @@ resource "aws_kms_key" "storage" {
 }
 
 resource "aws_kms_alias" "storage" {
-  name          = "alias/${var.name}-storage"
+  name          = "alias/${var.name}-${var.environment}${local.kms_suffix}-storage"
   target_key_id = aws_kms_key.storage.key_id
 }
 
@@ -47,7 +50,7 @@ resource "aws_kms_key" "s3" {
 }
 
 resource "aws_kms_alias" "s3" {
-  name          = "alias/${var.name}-s3"
+  name          = "alias/${var.name}-${var.environment}${local.kms_suffix}-s3"
   target_key_id = aws_kms_key.s3.key_id
 }
 

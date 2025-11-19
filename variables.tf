@@ -44,6 +44,12 @@ variable "eks_admin_principal_arn" {
   type        = string
 }
 
+variable "use_random_suffix" {
+  description = "Whether to add a random suffix to KMS alias names (useful for ephemeral or test environments)"
+  type        = bool
+  default     = false
+}
+
 # --------------------------------------------------------------------------
 # VPC
 # --------------------------------------------------------------------------
