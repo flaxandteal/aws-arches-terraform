@@ -96,18 +96,18 @@ runs:
     #       trivy-static.sarif
     #       trivy-plan.sarif
 
-    # ========================
-    # Artifact Upload
-    # ========================
-    - name: Upload Scan Artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: terraform-security-scan-${{ github.run_number }}-${{ inputs.environment }}
-        path: |
-          trivy-static.sarif
-          trivy-plan.sarif
-          tfplan.json
-          backend.hcl
-        retention-days: 90
-        if-no-files-found: warn
+    # # ========================
+    # # Artifact Upload
+    # # ========================
+    # - name: Upload Scan Artifacts
+    #   if: always()
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: terraform-security-scan-${{ github.run_number }}-${{ inputs.environment }}
+    #     path: |
+    #       trivy-static.sarif
+    #       trivy-plan.sarif
+    #       tfplan.json
+    #       backend.hcl
+    #     retention-days: 90
+    #     if-no-files-found: warn
