@@ -31,4 +31,20 @@ module "vpc" {
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = "1"
   }
+
+  ##################################################
+  # Enable VPC Flow Logs (AVD-AWS-0***78 (MEDIUM))
+  ##################################################
+  enable_flow_log                      = true
+  flow_log_destination_type            = "cloud-watch-logs"
+  flow_log_destination_arn             = aws_cloudwatch_log_group.vpc_flow_logs.arn
+  flow_log_cloudwatch_log_group_kms_key_id = aws_kms_key.vpc_flow_logs_kms.arn
+  flow_log_max_aggregation_interval    = 60
+}
+
+resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  name              = "/aws/vpc/flow-logs"
+  retention_in_days = 90
+
+  kms_key_id = aws_kms_key.vpc_flow_logs_kms.arn
 }

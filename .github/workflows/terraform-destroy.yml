@@ -64,7 +64,7 @@ jobs:
           TERRAFORM_BACKEND_PROD:  ${{ secrets.TERRAFORM_BACKEND_PROD }}
 
       - name: Terraform Destroy
-        uses: ./.github/actions/terraform-destroy
+        uses: ./.github/actions/terraform/destroy
         with:
           environment: ${{ inputs.environment || 'dev' }}
           tfvars-file: ${{ inputs.environment || 'dev' }}.tfvars

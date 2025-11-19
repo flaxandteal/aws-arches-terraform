@@ -7,3 +7,9 @@ output "node_iam_role_name" { value = module.eks.eks_managed_node_groups.main.ia
 output "node_iam_role_arn" { value = module.eks.eks_managed_node_groups.main.iam_role_arn }
 output "node_security_group_id" { value = module.eks.node_security_group_id }
 output "cluster_security_group_id" { value = module.eks.cluster_security_group_id }
+
+output "kubeconfig" {
+  value       = module.eks.kubeconfig
+  sensitive   = true
+  description = "Kubeconfig for the real cluster – Flux will need this"
+}
