@@ -41,12 +41,12 @@ runs:
         terraform init -upgrade -backend-config="${{ inputs.backend-file-path }}"
         terraform providers
 
-    # # ---------------------------------------------
-    # # Terraform Destroy
-    # # ---------------------------------------------
-    # - name: Terraform Destroy
-    #   run: terraform destroy -auto-approve -var-file=${{ inputs.tfvars-file }}
-    #   shell: bash
+    # ---------------------------------------------
+    # Terraform Destroy
+    # ---------------------------------------------
+    - name: Terraform Destroy
+      run: terraform destroy -auto-approve -var-file=${{ inputs.tfvars-file }}
+      shell: bash
 
     # ---------------------------------------------
     # KMS cleanup
@@ -78,3 +78,10 @@ runs:
         done
 
         echo "KMS cleanup complete"     
+
+    # # Grab the region the workflow is already using (same region Terraform/EKS is using
+    # REGION="${AWS_REGION:-$(aws configure get region)}"
+    # if [[ -z "$REGION" ]]; then
+    #   echo "Could not detect region – falling back to eu-north-1 (change if needed)"
+    #   REGION="eu-north-1"
+    # fi
