@@ -52,6 +52,7 @@ runs:
     # KMS cleanup
     # ---------------------------------------------
     - name: Clean up old KMS alias + key (any region)
+      shell: bash
       run: |
         # Grab the region the workflow is already using (same region Terraform/EKS is using
         REGION="${AWS_REGION:-$(aws configure get region)}"
