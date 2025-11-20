@@ -31,7 +31,7 @@ resource "aws_s3_bucket_public_access_block" "this" {
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
-  restrict_public_buckets    = true
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
@@ -42,7 +42,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
     status = "Enabled"
 
     expiration {
-      days = 3650  # 10 years, or whatever your compliance requires
+      days = 3650 # 10 years, or whatever your compliance requires
     }
 
     noncurrent_version_expiration {
