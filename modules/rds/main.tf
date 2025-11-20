@@ -37,11 +37,11 @@ module "rds" {
   })
 
   performance_insights_enabled          = true
-  performance_insights_retention_period = 7
+  performance_insights_retention_period = var.performance_insights_retention_period
 
-  iam_database_authentication_enabled = true
+  iam_database_authentication_enabled   = true
 
-  deletion_protection = var.environment != "dev" ? true : false
+  deletion_protection                   = var.environment != "dev" ? true : false
 }
 
 resource "random_password" "master" {
