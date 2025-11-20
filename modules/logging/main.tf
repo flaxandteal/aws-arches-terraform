@@ -9,13 +9,24 @@ resource "aws_s3_bucket" "this" {
   })
 }
 
+# resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
+#   bucket = aws_s3_bucket.this.id
+
+#   rule {
+#     apply_server_side_encryption_by_default {
+#       sse_algorithm = "AES256"
+#     }
+#   }
+# }
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = aws_kms_key.s3_logging.arn
+      sse_algorithm     = "aws:kms"
     }
+    bucket_key_enabled = true
   }
 }
 
@@ -105,17 +116,17 @@ data "aws_iam_policy_document" "s3_logging_key" {
 
 data "aws_partition" "current" {}
 
-# ──────────────────────────────────────────────────────────────────────
-# Encryption block – uses CMK instead of AES256
-# ──────────────────────────────────────────────────────────────────────
-resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
-  bucket = aws_s3_bucket.this.id
+# # ──────────────────────────────────────────────────────────────────────
+# # Encryption block – uses CMK instead of AES256
+# # ──────────────────────────────────────────────────────────────────────
+# resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
+#   bucket = aws_s3_bucket.this.id
 
-  rule {
-    apply_server_side_encryption_by_default {
-      kms_master_key_id = aws_kms_key.s3_logging.arn
-      sse_algorithm     = "aws:kms"
-    }
-    bucket_key_enabled = true
-  }
-}
+#   rule {
+#     apply_server_side_encryption_by_default {
+#       kms_master_key_id = aws_kms_key.s3_logging.arn
+#       sse_algorithm     = "aws:kms"
+#     }
+#     bucket_key_enabled = true
+#   }
+# }
