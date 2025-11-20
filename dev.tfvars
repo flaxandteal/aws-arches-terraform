@@ -55,7 +55,7 @@ db_backup_retention = 1
 
 db_storage = 20
 
-performance_insights_retention_period = 1
+performance_insights_retention_period = 7 # minimum possible
 
 # --------------------------------------------------------------------------
 # s3
