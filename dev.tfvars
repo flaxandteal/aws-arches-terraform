@@ -60,5 +60,6 @@ db_storage = 20
 # --------------------------------------------------------------------------
 lifecycle_transition_days = 7
 lifecycle_storage_class   = "GLACIER"
+force_destroy = true
 #enable_logging   = false
 #logging_bucket   = "catalina-dev-logs-bucket" 

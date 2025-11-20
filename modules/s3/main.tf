@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
 
   force_destroy = var.force_destroy # false in prod, true in dev/stage/uat
-
+  
   tags = merge(var.tags, {
     Name        = local.bucket_name
     Environment = var.environment
