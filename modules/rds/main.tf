@@ -48,9 +48,9 @@ resource "random_password" "master" {
 # Security Group
 # ------------------------------------------------------------------
 resource "aws_security_group" "rds" {
-  name   = "${var.name_prefix}-${var.environment}-rds-sg"
-  vpc_id = var.vpc_id
-  description     = "PostgreSQL from EKS nodes" #Security groups should include a description for auditing purposes.
+  name        = "${var.name_prefix}-${var.environment}-rds-sg"
+  vpc_id      = var.vpc_id
+  description = "PostgreSQL from EKS nodes" #Security groups should include a description for auditing purposes.
 
   ingress {
     description     = "PostgreSQL from EKS nodes"

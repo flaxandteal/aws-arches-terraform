@@ -4,7 +4,7 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-locals {
+locals { #sji todo add var.environment
   bucket_name = "${var.name}-data-${random_id.suffix.hex}"
 }
 
@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
 
   force_destroy = var.force_destroy # false in prod, true in dev/stage/uat
-  
+
   tags = merge(var.tags, {
     Name        = local.bucket_name
     Environment = var.environment
@@ -89,13 +89,10 @@ resource "aws_s3_bucket_public_access_block" "this" {
 }
 
 # --------------------------------------------------------------------------
-# Logging
+# Server Access Logging – REQUIRED for all buckets (best practice)
 # --------------------------------------------------------------------------
 resource "aws_s3_bucket_logging" "this" {
-  count = var.enable_logging ? 1 : 0
-
-  bucket = aws_s3_bucket.this.id
-  #depends_on    = [aws_s3_bucket.this]
+  bucket        = aws_s3_bucket.this.id
   target_bucket = var.logging_bucket
   target_prefix = "logs/s3/${local.bucket_name}/"
 }

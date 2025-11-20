@@ -33,8 +33,9 @@ variable "enable_logging" {
 }
 
 variable "logging_bucket" {
-  type    = string
-  default = ""
+  description = "Central S3 bucket for access logs (MUST exist and be in same region)"
+  type        = string
+  nullable    = false
 }
 
 variable "force_destroy" {
