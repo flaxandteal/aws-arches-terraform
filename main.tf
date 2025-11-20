@@ -100,7 +100,7 @@ module "kms" {
 # 6a. S3 Access Logs Bucket
 # =============================================================================
 module "s3_logging_bucket" {
-  source = "./modules/s3-logging-bucket" # ← create this tiny module (see below)
+  source = "./modules/logging" # ← create this tiny module (see below)
 
   name        = "s3-access-logs"
   environment = "logs"
