@@ -227,6 +227,45 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   })
 }
 
+# =============================================================================
+# 7.5 Additional VPC Endpoints REQUIRED for fully-private EKS clusters
+# =============================================================================
+
+# # STS – mandatory for node registration (tokens)
+# resource "aws_vpc_endpoint" "sts" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${var.region}.sts"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnet_ids
+#   security_group_ids  = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
+
+#   tags = merge(module.labels.tags, { Name = "${local.name}-sts" })
+# }
+
+# # EC2 – needed for describe-instances, IMDSv2, etc.
+# resource "aws_vpc_endpoint" "ec2" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${var.region}.ec2"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnet_ids
+#   security_group_ids  = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
+
+#   tags = merge(module.labels.tags, { Name = "${local.name}-ec2" })
+# }
+
+# # CloudWatch Logs – if you ever want logs from workers
+# resource "aws_vpc_endpoint" "logs" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${var.region}.logs"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnet_ids
+#   security_group_ids  = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
+
+#   tags = merge(module.labels.tags, { Name = "${local.name}-logs" })
+# }
 # # Add the rest only if you really need them (most clusters work fine with just S3 + ECR)
 # resource "aws_vpc_endpoint" "ssm" {
 #   vpc_id            = module.vpc.vpc_id
