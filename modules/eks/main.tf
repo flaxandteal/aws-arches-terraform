@@ -35,7 +35,7 @@ module "eks" {
       from_port                  = 443
       to_port                    = 443
       type                       = "ingress"
-      source_node_security_group = true
+      source_security_group_ids = [aws_security_group.eks_nodes[0].id]
     }
   }
   # ==================================================================
@@ -166,53 +166,53 @@ resource "null_resource" "delay_destroy" {
   }
 }
 
-# =============================================================================
-# REQUIRED VPC INTERFACE ENDPOINTS FOR FULLY PRIVATE EKS (v21+)
-# Without these the nodes can NEVER register → CREATE_FAILED forever
-# =============================================================================
+# # =============================================================================
+# # REQUIRED VPC INTERFACE ENDPOINTS FOR FULLY PRIVATE EKS (v21+)
+# # Without these the nodes can NEVER register → CREATE_FAILED forever
+# # =============================================================================
 
-resource "aws_vpc_endpoint" "eks_api" {
-  vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.eks"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = var.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
-  private_dns_enabled = true
+# resource "aws_vpc_endpoint" "eks_api" {
+#   vpc_id              = var.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.eks"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = var.private_subnet_ids
+#   security_group_ids  = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
 
-  tags = merge(var.tags, {
-    Name = "${local.cluster_name}-eks-api"
-  })
-}
+#   tags = merge(var.tags, {
+#     Name = "${local.cluster_name}-eks-api"
+#   })
+# }
 
-resource "aws_vpc_endpoint" "sts" {
-  vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.sts"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = var.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
-  private_dns_enabled = true
+# resource "aws_vpc_endpoint" "sts" {
+#   vpc_id              = var.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.sts"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = var.private_subnet_ids
+#   security_group_ids  = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
 
-  tags = merge(var.tags, { Name = "${local.cluster_name}-sts" })
-}
+#   tags = merge(var.tags, { Name = "${local.cluster_name}-sts" })
+# }
 
-resource "aws_vpc_endpoint" "ec2" {
-  vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = var.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
-  private_dns_enabled = true
+# resource "aws_vpc_endpoint" "ec2" {
+#   vpc_id              = var.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = var.private_subnet_ids
+#   security_group_ids  = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
 
-  tags = merge(var.tags, { Name = "${local.cluster_name}-ec2" })
-}
+#   tags = merge(var.tags, { Name = "${local.cluster_name}-ec2" })
+# }
 
-resource "aws_vpc_endpoint" "logs" {
-  vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.logs"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = var.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
-  private_dns_enabled = true
+# resource "aws_vpc_endpoint" "logs" {
+#   vpc_id              = var.vpc_id
+#   service_name        = "com.amazonaws.${data.aws_region.current.name}.logs"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = var.private_subnet_ids
+#   security_group_ids  = [module.eks.node_security_group_id]
+#   private_dns_enabled = true
 
-  tags = merge(var.tags, { Name = "${local.cluster_name}-logs" })
-}
+#   tags = merge(var.tags, { Name = "${local.cluster_name}-logs" })
+# }
