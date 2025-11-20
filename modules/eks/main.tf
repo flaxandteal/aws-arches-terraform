@@ -35,7 +35,7 @@ module "eks" {
       from_port                  = 443
       to_port                    = 443
       type                       = "ingress"
-      source_security_group_ids = [aws_security_group.eks_nodes[0].id]
+      source_node_security_group = true
     }
   }
   # ==================================================================
