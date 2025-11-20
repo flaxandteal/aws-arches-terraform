@@ -88,13 +88,16 @@ module "eks" {
   # ==================================================================
   # Logging & tagging
   # ==================================================================
-  #   cloudwatch_log_group_retention_in_days = var.log_retention_days
-  #   enabled_log_types                      = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  cloudwatch_log_group_retention_in_days = var.log_retention_days
+  enabled_log_types                      = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  #   tags = merge(var.tags, {
-  #     "GitHubRepo"  = var.github_repo
-  #     "Environment" = var.environment
-  #   })
+  tags = merge(var.tags, {
+    Name                                              = local.cluster_name
+    GitHubRepo                                        = var.github_repo
+    Environment                                       = var.environment
+    "k8s.io/cluster-autoscaler/enabled"               = "true"
+    "k8s.io/cluster-autoscaler/${local.cluster_name}" = "owned"
+  })
 }
 
 resource "null_resource" "delay_destroy" {

@@ -66,3 +66,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "performance_insights_retention_period" {
+  description = "RDS performance insights retention period in days"
+  type        = number
+  default     = 7
+}

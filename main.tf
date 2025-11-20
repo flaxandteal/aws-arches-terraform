@@ -161,6 +161,8 @@ module "rds" {
   db_password         = var.db_password
   kms_key_arn         = module.kms.rds_kms_key_arn
 
+  performance_insights_retention_period = var.performance_insights_retention_period
+
   tags = module.labels.tags
 }
 
