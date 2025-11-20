@@ -36,7 +36,7 @@ provider "aws" {
 }
 
 data "aws_caller_identity" "current" {}
-data "aws_partition" "current" {} 
+data "aws_partition" "current" {}
 data "aws_region" "current" {}
 
 # =============================================================================
@@ -127,7 +127,7 @@ module "s3" {
   lifecycle_transition_days = var.lifecycle_transition_days
   lifecycle_storage_class   = var.lifecycle_storage_class
   force_destroy             = var.environment != "prod"
-  logging_bucket = module.s3_logging_bucket.bucket_name
+  logging_bucket            = module.s3_logging_bucket.bucket_name
 
   tags = module.labels.tags
 
