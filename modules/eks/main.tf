@@ -5,7 +5,7 @@
 locals {
   cluster_name = "${var.name_prefix}-${var.environment}"
 }
-data "aws_region" "current" {}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
