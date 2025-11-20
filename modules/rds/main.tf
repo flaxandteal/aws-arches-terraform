@@ -7,7 +7,7 @@ module "rds" {
   identifier = "${var.name_prefix}-${var.environment}-postgres"
 
   engine               = "postgres"
-  engine_version       = "16.11"#18.1 poss? sji todo
+  engine_version       = "16.11" #18.1 poss? sji todo
   family               = "postgres16"
   major_engine_version = "16"
   instance_class       = var.db_class
