@@ -80,19 +80,8 @@ module "eks" {
       enable_bootstrap_user_data = true
 
       # Encrypted root volume with KMS key
-      block_device_mappings = {
-        xvda = {
-          device_name = "/dev/xvda"
-          ebs = {
-            volume_size           = var.node_root_volume_size
-            volume_type           = "gp3"
-            encrypted             = true
-            kms_key_id            = var.ebs_kms_key_arn != "" ? var.ebs_kms_key_arn : null #sji
-            delete_on_termination = true
-          }
-        }
-      }
-      #depends_on = ["vpc-cni"]
+      ebs_encrypted  = true
+      ebs_kms_key_id = null
     }
   }
 
