@@ -108,6 +108,7 @@ module "s3" {
   lifecycle_transition_days = var.lifecycle_transition_days
   lifecycle_storage_class   = var.lifecycle_storage_class
   force_destroy             = var.environment != "prod"
+  logging_bucket            = true
 
   tags = module.labels.tags
 }

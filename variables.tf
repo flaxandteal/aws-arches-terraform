@@ -96,12 +96,6 @@ variable "lifecycle_storage_class" {
   default     = "GLACIER_IR"
 }
 
-variable "force_destroy" {
-  description = "Force destroy" #false in prod, true in dev/stage/uat
-  type        = bool
-  default     = false
-}
-
 # --------------------------------------------------------------------------
 # EKS
 # --------------------------------------------------------------------------
