@@ -29,13 +29,19 @@ module "rds" {
 
   backup_retention_period = var.db_backup_retention
   skip_final_snapshot     = var.environment != "prod"
-  deletion_protection     = var.environment == "prod"
 
   apply_immediately = true
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-${var.environment}-rds"
   })
+
+  performance_insights_enabled          = true
+  performance_insights_retention_period = 7
+
+  iam_database_authentication_enabled = true
+
+  deletion_protection = var.environment != "dev" ? true : false
 }
 
 resource "random_password" "master" {
