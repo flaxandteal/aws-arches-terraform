@@ -50,3 +50,72 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
     }
   }
 }
+
+# ──────────────────────────────────────────────────────────────────────
+# Customer-managed KMS key for S3 access-logging bucket (AVD-AWS-0133)
+# ──────────────────────────────────────────────────────────────────────
+resource "aws_kms_key" "s3_logging" {
+  description             = "Customer-managed key for S3 server-access-logging bucket"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+
+  policy = data.aws_iam_policy_document.s3_logging_key.json
+
+  tags = merge(var.tags, {
+    Purpose = "S3AccessLoggingEncryption"
+  })
+}
+
+resource "aws_kms_alias" "s3_logging" {
+  name          = "alias/s3-access-logs-${var.account_id}"
+  target_key_id = aws_kms_key.s3_logging.key_id
+}
+
+data "aws_iam_policy_document" "s3_logging_key" {
+  statement {
+    sid    = "EnableRoot"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:${data.aws_partition.current.partition}:iam::${var.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowS3LoggingService"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["logging.s3.amazonaws.com"]
+    }
+    actions = [
+      "kms:GenerateDataKey*",
+      "kms:Encrypt*"
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringLike"
+      variable = "kms:ViaService"
+      values   = ["s3.*.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_partition" "current" {}
+
+# ──────────────────────────────────────────────────────────────────────
+# Encryption block – uses CMK instead of AES256
+# ──────────────────────────────────────────────────────────────────────
+resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.s3_logging.arn
+      sse_algorithm     = "aws:kms"
+    }
+    bucket_key_enabled = true
+  }
+}
