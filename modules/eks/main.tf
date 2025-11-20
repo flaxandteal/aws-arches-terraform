@@ -205,6 +205,3 @@ resource "aws_vpc_endpoint" "logs" {
 
   tags = merge(var.tags, { Name = "${local.cluster_name}-logs" })
 }
-
-# Only needed once — add at the top of the file if not already present
-data "aws_region" "current" {}
