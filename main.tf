@@ -97,7 +97,22 @@ module "kms" {
 }
 
 # =============================================================================
-# 6. S3
+# 6a. S3 Access Logs Bucket
+# =============================================================================
+module "s3_logging_bucket" {
+  source = "./modules/s3-logging-bucket"   # ← create this tiny module (see below)
+
+  name        = "s3-access-logs"
+  environment = "logs"
+  account_id  = data.aws_caller_identity.current.account_id   # makes name globally unique + obvious
+
+  tags = merge(module.labels.tags, {
+    Purpose = "CentralizedS3AccessLogging"
+  })
+}
+
+# =============================================================================
+# 6b. S3
 # =============================================================================
 module "s3" {
   source = "./modules/s3"

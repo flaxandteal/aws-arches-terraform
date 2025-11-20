@@ -86,6 +86,48 @@ module "eks" {
   }
 
   # ==================================================================
+  # LOCK DOWN NODE EGRESS – remove 0.0.0.0/0 internet access
+  # ==================================================================
+  # node_security_group_additional_rules = {
+  #   # Allow nodes to pull images from ECR + talk to EKS API (in-VPC)
+  #   egress_vpc = {
+  #     description = "Node to VPC (for EKS API, DNS, ECR dkr endpoints)"
+  #     protocol    = "-1"
+  #     from_port   = 0
+  #     to_port     = 0
+  #     type        = "egress"
+  #     cidr_blocks = [var.vpc_cidr]  # e.g. "10.0.0.0/16"
+  #   }
+
+  #   # Optional: allow HTTPS only to AWS services (if you need S3, DynamoDB, etc.)
+  #   egress_https_443 = {
+  #     description = "Node HTTPS to AWS services"
+  #     protocol    = "tcp"
+  #     from_port   = 443
+  #     to_port     = 443
+  #     type        = "egress"
+  #     cidr_blocks = ["0.0.0.0/0"]
+  #     # Safe because it's only port 443
+  #   }
+
+  #   # Optional: allow DNS (UDP 53)
+  #   egress_dns = {
+  #     description = "Node DNS resolution"
+  #     protocol    = "udp"
+  #     from_port   = 53
+  #     to_port     = 53
+  #     type        = "egress"
+  #     cidr_blocks = ["0.0.0.0/0"]
+  #   }
+  # }
+
+  # # COMPLETELY DISABLE the default permissive rules created by the module
+  # create_node_security_group = true
+  # node_security_group_tags = {
+  #   "kubernetes.io/cluster/${local.cluster_name}" = "owned"
+  # }
+  
+  # ==================================================================
   # Logging & tagging
   # ==================================================================
   cloudwatch_log_group_retention_in_days = var.log_retention_days
