@@ -32,6 +32,9 @@ module "vpc" {
     "kubernetes.io/role/internal-elb" = "1"
   }
 
+  enable_dns_hostnames = true # ← Required for private hosted zone
+  enable_dns_support   = true # ← Required for Route 53 resolution
+
   # ##################################################
   # # Enable VPC Flow Logs (AVD-AWS-0***78 (MEDIUM))
   # ##################################################
