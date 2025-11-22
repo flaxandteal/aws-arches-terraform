@@ -24,7 +24,7 @@ module "rds" {
 
   multi_az               = var.db_multi_az
   publicly_accessible    = false
-  vpc_security_group_ids = [module.eks.node_security_group_id]
+  vpc_security_group_ids = [aws_security_group.rds.id]
   subnet_ids             = var.db_subnet_ids
 
   backup_retention_period = var.db_backup_retention
@@ -66,6 +66,14 @@ resource "aws_security_group" "rds" {
     security_groups = var.eks_node_sg_id != "" ? [var.eks_node_sg_id] : []
   }
 
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-${var.environment}-rds-sg"
   })
