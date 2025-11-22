@@ -28,16 +28,16 @@ module "eks" {
   control_plane_subnet_ids = var.control_plane_subnet_ids
 
   # THIS IS THE MISSING PIECE – opens the cluster SG for the worker nodes
-  # security_group_additional_rules = {
-  #   ingress_nodes_443 = {
-  #     description                = "Node groups to cluster API"
-  #     protocol                   = "tcp"
-  #     from_port                  = 443
-  #     to_port                    = 443
-  #     type                       = "ingress"
-  #     source_node_security_group = true
-  #   }
-  # }
+  security_group_additional_rules = {
+    ingress_nodes_443 = {
+      description                = "Node groups to cluster API"
+      protocol                   = "tcp"
+      from_port                  = 443
+      to_port                    = 443
+      type                       = "ingress"
+      source_node_security_group = true
+    }
+  }
   # ==================================================================
   # Access – admin via IAM principal (terraform-deployer)
   # ==================================================================
@@ -169,15 +169,15 @@ resource "null_resource" "delay_destroy" {
 # ==================================================================
 # FIX: Allow nodes → control plane API (443) and kubelet (10250) in fully private clusters
 # ==================================================================
-resource "aws_security_group_rule" "eks_cluster_ingress_nodes_443" {
-  description              = "Allow worker nodes to access EKS control plane (API server)"
-  type                     = "ingress"
-  from_port                = 443
-  to_port                  = 443
-  protocol                 = "tcp"
-  security_group_id        = module.eks.cluster_security_group_id
-  source_security_group_id = module.eks.node_security_group_id
-}
+# resource "aws_security_group_rule" "eks_cluster_ingress_nodes_443" {
+#   description              = "Allow worker nodes to access EKS control plane (API server)"
+#   type                     = "ingress"
+#   from_port                = 443
+#   to_port                  = 443
+#   protocol                 = "tcp"
+#   security_group_id        = module.eks.cluster_security_group_id
+#   source_security_group_id = module.eks.node_security_group_id
+# }
 
 resource "aws_security_group_rule" "eks_cluster_ingress_nodes_10250" {
   description              = "Allow control plane to reach worker kubelets (for CNI, metrics, etc.)"
