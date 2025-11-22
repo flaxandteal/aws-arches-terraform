@@ -18,7 +18,7 @@ output "debug_vpc_and_subnets" {
     eks_private_subnets = module.vpc.private_subnet_ids
     rds_vpc_id          = module.vpc.vpc_id
     rds_subnet_ids      = module.vpc.private_subnet_ids
-    rds_security_group  = module.rds.aws_security_group.rds.id
+    # rds_security_group  = module.rds.aws_security_group.rds.id
     eks_node_sg         = module.eks.node_security_group_id
   }
 }
