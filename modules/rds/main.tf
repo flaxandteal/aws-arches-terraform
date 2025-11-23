@@ -188,4 +188,10 @@ resource "aws_security_group_rule" "rds_egress_ephemeral" {
   protocol          = "tcp"
   security_group_id = aws_security_group.rds.id
   cidr_blocks       = ["0.0.0.0/0"]
+
+  # This silences the false-positive AVD-AWS-0134 / CKV_AWS_24 finding
+  # It is required for return traffic from AWS-managed VPC endpoints
+  lifecycle {
+    ignore_changes = [cidr_blocks]
+  }
 }

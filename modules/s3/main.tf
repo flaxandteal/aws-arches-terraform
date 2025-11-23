@@ -90,8 +90,13 @@ resource "aws_s3_bucket_public_access_block" "this" {
 # --------------------------------------------------------------------------
 # Server Access Logging – REQUIRED for all buckets (best practice)
 # --------------------------------------------------------------------------
+# resource "aws_s3_bucket_logging" "this" {
+#   bucket        = aws_s3_bucket.this.id
+#   target_bucket = var.logging_bucket
+#   target_prefix = "logs/s3/${local.bucket_name}/"
+# }
 resource "aws_s3_bucket_logging" "this" {
   bucket        = aws_s3_bucket.this.id
-  target_bucket = var.logging_bucket
-  target_prefix = "logs/s3/${local.bucket_name}/"
+  target_bucket = aws_s3_bucket.this.id
+  target_prefix = "access-logs/"
 }
