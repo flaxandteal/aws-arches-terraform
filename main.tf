@@ -292,22 +292,22 @@ resource "aws_vpc_endpoint" "kms" {
   tags = merge(module.labels.tags, { Name = "${local.name}-kms" })
 }
 
-resource "aws_vpc_endpoint" "sts" {
-  vpc_id              = module.vpc.vpc_id
-  service_name        = "com.amazonaws.${var.region}.sts"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  private_dns_enabled = true
+# resource "aws_vpc_endpoint" "sts" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${var.region}.sts"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnet_ids
+#   security_group_ids  = [aws_security_group.vpc_endpoints.id]
+#   private_dns_enabled = true
 
-  tags = merge(module.labels.tags, { Name = "${local.name}-sts" })
+#   tags = merge(module.labels.tags, { Name = "${local.name}-sts" })
 
-  # This silences the final false-positive AVD-AWS-0134 / CKV_AWS_24
-  # Required for AWS-managed VPC endpoint ENIs to return traffic
-  lifecycle {
-    ignore_changes = [egress]
-  }
-}
+#   # This silences the final false-positive AVD-AWS-0134 / CKV_AWS_24
+#   # Required for AWS-managed VPC endpoint ENIs to return traffic
+#   lifecycle {
+#     ignore_changes = [egress]
+#   }
+# }
 
 # # Add these three (copy-paste) — highly recommended
 # resource "aws_vpc_endpoint" "ssm" {
