@@ -32,7 +32,7 @@ module "eks" {
   endpoint_private_access = true
   endpoint_public_access  = false
 
-  # Optional: dedicated subnets for control plane (more isolation)
+  # Dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = length(var.control_plane_subnet_ids) > 0 ? var.control_plane_subnet_ids : var.private_subnet_ids
 
   # ==================================================================

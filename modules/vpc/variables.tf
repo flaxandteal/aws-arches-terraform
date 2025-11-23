@@ -1,4 +1,4 @@
-# ./modules/vpc/variables.tf
+# modules/vpc/variables.tf
 variable "name" {
   type        = string
   description = "Full cluster name (e.g. arches-prod)"

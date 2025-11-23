@@ -1,3 +1,4 @@
+# modules/s3/variables.tf
 variable "name" {
   description = "Base name (e.g. catalina-arches-uat)"
   type        = string
@@ -8,10 +9,10 @@ variable "environment" {
   type        = string
 }
 
-# variable "region" {
-#   description = "AWS region"
-#   type        = string
-# }
+variable "region" {
+  description = "AWS region"
+  type        = string
+}
 
 variable "s3_kms_key_arn" {
   description = "ARN of the KMS key used for SSE-KMS"

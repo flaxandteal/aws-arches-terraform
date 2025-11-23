@@ -1,6 +1,9 @@
 # root/main.tf
 
 # =============================================================================
+# Root main
+# sji todo description
+# =============================================================================
 
 terraform {
   required_version = ">= 1.6.0"
@@ -56,7 +59,7 @@ locals {
 }
 
 # =============================================================================
-# 1. VPC
+# VPC
 # =============================================================================
 module "vpc" {
   source = "./modules/vpc"
@@ -69,7 +72,7 @@ module "vpc" {
 }
 
 # =============================================================================
-# 4. IAM (GitHub OIDC etc)
+# IAM (GitHub OIDC etc)
 # =============================================================================
 module "iam" {
   source = "./modules/iam"
@@ -82,7 +85,7 @@ module "iam" {
 }
 
 # =============================================================================
-# 2. KMS
+# KMS
 # =============================================================================
 module "kms" {
   source = "./modules/kms"
@@ -98,14 +101,14 @@ module "kms" {
 }
 
 # =============================================================================
-# 6a. S3 Access Logs Bucket
+# S3 Logs Bucket
 # =============================================================================
 module "s3_logging_bucket" {
-  source = "./modules/logging" # ← create this tiny module (see below)
+  source = "./modules/logging"
 
   name        = "s3-access-logs"
   environment = "logs"
-  account_id  = data.aws_caller_identity.current.account_id # makes name globally unique + obvious
+  account_id  = data.aws_caller_identity.current.account_id
 
   tags = merge(module.labels.tags, {
     Purpose = "CentralizedS3AccessLogging"
@@ -120,6 +123,7 @@ module "s3" {
 
   name                      = local.name
   environment               = var.environment
+  region                    = var.region
   s3_kms_key_arn            = module.kms.s3_kms_key_arn
   lifecycle_transition_days = var.lifecycle_transition_days
   lifecycle_storage_class   = var.lifecycle_storage_class
@@ -257,66 +261,5 @@ resource "aws_vpc_endpoint" "sts" {
   security_group_ids  = [module.eks.node_security_group_id]
   private_dns_enabled = true
 
-  tags = merge(module.labels.tags, { Name = "${local.name}-kmstss" })
+  tags = merge(module.labels.tags, { Name = "${local.name}-sts" })
 }
-# =============================================================================
-# 7.5 Additional VPC Endpoints REQUIRED for fully-private EKS clusters
-# =============================================================================
-
-# # STS – mandatory for node registration (tokens)
-# resource "aws_vpc_endpoint" "sts" {
-#   vpc_id              = module.vpc.vpc_id
-#   service_name        = "com.amazonaws.${var.region}.sts"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = module.vpc.private_subnet_ids
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-
-#   tags = merge(module.labels.tags, { Name = "${local.name}-sts" })
-# }
-
-# # EC2 – needed for describe-instances, IMDSv2, etc.
-# resource "aws_vpc_endpoint" "ec2" {
-#   vpc_id              = module.vpc.vpc_id
-#   service_name        = "com.amazonaws.${var.region}.ec2"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = module.vpc.private_subnet_ids
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-
-#   tags = merge(module.labels.tags, { Name = "${local.name}-ec2" })
-# }
-
-# # CloudWatch Logs – if you ever want logs from workers
-# resource "aws_vpc_endpoint" "logs" {
-#   vpc_id              = module.vpc.vpc_id
-#   service_name        = "com.amazonaws.${var.region}.logs"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = module.vpc.private_subnet_ids
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-
-#   tags = merge(module.labels.tags, { Name = "${local.name}-logs" })
-# }
-# # Add the rest only if you really need them (most clusters work fine with just S3 + ECR)
-# resource "aws_vpc_endpoint" "ssm" {
-#   vpc_id            = module.vpc.vpc_id
-#   service_name      = "com.amazonaws.${var.region}.ssm"
-#   vpc_endpoint_type = "Interface"
-#   subnet_ids        = module.vpc.private_subnets
-#   security_group_ids = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-#   tags = module.labels.tags
-# }
-
-# resource "aws_vpc_endpoint" "ssmmessages" {
-#   vpc_id            = module.vpc.vpc_id
-#   service_name      = "com.amazonaws.${var.region}.ssmmessages"
-#   vpc_endpoint_type = "Interface"
-# :subnet_ids        = module.vpc.private_subnets
-#   security_group_ids = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-#   tags = module.labels.tags
-# }
-
-# # (add sts, kms, logs the same way if you want – optional for most setups)

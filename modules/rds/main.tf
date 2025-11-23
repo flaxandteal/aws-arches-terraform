@@ -61,23 +61,49 @@ resource "random_password" "master" {
 resource "aws_security_group" "rds" {
   name        = "${var.name_prefix}-${var.environment}-rds-sg"
   vpc_id      = var.vpc_id
-  description = "PostgreSQL from EKS nodes" #Security groups should include a description for auditing purposes.
+  description = "PostgreSQL from EKS nodes" #Security groups must include a description for auditing purposes.
 
+  # --------------------------------------------------
+  # INGRESS: Only EKS worker nodes → PostgreSQL
+  # --------------------------------------------------
   ingress {
     description     = "PostgreSQL from EKS nodes"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = var.eks_node_sg_id != "" ? [var.eks_node_sg_id] : []
+    security_groups = [var.eks_node_sg_id]
   }
 
-  # egress {
-  #   description = "Allow all outbound traffic"
-  #   from_port   = 0
-  #   to_port     = 0
-  #   protocol    = "-1"
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
+  # --------------------------------------------------
+  # EGRESS: Only what RDS actually needs (no internet!)
+  # --------------------------------------------------
+
+  # HTTPS to S3 VPC endpoint (automated backups, pg_dump to S3, extensions)
+  egress {
+    description     = "RDS → S3 (backups, extensions)"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.s3.id]
+  }
+
+  # HTTPS to KMS VPC endpoint (EBS/RDS encryption)
+  egress {
+    description     = "RDS → KMS (encryption)"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.kms.id]
+  }
+
+  # Return traffic on ephemeral ports
+  egress {
+    description = "Return traffic from AWS services"
+    from_port   = 1024
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-${var.environment}-rds-sg"
