@@ -188,6 +188,8 @@ module "rds" {
 
   performance_insights_retention_period = var.performance_insights_retention_period
 
+  vpc_endpoints_security_group_id = aws_security_group.vpc_endpoints.id
+
   tags = module.labels.tags
 
   depends_on = [module.eks]
