@@ -34,19 +34,68 @@ module "vpc" {
 
   enable_dns_hostnames = true # ← private hosted zone
   enable_dns_support   = true # ← Route 53 resolution
+}
 
-  # ##################################################
-  # # Enable VPC Flow Logs (AVD-AWS-0***78 (MEDIUM))
-  # ##################################################
-  enable_flow_log           = true
-  flow_log_destination_type = "s3"
-  flow_log_destination_arn  = module.s3_logging_bucket.bucket_arn
-  vpc_flow_log_tags         = var.tags
+# root/main.tf – add this after module "vpc" { ... }
 
-  create_flow_log_cloudwatch_log_group = false # prevents creation of CW log group
-  create_flow_log_cloudwatch_iam_role  = true  # auto-creates the required role
-  flow_log_max_aggregation_interval    = 60
-  flow_log_traffic_type                = "ALL" # or "REJECT" to save ~60 % cost
+# ================================================
+# VPC Flow Logs → S3 (standalone, cheap, compliant)
+# ================================================
+resource "aws_flow_log" "vpc" {
+  iam_role_arn         = aws_iam_role.vpc_flow_logs_role.arn # auto-created below
+  log_destination      = module.s3_logging_bucket.bucket_arn
+  log_destination_type = "s3"
+  traffic_type         = "ALL" # change to "REJECT" later to save ~60 % cost
+  vpc_id               = module.vpc.vpc_id
 
-  flow_log_cloudwatch_log_group_retention_in_days = 365 #sji move this and some of above to tfvars
+  destination_options {
+    file_format        = "parquet" # saves ~70 % storage cost
+    per_hour_partition = true      # easier Athena queries
+  }
+
+  tags = module.labels.tags
+}
+
+# IAM role for VPC Flow Logs delivery to S3 (minimal policy)
+resource "aws_iam_role" "vpc_flow_logs_role" {
+  name = "${var.name}-vpc-flow-logs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "vpc-flow-logs.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = module.labels.tags
+}
+
+resource "aws_iam_role_policy" "vpc_flow_logs_policy" {
+  name = "vpc-flow-logs-s3-policy"
+  role = aws_iam_role.vpc_flow_logs_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl"
+        ]
+        Effect   = "Allow"
+        Resource = "${module.s3_logging_bucket.bucket_arn}/vpc-flow-logs/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      }
+    ]
+  })
 }
