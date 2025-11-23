@@ -159,6 +159,8 @@ module "eks" {
   github_repo             = var.github_repo
   log_retention_days      = var.log_retention_days
 
+  vpc_endpoints_security_group_id = aws_security_group.vpc_endpoints.id
+
   tags = module.labels.tags
 
 }

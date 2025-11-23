@@ -100,3 +100,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "vpc_endpoints_security_group_id" {
+  description = "Security group ID attached to all interface VPC endpoints"
+  type        = string
+  default     = null 
+}
