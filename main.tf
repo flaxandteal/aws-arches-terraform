@@ -147,6 +147,7 @@ module "eks" {
   region          = var.region
 
   vpc_id                   = module.vpc.vpc_id
+  vpc_cidr_block           = module.vpc.vpc_cidr_block
   private_subnet_ids       = module.vpc.private_subnet_ids
   control_plane_subnet_ids = length(var.intra_subnet_cidrs) > 0 ? var.intra_subnet_cidrs : module.vpc.private_subnet_ids
 

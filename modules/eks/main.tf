@@ -184,7 +184,7 @@ resource "aws_security_group_rule" "nodes_egress_dns_udp" {
   to_port           = 53
   protocol          = "udp"
   security_group_id = module.eks.node_security_group_id
-  cidr_blocks       = [module.vpc.vpc_cidr_block]
+  cidr_blocks       = [var.vpc_cidr_block]
 }
 
 resource "aws_security_group_rule" "nodes_egress_dns_tcp" {
@@ -194,7 +194,7 @@ resource "aws_security_group_rule" "nodes_egress_dns_tcp" {
   to_port           = 53
   protocol          = "tcp"
   security_group_id = module.eks.node_security_group_id
-  cidr_blocks       = [module.vpc.vpc_cidr_block]
+  cidr_blocks       = [var.vpc_cidr_block]
 }
 
 # Allow return traffic on ephemeral ports
