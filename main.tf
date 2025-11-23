@@ -218,7 +218,7 @@ resource "aws_security_group_rule" "vpc_endpoints_allow_nodes" {
   protocol                 = "tcp"
   security_group_id        = aws_security_group.vpc_endpoints.id # ← target SG
   source_security_group_id = module.eks.node_security_group_id   # ← source SG
-  description              = "EKS nodes → VPC interface endpoints"
+  description              = "EKS nodes VPC interface endpoints"
 }
 
 resource "aws_vpc_endpoint" "s3" {

@@ -128,7 +128,7 @@ resource "null_resource" "delay_destroy" {
 }
 
 # ==================================================================
-# Ingress: Allow nodes → kubelet (10250) and internal
+# Ingress: Allow nodes such as kubelet (10250) and internal
 # ==================================================================
 resource "aws_security_group_rule" "eks_cluster_ingress_nodes_10250" {
   description              = "Allow control plane to reach worker kubelets (for CNI, metrics, etc.)"

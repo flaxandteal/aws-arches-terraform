@@ -67,7 +67,7 @@ resource "aws_security_group" "rds" {
   description = "PostgreSQL from EKS nodes" #Security groups must include a description for auditing purposes.
 
   # --------------------------------------------------
-  # INGRESS: Only EKS worker nodes → PostgreSQL
+  # INGRESS: Only EKS worker nodes PostgreSQL
   # --------------------------------------------------
   ingress {
     description     = "PostgreSQL from EKS nodes"
@@ -83,7 +83,7 @@ resource "aws_security_group" "rds" {
 
   # HTTPS to S3 VPC endpoint (automated backups, pg_dump to S3, extensions)
   egress {
-    description     = "RDS → S3 (backups, extensions)"
+    description     = "RDS S3 (backups, extensions)"
     from_port       = 443
     to_port         = 443
     protocol        = "tcp"
@@ -92,7 +92,7 @@ resource "aws_security_group" "rds" {
 
   # HTTPS to KMS VPC endpoint (EBS/RDS encryption)
   egress {
-    description     = "RDS → KMS (encryption)"
+    description     = "RDS KMS (encryption)"
     from_port       = 443
     to_port         = 443
     protocol        = "tcp"
