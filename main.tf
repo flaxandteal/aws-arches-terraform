@@ -43,7 +43,7 @@ data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3
 data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.region}.ecr.api" }
 data "aws_ec2_managed_prefix_list" "ecr_dkr" {
   name       = "com.amazonaws.${var.region}.ecr.dkr"
-  depends_on = [aws_vpc_endpoint.ecr_dkr] # endpoint is in root
+  depends_on = [aws_vpc_endpoint.ecr_dkr]
 }
 data "aws_ec2_managed_prefix_list" "logs" {
   name       = "com.amazonaws.${var.region}.logs"
