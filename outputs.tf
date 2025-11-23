@@ -12,7 +12,23 @@ output "github_actions_role_arn" { value = module.iam.github_actions_role_arn }
 output "rds_endpoint" { value = module.rds.endpoint }
 
 
-# root/outputs.tf
+# output "DEBUG_RDS_INPUTS" {
+#   value = {
+#     vpc_id_passed_to_rds        = module.vpc.vpc_id
+#     db_subnet_ids_passed_to_rds = module.vpc.private_subnet_ids
+#     all_inputs_to_rds_module    = module.rds
+#   }
+#   sensitive = true
+# }
+
+# output "debug_vpc_consistency" {
+#   value = {
+#     vpc_id_from_vpc_module    = module.vpc.vpc_id  # Should be vpc-0660a41447bbca334
+#     vpc_id_from_subnet        = data.aws_subnet.first_private.vpc_id  # Must match above
+#     rds_security_group_vpc_id = aws_security_group.rds.vpc_id  # Must match above (from module.rds.aws_security_group.rds.vpc_id)
+#     rds_subnet_ids            = var.subnet_ids  # Should be subnets starting with subnet- in the same VPC
+#   }
+# }
 
 # output "debug_vpc_and_subnets" {
 #   description = "Confirm EKS and RDS are in the same VPC/subnets"
