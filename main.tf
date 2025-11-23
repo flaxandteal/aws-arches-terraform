@@ -93,7 +93,7 @@ module "kms" {
 
   name              = local.name
   environment       = var.environment
-  region = var.region
+  region            = var.region
   tags              = module.labels.tags
   use_random_suffix = var.use_random_suffix
 }
@@ -216,8 +216,8 @@ resource "aws_security_group_rule" "vpc_endpoints_allow_nodes" {
   from_port                = 443
   to_port                  = 443
   protocol                 = "tcp"
-  security_group_id      = aws_security_group.vpc_endpoints.id          # ← target SG
-  source_security_group_id = module.eks.node_security_group_id            # ← source SG
+  security_group_id        = aws_security_group.vpc_endpoints.id # ← target SG
+  source_security_group_id = module.eks.node_security_group_id   # ← source SG
   description              = "EKS nodes → VPC interface endpoints"
 }
 
@@ -237,7 +237,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   service_name        = "com.amazonaws.${var.region}.ecr.api"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, {
@@ -250,7 +250,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   service_name        = "com.amazonaws.${var.region}.ecr.dkr"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, {
@@ -263,7 +263,7 @@ resource "aws_vpc_endpoint" "logs" {
   service_name        = "com.amazonaws.${var.region}.logs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, { Name = "${local.name}-logs" })
@@ -274,7 +274,7 @@ resource "aws_vpc_endpoint" "kms" {
   service_name        = "com.amazonaws.${var.region}.kms"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, { Name = "${local.name}-kms" })
@@ -285,7 +285,7 @@ resource "aws_vpc_endpoint" "sts" {
   service_name        = "com.amazonaws.${var.region}.sts"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, { Name = "${local.name}-sts" })
