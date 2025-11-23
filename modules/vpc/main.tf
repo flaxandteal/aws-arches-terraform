@@ -36,8 +36,6 @@ module "vpc" {
   enable_dns_support   = true # ← Route 53 resolution
 }
 
-# root/main.tf – add this after module "vpc" { ... }
-
 # ================================================
 # VPC Flow Logs → S3 (standalone, cheap, compliant)
 # ================================================
@@ -53,7 +51,7 @@ resource "aws_flow_log" "vpc" {
     per_hour_partition = true      # easier Athena queries
   }
 
-  tags = module.labels.tags
+  tags = var.tags
 }
 
 # IAM role for VPC Flow Logs delivery to S3 (minimal policy)
@@ -73,7 +71,7 @@ resource "aws_iam_role" "vpc_flow_logs_role" {
     ]
   })
 
-  tags = module.labels.tags
+  tags = var.tags
 }
 
 resource "aws_iam_role_policy" "vpc_flow_logs_policy" {

@@ -70,6 +70,8 @@ module "vpc" {
 
   cidr = var.vpc_cidr
   azs  = var.vpc_azs
+
+  s3_logging_bucket_arn = module.s3_logging_bucket.bucket_arn
 }
 
 # =============================================================================

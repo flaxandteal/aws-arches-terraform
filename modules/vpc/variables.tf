@@ -19,3 +19,8 @@ variable "tags" {
   default     = {}
   description = "Extra tags to add on top of the ones from the label module"
 }
+
+variable "s3_logging_bucket_arn" {
+  description = "ARN of the central S3 bucket for logs"
+  type        = string
+}
