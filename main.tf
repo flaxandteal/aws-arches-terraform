@@ -44,7 +44,7 @@ data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.regio
 data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.region}.ecr.dkr" }
 data "aws_ec2_managed_prefix_list" "logs" { name = "com.amazonaws.${var.region}.logs" }
 data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
-data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
+#data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
 
 # =============================================================================
 # Naming & Tagging
@@ -167,6 +167,14 @@ module "eks" {
   eks_admin_principal_arn = var.eks_admin_principal_arn
   github_repo             = var.github_repo
   log_retention_days      = var.log_retention_days
+
+  prefix_list_ids = {
+    s3      = data.aws_ec2_managed_prefix_list.s3.id
+    ecr_api = data.aws_ec2_managed_prefix_list.ecr_api.id
+    ecr_dkr = try(data.aws_ec2_managed_prefix_list.ecr_dkr.id, "")
+    logs    = data.aws_ec2_managed_prefix_list.logs.id
+    kms     = data.aws_ec2_managed_prefix_list.kms.id
+  }
 
   tags = module.labels.tags
 

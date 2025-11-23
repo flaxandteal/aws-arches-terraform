@@ -173,12 +173,12 @@ resource "aws_security_group_rule" "nodes_egress_https_aws_services" {
   protocol          = "tcp"
   security_group_id = module.eks.node_security_group_id
   prefix_list_ids = [
-    data.aws_ec2_managed_prefix_list.s3.id,
-    length(data.aws_ec2_managed_prefix_list.ecr_api.id) > 0 ? data.aws_ec2_managed_prefix_list.ecr_api.id : null,
-    length(data.aws_ec2_managed_prefix_list.ecr_dkr.id) > 0 ? data.aws_ec2_managed_prefix_list.ecr_dkr.id : null,
-    data.aws_ec2_managed_prefix_list.logs.id,
-    data.aws_ec2_managed_prefix_list.kms.id,
-    data.aws_ec2_managed_prefix_list.sts.id, # node refresh, cluster IRSA/token refresh
+    var.prefix_list_ids.s3,
+    var.prefix_list_ids.ecr_api,
+    var.prefix_list_ids.ecr_dkr,
+    var.prefix_list_ids.logs,
+    var.prefix_list_ids.kms,
+    #var.prefix_list_ids.sts, # node refresh, cluster IRSA/token refresh
   ]
 }
 
