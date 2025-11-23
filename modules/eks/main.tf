@@ -7,12 +7,6 @@ locals {
 }
 
 data "aws_region" "current" {}
-data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3" }
-data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.region}.ecr.api" }
-data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.region}.ecr.dkr" }
-data "aws_ec2_managed_prefix_list" "logs" { name = "com.amazonaws.${var.region}.logs" }
-data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
-data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"

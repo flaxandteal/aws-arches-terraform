@@ -39,6 +39,13 @@ provider "aws" {
 }
 
 data "aws_caller_identity" "current" {}
+data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3" }
+data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.region}.ecr.api" }
+data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.region}.ecr.dkr" }
+data "aws_ec2_managed_prefix_list" "logs" { name = "com.amazonaws.${var.region}.logs" }
+data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
+data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
+
 # =============================================================================
 # Naming & Tagging
 # =============================================================================
@@ -162,12 +169,6 @@ module "eks" {
   log_retention_days      = var.log_retention_days
 
   tags = module.labels.tags
-
-  depends_on = [
-    aws_vpc_endpoint.s3,
-    aws_vpc_endpoint.logs,
-    aws_vpc_endpoint.kms,
-  ]
 
 }
 
