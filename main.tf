@@ -163,6 +163,12 @@ module "eks" {
 
   tags = module.labels.tags
 
+  depends_on = [
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.logs,
+    aws_vpc_endpoint.kms,
+  ]
+
 }
 
 # =============================================================================
