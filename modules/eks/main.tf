@@ -29,17 +29,17 @@ module "eks" {
   # Dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = length(var.control_plane_subnet_ids) > 0 ? var.control_plane_subnet_ids : var.private_subnet_ids
 
-  # Override default open egress with an empty rule which disables it completely
-  node_security_group_additional_rules = {
-    egress_all = {
-      description = "Disabled we are using explicit egress rules only"
-      protocol    = "-1"
-      from_port   = 0
-      to_port     = 0
-      type        = "egress"
-      cidr_blocks = [] # default open egress blocked
-    }
-  }
+  # # Override default open egress with an empty rule which disables it completely
+  # node_security_group_additional_rules = {
+  #   egress_all = {
+  #     description = "Disabled we are using explicit egress rules only"
+  #     protocol    = "-1"
+  #     from_port   = 0
+  #     to_port     = 0
+  #     type        = "egress"
+  #     cidr_blocks = [] # default open egress blocked
+  #   }
+  # }
 
   # ==================================================================
   # Access – admin via IAM principal (terraform-deployer)

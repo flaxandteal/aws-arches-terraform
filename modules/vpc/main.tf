@@ -38,16 +38,15 @@ module "vpc" {
   # ##################################################
   # # Enable VPC Flow Logs (AVD-AWS-0***78 (MEDIUM))
   # ##################################################
-  # enable_flow_log                      = true
-  # flow_log_destination_type            = "cloud-watch-logs"
-  # flow_log_destination_arn             = aws_cloudwatch_log_group.vpc_flow_logs.arn
-  # flow_log_cloudwatch_log_group_kms_key_id = aws_kms_key.vpc_flow_logs_kms.arn
-  # flow_log_max_aggregation_interval    = 60
+  enable_flow_log           = true
+  flow_log_destination_type = "s3"
+  flow_log_destination_arn  = module.s3_logging_bucket.bucket_arn
+  vpc_flow_log_tags         = var.tags
+
+  create_flow_log_cloudwatch_log_group = false # prevents creation of CW log group
+  create_flow_log_cloudwatch_iam_role  = true  # auto-creates the required role
+  flow_log_max_aggregation_interval    = 60
+  flow_log_traffic_type                = "ALL" # or "REJECT" to save ~60 % cost
+
+  flow_log_cloudwatch_log_group_retention_in_days = 365 #sji move this and some of above to tfvars
 }
-
-# resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-#   name              = "/aws/vpc/flow-logs"
-#   retention_in_days = 90
-
-#   kms_key_id = aws_kms_key.vpc_flow_logs_kms.arn #dont need this line
-# }
