@@ -15,8 +15,8 @@ module "eks" {
   name               = local.cluster_name
   kubernetes_version = var.cluster_version
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnet_ids
+  vpc_id     = var.vpc_id
+  subnet_ids = var.private_subnet_ids
 
   # ==================================================================
   # FULLY PRIVATE – no public access allowed
@@ -26,6 +26,7 @@ module "eks" {
 
   # Optional: dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = var.control_plane_subnet_ids
+ # control_plane_subnet_ids = length(var.control_plane_subnet_ids) > 0 ? var.control_plane_subnet_ids : var.private_subnet_ids
 
   # THIS IS THE MISSING PIECE – opens the cluster SG for the worker nodes
   # security_group_additional_rules = {
