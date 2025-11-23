@@ -9,15 +9,6 @@ resource "aws_s3_bucket" "this" {
   })
 }
 
-# resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
-#   bucket = aws_s3_bucket.this.id
-
-#   rule {
-#     apply_server_side_encryption_by_default {
-#       sse_algorithm = "AES256"
-#     }
-#   }
-# }
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
@@ -53,18 +44,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
     status = "Enabled"
 
     expiration {
-      days = 3650 # 10 years, or whatever your compliance requires
+      days = 3650 # 10 years, or whatever compliance dictates sji todo move to tfvars
     }
 
     noncurrent_version_expiration {
-      noncurrent_days = 365
+      noncurrent_days = 365 #sji todo
     }
   }
 }
 
-# ──────────────────────────────────────────────────────────────────────
-# Customer-managed KMS key for S3 access-logging bucket (AVD-AWS-0133)
-# ──────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────
+# Customer-managed KMS key for S3 access-logging bucket (Sec best practice)
+# ──────────────────────────────────────────────────────────────────────────
 resource "aws_kms_key" "s3_logging" {
   description             = "Customer-managed key for S3 server-access-logging bucket"
   enable_key_rotation     = true

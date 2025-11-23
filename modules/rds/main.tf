@@ -105,10 +105,10 @@ resource "aws_security_group" "rds" {
 
   # Return traffic on ephemeral ports
   egress {
-    description     = "Return traffic from AWS services only"
-    from_port       = 1024
-    to_port         = 65535
-    protocol        = "tcp"
+    description = "Return traffic from AWS services only"
+    from_port   = 1024
+    to_port     = 65535
+    protocol    = "tcp"
     prefix_list_ids = [
       data.aws_ec2_managed_prefix_list.s3.id,
       data.aws_ec2_managed_prefix_list.kms.id,
