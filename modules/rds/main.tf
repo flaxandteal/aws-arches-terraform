@@ -71,15 +71,19 @@ resource "aws_security_group" "rds" {
     security_groups = var.eks_node_sg_id != "" ? [var.eks_node_sg_id] : []
   }
 
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # egress {
+  #   description = "Allow all outbound traffic"
+  #   from_port   = 0
+  #   to_port     = 0
+  #   protocol    = "-1"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-${var.environment}-rds-sg"
   })
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }

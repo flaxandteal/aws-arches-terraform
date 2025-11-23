@@ -185,6 +185,8 @@ module "rds" {
   performance_insights_retention_period = var.performance_insights_retention_period
 
   tags = module.labels.tags
+
+  depends_on = [module.eks]
 }
 
 # =============================================================================
