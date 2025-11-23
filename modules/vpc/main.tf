@@ -39,61 +39,51 @@ module "vpc" {
 # ================================================
 # VPC Flow Logs → S3 (standalone, cheap, compliant)
 # ================================================
+# VPC Flow Logs → S3 (parquet, cheap, compliant)
 resource "aws_flow_log" "vpc" {
-  iam_role_arn         = aws_iam_role.vpc_flow_logs_role.arn # auto-created below
-  log_destination      = module.s3_logging_bucket.bucket_arn
+  iam_role_arn         = aws_iam_role.vpc_flow_logs_role.arn
+  log_destination      = "${var.s3_logging_bucket_arn}/vpc-flow-logs/AWSLogs/${var.account_id}/"
   log_destination_type = "s3"
-  traffic_type         = "ALL" # change to "REJECT" later to save ~60 % cost
-  vpc_id               = module.vpc.vpc_id
+  traffic_type         = "ALL" # change to "REJECT" later to save money
+  vpc_id               = aws_vpc.this[0].id
 
   destination_options {
-    file_format        = "parquet" # saves ~70 % storage cost
-    per_hour_partition = true      # easier Athena queries
+    file_format        = "parquet"
+    per_hour_partition = true
   }
 
   tags = var.tags
 }
 
-# IAM role for VPC Flow Logs delivery to S3 (minimal policy)
 resource "aws_iam_role" "vpc_flow_logs_role" {
   name = "${var.name}-vpc-flow-logs-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "vpc-flow-logs.amazonaws.com"
-        }
-      }
-    ]
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "vpc-flow-logs.amazonaws.com" }
+    }]
   })
 
   tags = var.tags
 }
 
 resource "aws_iam_role_policy" "vpc_flow_logs_policy" {
-  name = "vpc-flow-logs-s3-policy"
+  name = "allow-vpc-flow-logs-to-s3"
   role = aws_iam_role.vpc_flow_logs_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "s3:PutObject",
-          "s3:PutObjectAcl"
-        ]
-        Effect   = "Allow"
-        Resource = "${module.s3_logging_bucket.bucket_arn}/vpc-flow-logs/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
-        Condition = {
-          StringEquals = {
-            "s3:x-amz-acl" = "bucket-owner-full-control"
-          }
-        }
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["s3:PutObject"]
+      Resource = "${var.s3_logging_bucket_arn}/vpc-flow-logs/AWSLogs/${var.account_id}/*"
+
+      Condition = {
+        StringEquals = { "s3:x-amz-acl" = "bucket-owner-full-control" }
       }
-    ]
+    }]
   })
 }

@@ -21,6 +21,11 @@ variable "tags" {
 }
 
 variable "s3_logging_bucket_arn" {
-  description = "ARN of the central S3 bucket for logs"
+  description = "ARN of the central S3 bucket used for VPC Flow Logs"
+  type        = string
+}
+
+variable "account_id" {
+  description = "AWS account ID (passed from root)"
   type        = string
 }

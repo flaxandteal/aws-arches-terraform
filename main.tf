@@ -71,7 +71,8 @@ module "vpc" {
   cidr = var.vpc_cidr
   azs  = var.vpc_azs
 
-  s3_logging_bucket_arn = module.s3_logging_bucket.bucket_arn
+  s3_logging_bucket_arn = module.s3_logging_bucket.arn
+  account_id            = data.aws_caller_identity.current.account_id
 }
 
 # =============================================================================
