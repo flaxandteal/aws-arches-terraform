@@ -8,6 +8,11 @@ variable "environment" {
   type        = string
 }
 
+# variable "region" {
+#   description = "AWS region"
+#   type        = string
+# }
+
 variable "s3_kms_key_arn" {
   description = "ARN of the KMS key used for SSE-KMS"
   type        = string

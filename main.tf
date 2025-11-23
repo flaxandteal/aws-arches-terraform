@@ -36,9 +36,6 @@ provider "aws" {
 }
 
 data "aws_caller_identity" "current" {}
-# data "aws_partition" "current" {}
-# data "aws_region" "current" {}
-
 # =============================================================================
 # Naming & Tagging
 # =============================================================================
@@ -143,6 +140,7 @@ module "eks" {
   name_prefix     = var.name_prefix
   environment     = var.environment
   cluster_version = var.cluster_version
+  region          = var.region
 
   vpc_id                   = module.vpc.vpc_id
   private_subnet_ids       = module.vpc.private_subnet_ids
@@ -229,6 +227,38 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   })
 }
 
+resource "aws_vpc_endpoint" "logs" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.logs"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnet_ids
+  security_group_ids  = [module.eks.node_security_group_id]
+  private_dns_enabled = true
+
+  tags = merge(module.labels.tags, { Name = "${local.name}-logs" })
+}
+
+resource "aws_vpc_endpoint" "kms" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.kms"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnet_ids
+  security_group_ids  = [module.eks.node_security_group_id]
+  private_dns_enabled = true
+
+  tags = merge(module.labels.tags, { Name = "${local.name}-kms" })
+}
+
+resource "aws_vpc_endpoint" "sts" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.${var.region}.sts"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnet_ids
+  security_group_ids  = [module.eks.node_security_group_id]
+  private_dns_enabled = true
+
+  tags = merge(module.labels.tags, { Name = "${local.name}-kmstss" })
+}
 # =============================================================================
 # 7.5 Additional VPC Endpoints REQUIRED for fully-private EKS clusters
 # =============================================================================

@@ -13,6 +13,7 @@ locals { #sji todo add var.environment
 # --------------------------------------------------------------------------
 resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
+  #region = var.region
 
   force_destroy = var.force_destroy # false in prod, true in dev/stage/uat
 
@@ -27,6 +28,7 @@ resource "aws_s3_bucket" "this" {
 # --------------------------------------------------------------------------
 resource "aws_s3_bucket_versioning" "this" {
   bucket = aws_s3_bucket.this.id
+  #region = var.region
   #   depends_on = [aws_s3_bucket.this]  
 
   versioning_configuration {

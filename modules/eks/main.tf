@@ -7,6 +7,12 @@ locals {
 }
 
 data "aws_region" "current" {}
+data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3" }
+data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.region}.ecr.api" }
+data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.region}.ecr.dkr" }
+data "aws_ec2_managed_prefix_list" "logs" { name = "com.amazonaws.${var.region}.logs" }
+data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
+data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -14,6 +20,8 @@ module "eks" {
 
   name               = local.cluster_name
   kubernetes_version = var.cluster_version
+
+  region = var.region
 
   vpc_id     = var.vpc_id
   subnet_ids = var.private_subnet_ids
@@ -25,20 +33,8 @@ module "eks" {
   endpoint_public_access  = false
 
   # Optional: dedicated subnets for control plane (more isolation)
-  control_plane_subnet_ids = var.control_plane_subnet_ids
-  # control_plane_subnet_ids = length(var.control_plane_subnet_ids) > 0 ? var.control_plane_subnet_ids : var.private_subnet_ids
+  control_plane_subnet_ids = length(var.control_plane_subnet_ids) > 0 ? var.control_plane_subnet_ids : var.private_subnet_ids
 
-  # THIS IS THE MISSING PIECE – opens the cluster SG for the worker nodes
-  # security_group_additional_rules = {
-  #   ingress_nodes_443 = {
-  #     description                = "Node groups to cluster API"
-  #     protocol                   = "tcp"
-  #     from_port                  = 443
-  #     to_port                    = 443
-  #     type                       = "ingress"
-  #     source_node_security_group = true
-  #   }
-  # }
   # ==================================================================
   # Access – admin via IAM principal (terraform-deployer)
   # ==================================================================
@@ -90,7 +86,7 @@ module "eks" {
       max_size     = var.node_max_size
       desired_size = var.node_desired_size
 
-      ami_type                   = var.node_ami_type # AL2023_ARM_64_STANDARD
+      ami_type                   = var.node_ami_type
       enable_bootstrap_user_data = true
 
       # Encrypted root volume with KMS key
@@ -98,48 +94,6 @@ module "eks" {
       ebs_kms_key_id = null
     }
   }
-
-  # ==================================================================
-  # LOCK DOWN NODE EGRESS – remove 0.0.0.0/0 internet access
-  # ==================================================================
-  # node_security_group_additional_rules = {
-  #   # Allow nodes to pull images from ECR + talk to EKS API (in-VPC)
-  #   egress_vpc = {
-  #     description = "Node to VPC (for EKS API, DNS, ECR dkr endpoints)"
-  #     protocol    = "-1"
-  #     from_port   = 0
-  #     to_port     = 0
-  #     type        = "egress"
-  #     cidr_blocks = [var.vpc_cidr]  # e.g. "10.0.0.0/16"
-  #   }
-
-  #   # Optional: allow HTTPS only to AWS services (if you need S3, DynamoDB, etc.)
-  #   egress_https_443 = {
-  #     description = "Node HTTPS to AWS services"
-  #     protocol    = "tcp"
-  #     from_port   = 443
-  #     to_port     = 443
-  #     type        = "egress"
-  #     cidr_blocks = ["0.0.0.0/0"]
-  #     # Safe because it's only port 443
-  #   }
-
-  #   # Optional: allow DNS (UDP 53)
-  #   egress_dns = {
-  #     description = "Node DNS resolution"
-  #     protocol    = "udp"
-  #     from_port   = 53
-  #     to_port     = 53
-  #     type        = "egress"
-  #     cidr_blocks = ["0.0.0.0/0"]
-  #   }
-  # }
-
-  # # COMPLETELY DISABLE the default permissive rules created by the module
-  # create_node_security_group = true
-  # node_security_group_tags = {
-  #   "kubernetes.io/cluster/${local.cluster_name}" = "owned"
-  # }
 
   # ==================================================================
   # Logging & tagging
@@ -168,18 +122,8 @@ resource "null_resource" "delay_destroy" {
 }
 
 # ==================================================================
-# FIX: Allow nodes → control plane API (443) and kubelet (10250) in fully private clusters
+# Ingress: Allow nodes → kubelet (10250) and internal
 # ==================================================================
-# resource "aws_security_group_rule" "eks_cluster_ingress_nodes_443" {
-#   description              = "Allow worker nodes to access EKS control plane (API server)"
-#   type                     = "ingress"
-#   from_port                = 443
-#   to_port                  = 443
-#   protocol                 = "tcp"
-#   security_group_id        = module.eks.cluster_security_group_id
-#   source_security_group_id = module.eks.node_security_group_id
-# }
-
 resource "aws_security_group_rule" "eks_cluster_ingress_nodes_10250" {
   description              = "Allow control plane to reach worker kubelets (for CNI, metrics, etc.)"
   type                     = "ingress"
@@ -190,7 +134,7 @@ resource "aws_security_group_rule" "eks_cluster_ingress_nodes_10250" {
   source_security_group_id = module.eks.node_security_group_id
 }
 
-# Optional but recommended – allow nodes to talk to each other on the node SG (required for CNI, DNS, etc.)
+# Allow nodes to talk to each other on the node SG (required for CNI, DNS, etc.)
 resource "aws_security_group_rule" "nodes_internal" {
   description              = "Allow nodes to communicate with each other"
   type                     = "ingress"
@@ -210,6 +154,101 @@ resource "aws_security_group_rule" "nodes_internal_udp" {
   security_group_id        = module.eks.node_security_group_id
   source_security_group_id = module.eks.node_security_group_id
 }
+
+# ==================================================================
+# Egress – remove 0.0.0.0/0 internet access
+# ==================================================================
+# HTTPS to all AWS service VPC endpoints (ECR, S3, Logs, KMS, STS, etc.)
+resource "aws_security_group_rule" "nodes_egress_https_aws_services" {
+  description       = "Allow HTTPS to AWS service VPC endpoints only"
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = module.eks.node_security_group_id
+  prefix_list_ids = [
+    data.aws_ec2_managed_prefix_list.s3.id,
+    data.aws_ec2_managed_prefix_list.ecr_api.id,
+    data.aws_ec2_managed_prefix_list.ecr_dkr.id,
+    data.aws_ec2_managed_prefix_list.logs.id,
+    data.aws_ec2_managed_prefix_list.kms.id,
+    data.aws_ec2_managed_prefix_list.sts.id, # node refresh, cluster IRSA/token refresh
+  ]
+}
+
+# DNS UDP + TCP (to VPC+2 or in-VPC DNS forwarder)
+resource "aws_security_group_rule" "nodes_egress_dns_udp" {
+  description       = "DNS UDP to VPC+2"
+  type              = "egress"
+  from_port         = 53
+  to_port           = 53
+  protocol          = "udp"
+  security_group_id = module.eks.node_security_group_id
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
+}
+
+resource "aws_security_group_rule" "nodes_egress_dns_tcp" {
+  description       = "DNS TCP (large responses/DNSSEC)"
+  type              = "egress"
+  from_port         = 53
+  to_port           = 53
+  protocol          = "tcp"
+  security_group_id = module.eks.node_security_group_id
+  cidr_blocks       = [module.vpc.vpc_cidr_block]
+}
+
+# Allow return traffic on ephemeral ports
+resource "aws_security_group_rule" "nodes_egress_ephemeral" {
+  description       = "Allow return traffic from AWS services"
+  type              = "egress"
+  from_port         = 1024
+  to_port           = 65535
+  protocol          = "tcp"
+  security_group_id = module.eks.node_security_group_id
+  cidr_blocks       = ["0.0.0.0/0"] # SGs are stateful
+}
+
+
+# node_security_group_additional_rules = {
+#   # Allow nodes to pull images from ECR + talk to EKS API (in-VPC)
+#   egress_vpc = {
+#     description = "Node to VPC (for EKS API, DNS, ECR dkr endpoints)"
+#     protocol    = "-1"
+#     from_port   = 0
+#     to_port     = 0
+#     type        = "egress"
+#     cidr_blocks = [var.vpc_cidr]  # e.g. "10.0.0.0/16"
+#   }
+
+#   # Optional: allow HTTPS only to AWS services (if you need S3, DynamoDB, etc.)
+#   egress_https_443 = {
+#     description = "Node HTTPS to AWS services"
+#     protocol    = "tcp"
+#     from_port   = 443
+#     to_port     = 443
+#     type        = "egress"
+#     cidr_blocks = ["0.0.0.0/0"]
+#     # Safe because it's only port 443
+#   }
+
+#   # Optional: allow DNS (UDP 53)
+#   egress_dns = {
+#     description = "Node DNS resolution"
+#     protocol    = "udp"
+#     from_port   = 53
+#     to_port     = 53
+#     type        = "egress"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }
+
+# # COMPLETELY DISABLE the default permissive rules created by the module
+# create_node_security_group = true
+# node_security_group_tags = {
+#   "kubernetes.io/cluster/${local.cluster_name}" = "owned"
+# }
+
+
 # # =============================================================================
 # # REQUIRED VPC INTERFACE ENDPOINTS FOR FULLY PRIVATE EKS (v21+)
 # # Without these the nodes can NEVER register → CREATE_FAILED forever
