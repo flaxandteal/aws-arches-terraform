@@ -1,12 +1,12 @@
 # modules/rds/main.tf
 
-# data "aws_ec2_managed_prefix_list" "s3" {
-#   name = "com.amazonaws.${var.region}.s3"
-# }
+data "aws_ec2_managed_prefix_list" "s3" {
+  name = "com.amazonaws.${var.region}.s3"
+}
 
-# data "aws_ec2_managed_prefix_list" "kms" {
-#   name = "com.amazonaws.${var.region}.kms"
-# }
+data "aws_ec2_managed_prefix_list" "kms" {
+  name = "com.amazonaws.${var.region}.kms"
+}
 
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
@@ -165,7 +165,7 @@ resource "aws_security_group" "rds" {
 # EGRESS RULES – separate resources
 # ——————————————————————————————————————————————————————————————————
 resource "aws_security_group_rule" "rds_egress_to_vpc_endpoints" {
-  description              = "RDS → all interface VPC endpoints (KMS, Secrets Manager, SSM, etc.)"
+  description              = "RDS all interface VPC endpoints (KMS, Secrets Manager, SSM, etc.)"
   type                     = "egress"
   from_port                = 443
   to_port                  = 443
@@ -175,7 +175,7 @@ resource "aws_security_group_rule" "rds_egress_to_vpc_endpoints" {
 }
 
 resource "aws_security_group_rule" "rds_egress_to_s3" {
-  description       = "RDS → S3 gateway endpoint (backups, extensions)"
+  description       = "RDS S3 gateway endpoint (backups, extensions)"
   type              = "egress"
   from_port         = 443
   to_port           = 443
