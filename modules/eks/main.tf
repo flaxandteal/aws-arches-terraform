@@ -15,24 +15,24 @@ data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.regio
 # data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
 
 data "aws_ec2_managed_prefix_list" "ecr_dkr" {
-  name = "com.amazonaws.${var.region}.s3"
-  depends_on = [aws_vpc_endpoint.s3] 
+  name       = "com.amazonaws.${var.region}.s3"
+  depends_on = [aws_vpc_endpoint.s3]
 }
 
 data "aws_ec2_managed_prefix_list" "logs" {
-  name = "com.amazonaws.${var.region}.logs"
+  name       = "com.amazonaws.${var.region}.logs"
   depends_on = [aws_vpc_endpoint.logs]
 }
 
 data "aws_ec2_managed_prefix_list" "kms" {
-  name = "com.amazonaws.${var.region}.kms"
+  name       = "com.amazonaws.${var.region}.kms"
   depends_on = [aws_vpc_endpoint.kms]
 }
 
 # node registration
 data "aws_ec2_managed_prefix_list" "sts" {
-  name = "com.amazonaws.${var.region}.sts"
-  depends_on = [aws_vpc_endpoint.sts] 
+  name       = "com.amazonaws.${var.region}.sts"
+  depends_on = [aws_vpc_endpoint.sts]
 }
 
 module "eks" {
