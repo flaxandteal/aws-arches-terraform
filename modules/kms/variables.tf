@@ -1,5 +1,9 @@
 variable "name" { type = string }
 variable "environment" { type = string }
+variable "region" {
+  description = "AWS region"
+  type        = string
+}
 variable "tags" {
   type    = map(string)
   default = {}

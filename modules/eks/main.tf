@@ -172,14 +172,7 @@ resource "aws_security_group_rule" "nodes_egress_https_aws_services" {
   to_port           = 443
   protocol          = "tcp"
   security_group_id = module.eks.node_security_group_id
-  prefix_list_ids = [
-    var.prefix_list_ids.s3,
-    var.prefix_list_ids.ecr_api,
-    var.prefix_list_ids.ecr_dkr,
-    var.prefix_list_ids.logs,
-    var.prefix_list_ids.kms,
-    #var.prefix_list_ids.sts, # node refresh, cluster IRSA/token refresh
-  ]
+  source_security_group_id = aws_security_group.vpc_endpoints.id   # SG attached to all interface endpoints
 }
 
 # DNS UDP + TCP

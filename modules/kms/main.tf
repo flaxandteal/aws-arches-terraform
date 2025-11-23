@@ -2,6 +2,10 @@
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
+data "aws_ec2_managed_prefix_list" "kms" {
+  name = "com.amazonaws.${var.region}.kms"
+}
+
 locals {
   account_id = data.aws_caller_identity.current.account_id
   partition  = data.aws_partition.current.partition

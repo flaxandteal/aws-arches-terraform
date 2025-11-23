@@ -4,10 +4,6 @@ data "aws_ec2_managed_prefix_list" "s3" {
   name = "com.amazonaws.${var.region}.s3"
 }
 
-data "aws_ec2_managed_prefix_list" "kms" {
-  name = "com.amazonaws.${var.region}.kms"
-}
-
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 6.10.0"

@@ -39,22 +39,6 @@ provider "aws" {
 }
 
 data "aws_caller_identity" "current" {}
-data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3" }
-data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.region}.ecr.api" }
-data "aws_ec2_managed_prefix_list" "ecr_dkr" {
-  name       = "com.amazonaws.${var.region}.ecr.dkr"
-  depends_on = [aws_vpc_endpoint.ecr_dkr]
-}
-data "aws_ec2_managed_prefix_list" "logs" {
-  name       = "com.amazonaws.${var.region}.logs"
-  depends_on = [aws_vpc_endpoint.logs]
-}
-
-data "aws_ec2_managed_prefix_list" "kms" {
-  name       = "com.amazonaws.${var.region}.kms"
-  depends_on = [aws_vpc_endpoint.kms]
-}
-#data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
 
 # =============================================================================
 # Naming & Tagging
@@ -109,6 +93,7 @@ module "kms" {
 
   name              = local.name
   environment       = var.environment
+  region = var.region
   tags              = module.labels.tags
   use_random_suffix = var.use_random_suffix
 }
@@ -174,14 +159,6 @@ module "eks" {
   github_repo             = var.github_repo
   log_retention_days      = var.log_retention_days
 
-  prefix_list_ids = {
-    s3      = data.aws_ec2_managed_prefix_list.s3.id
-    ecr_api = data.aws_ec2_managed_prefix_list.ecr_api.id
-    ecr_dkr = try(data.aws_ec2_managed_prefix_list.ecr_dkr.id, "")
-    logs    = data.aws_ec2_managed_prefix_list.logs.id
-    kms     = data.aws_ec2_managed_prefix_list.kms.id
-  }
-
   tags = module.labels.tags
 
 }
@@ -217,6 +194,33 @@ module "rds" {
 # =============================================================================
 # 7. VPC Endpoints – fully private
 # =============================================================================
+resource "aws_security_group" "vpc_endpoints" {
+  name        = "${local.name}-vpc-endpoints-sg"
+  description = "Attached to all interface VPC endpoints"
+  vpc_id      = module.vpc.vpc_id
+
+  # Allow outbound to AWS (endpoints can reach back to the internet if they need to)
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(module.labels.tags, { Name = "${local.name}-vpc-endpoints-sg" })
+}
+
+# Add the correct ingress to the endpoint SG
+resource "aws_security_group_rule" "vpc_endpoints_allow_nodes" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id      = aws_security_group.vpc_endpoints.id          # ← target SG
+  source_security_group_id = module.eks.node_security_group_id            # ← source SG
+  description              = "EKS nodes → VPC interface endpoints"
+}
+
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = module.vpc.vpc_id
   service_name      = "com.amazonaws.${var.region}.s3"
@@ -233,7 +237,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   service_name        = "com.amazonaws.${var.region}.ecr.api"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, {
@@ -246,7 +250,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   service_name        = "com.amazonaws.${var.region}.ecr.dkr"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, {
@@ -259,7 +263,7 @@ resource "aws_vpc_endpoint" "logs" {
   service_name        = "com.amazonaws.${var.region}.logs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, { Name = "${local.name}-logs" })
@@ -270,7 +274,7 @@ resource "aws_vpc_endpoint" "kms" {
   service_name        = "com.amazonaws.${var.region}.kms"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, { Name = "${local.name}-kms" })
@@ -281,8 +285,41 @@ resource "aws_vpc_endpoint" "sts" {
   service_name        = "com.amazonaws.${var.region}.sts"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = module.vpc.private_subnet_ids
-  security_group_ids  = [module.eks.node_security_group_id]
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = merge(module.labels.tags, { Name = "${local.name}-sts" })
 }
+
+# # Add these three (copy-paste) — highly recommended
+# resource "aws_vpc_endpoint" "ssm" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${var.region}.ssm"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnet_ids
+#   security_group_ids  = [aws_security_group.vpc_endpoints.id]
+#   private_dns_enabled = true
+#   tags                = merge(module.labels.tags, { Name = "${local.name}-ssm" })
+# }
+
+#sji add later todo
+
+# resource "aws_vpc_endpoint" "ssmmessages" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${var.region}.ssmmessages"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnet_ids
+#   security_group_ids  = [aws_security_group.vpc_endpoints.id]
+#   private_dns_enabled = true
+#   tags                = merge(module.labels.tags, { Name = "${local.name}-ssmmessages" })
+# }
+
+# resource "aws_vpc_endpoint" "ec2messages" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.${var.region}.ec2messages"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnet_ids
+#   security_group_ids  = [aws_security_group.vpc_endpoints.id]
+#   private_dns_enabled = true
+#   tags                = merge(module.labels.tags, { Name = "${local.name}-ec2messages" })
+# }

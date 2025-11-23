@@ -100,14 +100,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "prefix_list_ids" {
-  description = "Map of AWS service prefix list IDs"
-  type = object({
-    s3      = string
-    ecr_api = string
-    ecr_dkr = string
-    logs    = string
-    kms     = string
-  })
-}
