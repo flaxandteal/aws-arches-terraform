@@ -7,12 +7,33 @@ locals {
 }
 
 data "aws_region" "current" {}
-data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3" }
+# data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3" }
 data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.region}.ecr.api" }
 data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.region}.ecr.dkr" }
-data "aws_ec2_managed_prefix_list" "logs" { name = "com.amazonaws.${var.region}.logs" }
-data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
-data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
+# data "aws_ec2_managed_prefix_list" "logs" { name = "com.amazonaws.${var.region}.logs" }
+# data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
+# data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
+
+data "aws_ec2_managed_prefix_list" "ecr_dkr" {
+  name = "com.amazonaws.${var.region}.s3"
+  depends_on = [aws_vpc_endpoint.s3] 
+}
+
+data "aws_ec2_managed_prefix_list" "logs" {
+  name = "com.amazonaws.${var.region}.logs"
+  depends_on = [aws_vpc_endpoint.logs]
+}
+
+data "aws_ec2_managed_prefix_list" "kms" {
+  name = "com.amazonaws.${var.region}.kms"
+  depends_on = [aws_vpc_endpoint.kms]
+}
+
+# node registration
+data "aws_ec2_managed_prefix_list" "sts" {
+  name = "com.amazonaws.${var.region}.sts"
+  depends_on = [aws_vpc_endpoint.sts] 
+}
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -180,8 +201,8 @@ resource "aws_security_group_rule" "nodes_egress_https_aws_services" {
   security_group_id = module.eks.node_security_group_id
   prefix_list_ids = [
     data.aws_ec2_managed_prefix_list.s3.id,
-    data.aws_ec2_managed_prefix_list.ecr_api.id,
-    data.aws_ec2_managed_prefix_list.ecr_dkr.id,
+    length(data.aws_ec2_managed_prefix_list.ecr_api.id) > 0 ? data.aws_ec2_managed_prefix_list.ecr_api.id : null,
+    length(data.aws_ec2_managed_prefix_list.ecr_dkr.id) > 0 ? data.aws_ec2_managed_prefix_list.ecr_dkr.id : null,
     data.aws_ec2_managed_prefix_list.logs.id,
     data.aws_ec2_managed_prefix_list.kms.id,
     data.aws_ec2_managed_prefix_list.sts.id, # node refresh, cluster IRSA/token refresh
