@@ -14,7 +14,7 @@ data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.regio
 # data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
 # data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
 
-data "aws_ec2_managed_prefix_list" "ecr_dkr" {
+data "aws_ec2_managed_prefix_list" "s3" {
   name       = "com.amazonaws.${var.region}.s3"
   depends_on = [aws_vpc_endpoint.s3]
 }
