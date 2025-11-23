@@ -78,3 +78,8 @@ variable "performance_insights_retention_period" {
   type        = number
   default     = 7
 }
+
+variable "vpc_endpoints_security_group_id" {
+  description = "Shared SG attached to all interface VPC endpoints"
+  type        = string
+}

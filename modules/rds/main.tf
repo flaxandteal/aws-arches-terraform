@@ -1,12 +1,12 @@
 # modules/rds/main.tf
 
-data "aws_ec2_managed_prefix_list" "s3" {
-  name = "com.amazonaws.${var.region}.s3"
-}
+# data "aws_ec2_managed_prefix_list" "s3" {
+#   name = "com.amazonaws.${var.region}.s3"
+# }
 
-data "aws_ec2_managed_prefix_list" "kms" {
-  name = "com.amazonaws.${var.region}.kms"
-}
+# data "aws_ec2_managed_prefix_list" "kms" {
+#   name = "com.amazonaws.${var.region}.kms"
+# }
 
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
@@ -80,41 +80,6 @@ resource "aws_security_group" "rds" {
     protocol        = "tcp"
     security_groups = [var.eks_node_sg_id]
   }
-
-  # --------------------------------------------------
-  # EGRESS: Only what RDS actually needs (no internet!)
-  # --------------------------------------------------
-
-  # HTTPS to S3 VPC endpoint (automated backups, pg_dump to S3, extensions)
-  egress {
-    description     = "RDS S3 (backups, extensions)"
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    prefix_list_ids = [data.aws_ec2_managed_prefix_list.s3.id]
-  }
-
-  # HTTPS to KMS VPC endpoint (EBS/RDS encryption)
-  egress {
-    description     = "RDS KMS (encryption)"
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    prefix_list_ids = [data.aws_ec2_managed_prefix_list.kms.id]
-  }
-
-  # Return traffic on ephemeral ports
-  egress {
-    description = "Return traffic from AWS services only"
-    from_port   = 1024
-    to_port     = 65535
-    protocol    = "tcp"
-    prefix_list_ids = [
-      data.aws_ec2_managed_prefix_list.s3.id,
-      data.aws_ec2_managed_prefix_list.kms.id,
-    ]
-  }
-
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-${var.environment}-rds-sg"
   })
@@ -122,4 +87,109 @@ resource "aws_security_group" "rds" {
   lifecycle {
     create_before_destroy = true
   }
+}
+  # --------------------------------------------------
+  # EGRESS: Only what RDS actually needs (no internet!)
+  # --------------------------------------------------
+# ------------------------------------------------------------------
+# EGRESS – fully private, works in every region (no prefix-list drift)
+# ------------------------------------------------------------------
+
+# # 1. HTTPS to ALL interface VPC endpoints (KMS, Secrets Manager, SSM, etc.)
+#   egress {
+#     description              = "RDS → all interface VPC endpoints (KMS, Secrets Manager, SSM, etc.)"
+#     from_port                = 443
+#     to_port                  = 443
+#     protocol                 = "tcp"
+#     source_security_group_id = var.vpc_endpoints_security_group_id   # passed from root
+#   }
+
+#   # 2. HTTPS to S3 gateway endpoint (backups, extensions, pg_dump, etc.)
+#   egress {
+#     description     = "RDS → S3 (backups, extensions)"
+#     from_port       = 443
+#     to_port         = 443
+#     protocol        = "tcp"
+#     prefix_list_ids = [data.aws_ec2_managed_prefix_list.s3.id]   # S3 is always available
+#   }
+
+#   # 3. Return traffic on ephemeral ports (stateful – safe)
+#   egress {
+#     description = "Ephemeral return traffic"
+#     from_port   = 1024
+#     to_port     = 65535
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]   # required for return traffic; SGs are stateful
+  #}
+
+  # # HTTPS to S3 VPC endpoint (automated backups, pg_dump to S3, extensions)
+  # egress {
+  #   description     = "RDS S3 (backups, extensions)"
+  #   from_port       = 443
+  #   to_port         = 443
+  #   protocol        = "tcp"
+  #   prefix_list_ids = [data.aws_ec2_managed_prefix_list.s3.id]
+  # }
+
+  # # HTTPS to KMS VPC endpoint (EBS/RDS encryption)
+  # egress {
+  #   description     = "RDS KMS (encryption)"
+  #   from_port       = 443
+  #   to_port         = 443
+  #   protocol        = "tcp"
+  #   prefix_list_ids = [data.aws_ec2_managed_prefix_list.kms.id]
+  # }
+
+  # # Return traffic on ephemeral ports
+  # egress {
+  #   description = "Return traffic from AWS services only"
+  #   from_port   = 1024
+  #   to_port     = 65535
+  #   protocol    = "tcp"
+  #   prefix_list_ids = [
+  #     data.aws_ec2_managed_prefix_list.s3.id,
+  #     data.aws_ec2_managed_prefix_list.kms.id,
+  #   ]
+  #}
+
+#   tags = merge(var.tags, {
+#     Name = "${var.name_prefix}-${var.environment}-rds-sg"
+#   })
+
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
+
+# ——————————————————————————————————————————————————————————————————
+# EGRESS RULES – separate resources
+# ——————————————————————————————————————————————————————————————————
+resource "aws_security_group_rule" "rds_egress_to_vpc_endpoints" {
+  description              = "RDS → all interface VPC endpoints (KMS, Secrets Manager, SSM, etc.)"
+  type                     = "egress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.rds.id
+  source_security_group_id = var.vpc_endpoints_security_group_id   # from root
+}
+
+resource "aws_security_group_rule" "rds_egress_to_s3" {
+  description       = "RDS → S3 gateway endpoint (backups, extensions)"
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.rds.id
+  prefix_list_ids   = [data.aws_ec2_managed_prefix_list.s3.id]
+}
+
+resource "aws_security_group_rule" "rds_egress_ephemeral" {
+  description       = "Return traffic (stateful)"
+  type              = "egress"
+  from_port         = 1024
+  to_port           = 65535
+  protocol          = "tcp"
+  security_group_id = aws_security_group.rds.id
+  cidr_blocks       = ["0.0.0.0/0"]
 }
