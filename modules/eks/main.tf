@@ -38,7 +38,7 @@ module "eks" {
   # Override default open egress with an empty rule which disables it completely
   node_security_group_additional_rules = {
     egress_all = {
-      description = "Disabled – using explicit egress rules only"
+      description = "Disabled we are using explicit egress rules only"
       protocol    = "-1"
       from_port   = 0
       to_port     = 0
