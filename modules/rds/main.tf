@@ -27,7 +27,7 @@ module "rds" {
   publicly_accessible = false
 
   create_db_subnet_group = true
-  db_subnet_group_name   = null
+  db_subnet_group_name   = "${var.name_prefix}-${var.environment}-db-subnet-group"
 
   vpc_security_group_ids = [module.rds.security_group_id] #[aws_security_group.rds.id]
   subnet_ids             = var.db_subnet_ids
