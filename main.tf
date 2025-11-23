@@ -173,6 +173,7 @@ module "rds" {
 
   name_prefix = var.name_prefix
   environment = var.environment
+  region      = var.region
 
   vpc_id         = module.vpc.vpc_id
   db_subnet_ids  = module.vpc.private_subnet_ids

@@ -35,6 +35,18 @@ module "eks" {
   # Dedicated subnets for control plane (more isolation)
   control_plane_subnet_ids = length(var.control_plane_subnet_ids) > 0 ? var.control_plane_subnet_ids : var.private_subnet_ids
 
+  # Override default open egress with an empty rule which disables it completely
+  node_security_group_additional_rules = {
+    egress_all = {
+      description = "Disabled – using explicit egress rules only"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "egress"
+      cidr_blocks = [] # default open egress blocked
+    }
+  }
+
   # ==================================================================
   # Access – admin via IAM principal (terraform-deployer)
   # ==================================================================
@@ -176,7 +188,7 @@ resource "aws_security_group_rule" "nodes_egress_https_aws_services" {
   ]
 }
 
-# DNS UDP + TCP (to VPC+2 or in-VPC DNS forwarder)
+# DNS UDP + TCP
 resource "aws_security_group_rule" "nodes_egress_dns_udp" {
   description       = "DNS UDP to VPC+2"
   type              = "egress"
@@ -207,95 +219,3 @@ resource "aws_security_group_rule" "nodes_egress_ephemeral" {
   security_group_id = module.eks.node_security_group_id
   cidr_blocks       = ["0.0.0.0/0"] # SGs are stateful
 }
-
-
-# node_security_group_additional_rules = {
-#   # Allow nodes to pull images from ECR + talk to EKS API (in-VPC)
-#   egress_vpc = {
-#     description = "Node to VPC (for EKS API, DNS, ECR dkr endpoints)"
-#     protocol    = "-1"
-#     from_port   = 0
-#     to_port     = 0
-#     type        = "egress"
-#     cidr_blocks = [var.vpc_cidr]  # e.g. "10.0.0.0/16"
-#   }
-
-#   # Optional: allow HTTPS only to AWS services (if you need S3, DynamoDB, etc.)
-#   egress_https_443 = {
-#     description = "Node HTTPS to AWS services"
-#     protocol    = "tcp"
-#     from_port   = 443
-#     to_port     = 443
-#     type        = "egress"
-#     cidr_blocks = ["0.0.0.0/0"]
-#     # Safe because it's only port 443
-#   }
-
-#   # Optional: allow DNS (UDP 53)
-#   egress_dns = {
-#     description = "Node DNS resolution"
-#     protocol    = "udp"
-#     from_port   = 53
-#     to_port     = 53
-#     type        = "egress"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
-
-# # COMPLETELY DISABLE the default permissive rules created by the module
-# create_node_security_group = true
-# node_security_group_tags = {
-#   "kubernetes.io/cluster/${local.cluster_name}" = "owned"
-# }
-
-
-# # =============================================================================
-# # REQUIRED VPC INTERFACE ENDPOINTS FOR FULLY PRIVATE EKS (v21+)
-# # Without these the nodes can NEVER register → CREATE_FAILED forever
-# # =============================================================================
-
-# resource "aws_vpc_endpoint" "eks_api" {
-#   vpc_id              = var.vpc_id
-#   service_name        = "com.amazonaws.${data.aws_region.current.name}.eks"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = var.private_subnet_ids
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-
-#   tags = merge(var.tags, {
-#     Name = "${local.cluster_name}-eks-api"
-#   })
-# }
-
-# resource "aws_vpc_endpoint" "sts" {
-#   vpc_id              = var.vpc_id
-#   service_name        = "com.amazonaws.${data.aws_region.current.name}.sts"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = var.private_subnet_ids
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-
-#   tags = merge(var.tags, { Name = "${local.cluster_name}-sts" })
-# }
-
-# resource "aws_vpc_endpoint" "ec2" {
-#   vpc_id              = var.vpc_id
-#   service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = var.private_subnet_ids
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-
-#   tags = merge(var.tags, { Name = "${local.cluster_name}-ec2" })
-# }
-
-# resource "aws_vpc_endpoint" "logs" {
-#   vpc_id              = var.vpc_id
-#   service_name        = "com.amazonaws.${data.aws_region.current.name}.logs"
-#   vpc_endpoint_type   = "Interface"
-#   subnet_ids          = var.private_subnet_ids
-#   security_group_ids  = [module.eks.node_security_group_id]
-#   private_dns_enabled = true
-
-#   tags = merge(var.tags, { Name = "${local.cluster_name}-logs" })
-# }

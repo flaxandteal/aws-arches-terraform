@@ -1,9 +1,16 @@
 # modules/rds/main.tf
 
+data "aws_ec2_managed_prefix_list" "s3" {
+  name = "com.amazonaws.${var.region}.s3"
+}
+
+data "aws_ec2_managed_prefix_list" "kms" {
+  name = "com.amazonaws.${var.region}.kms"
+}
+
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 6.10.0"
-
 
   identifier = "${var.name_prefix}-${var.environment}-postgres"
 
@@ -98,11 +105,14 @@ resource "aws_security_group" "rds" {
 
   # Return traffic on ephemeral ports
   egress {
-    description = "Return traffic from AWS services"
-    from_port   = 1024
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Return traffic from AWS services only"
+    from_port       = 1024
+    to_port         = 65535
+    protocol        = "tcp"
+    prefix_list_ids = [
+      data.aws_ec2_managed_prefix_list.s3.id,
+      data.aws_ec2_managed_prefix_list.kms.id,
+    ]
   }
 
   tags = merge(var.tags, {

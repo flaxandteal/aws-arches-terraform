@@ -11,6 +11,11 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "region" {
+  description = "AWS region"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "VPC ID where RDS will be deployed"
   type        = string
