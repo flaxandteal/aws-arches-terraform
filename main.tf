@@ -41,9 +41,19 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 data "aws_ec2_managed_prefix_list" "s3" { name = "com.amazonaws.${var.region}.s3" }
 data "aws_ec2_managed_prefix_list" "ecr_api" { name = "com.amazonaws.${var.region}.ecr.api" }
-data "aws_ec2_managed_prefix_list" "ecr_dkr" { name = "com.amazonaws.${var.region}.ecr.dkr" }
-data "aws_ec2_managed_prefix_list" "logs" { name = "com.amazonaws.${var.region}.logs" }
-data "aws_ec2_managed_prefix_list" "kms" { name = "com.amazonaws.${var.region}.kms" }
+data "aws_ec2_managed_prefix_list" "ecr_dkr" {
+  name       = "com.amazonaws.${var.region}.ecr.dkr"
+  depends_on = [aws_vpc_endpoint.ecr_dkr] # endpoint is in root
+}
+data "aws_ec2_managed_prefix_list" "logs" {
+  name       = "com.amazonaws.${var.region}.logs"
+  depends_on = [aws_vpc_endpoint.logs]
+}
+
+data "aws_ec2_managed_prefix_list" "kms" {
+  name       = "com.amazonaws.${var.region}.kms"
+  depends_on = [aws_vpc_endpoint.kms]
+}
 #data "aws_ec2_managed_prefix_list" "sts" { name = "com.amazonaws.${var.region}.sts" } #node registration
 
 # =============================================================================
@@ -97,14 +107,10 @@ module "iam" {
 module "kms" {
   source = "./modules/kms"
 
-  name        = local.name
-  environment = var.environment
-  #eks_node_role_arns = [module.eks.node_iam_role_arn] # will be known after EKS - nope! circular i think
+  name              = local.name
+  environment       = var.environment
   tags              = module.labels.tags
   use_random_suffix = var.use_random_suffix
-
-  # We handle the circular dependency cleanly with depends_on
-  #depends_on = [module.eks]
 }
 
 # =============================================================================
