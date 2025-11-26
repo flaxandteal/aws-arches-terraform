@@ -39,13 +39,12 @@ module "vpc" {
 # ================================================
 # VPC Flow Logs → S3 (standalone, cheap, compliant)
 # ================================================
-# VPC Flow Logs → S3 (parquet, cheap, compliant)
 resource "aws_flow_log" "vpc" {
   iam_role_arn         = aws_iam_role.vpc_flow_logs_role.arn
   log_destination      = "${var.s3_logging_bucket_arn}/vpc-flow-logs/AWSLogs/${var.account_id}/"
   log_destination_type = "s3"
-  traffic_type         = "ALL" # change to "REJECT" later to save money
-  vpc_id               = aws_vpc.this[0].id
+  traffic_type         = "ALL" # change to "REJECT" as cheaper? sji todo
+  vpc_id               = module.vpc.vpc_id
 
   destination_options {
     file_format        = "parquet"
