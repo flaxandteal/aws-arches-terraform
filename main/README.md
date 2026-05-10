@@ -1,12 +1,36 @@
 # Create/Update AWS Infrastructure
-1. cd /main
 
-1. Initialize:
-```
-terraform init
+## Quick Start
+
+```bash
+# 1. Bootstrap state bucket (one-time)
+cd bootstrap && terraform init && terraform apply
+
+# 2. Init main stack
+cd ../main
+terraform init -backend-config=dev.backend.tfvars
+
+# 3. Plan and apply
+terraform plan -var-file=dev.tfvars
+terraform apply -var-file=dev.tfvars
 ```
 
-2. Format and Validate Terraform
+## Known Issues
+
+### EBS KMS Key Circular Dependency
+The custom KMS key for EBS encryption (`module.kms`) requires the EKS node IAM role name
+to build its key policy, but `module.eks` needs the KMS key ARN to configure encrypted
+volumes — creating a cycle. The `ebs_kms_key_arn` parameter is currently commented out
+in `main.tf`. EBS volumes are still encrypted using the default AWS-managed key.
+
+**To fix properly:** restructure the KMS module to use a wildcard or condition-based
+policy that doesn't require the node role at creation time, then grant the node role
+access in a separate `aws_kms_grant` or policy update after EKS is created.
+
+## Commands
+
+Format and validate:
+```
 terraform fmt --recursive
 terraform validate
 ```

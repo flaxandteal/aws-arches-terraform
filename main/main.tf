@@ -1,33 +1,3 @@
-terraform {
-  required_version = ">= 1.5"
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "= 6.15.0" # ← Required by EKS module v21+
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = ">= 2.0"
-    }
-
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.19"
-    }
-  }
-  #sji todo
-  # backend "s3" {
-  #   bucket = "tf-state-<your_aws_account_id>" # Replace with your AWS account ID then run backend.tf to create this bucket
-  #   key    = "terraform/state.tfstate"
-  #   region = "eu-north-1"
-  # }
-}
-
-provider "aws" {
-  region = var.region
-}
-
 # --------------------------------------------------------------------------
 # Common 
 # --------------------------------------------------------------------------
@@ -88,6 +58,8 @@ module "eks" {
     max_size      = var.clusters.max_size
   }
 
+  # Circular dependency: KMS needs node_iam_role_name from EKS, EKS needs KMS key
+  # EBS volumes still encrypted with AWS-managed key by default
   #ebs_kms_key_arn = module.kms.ebs_kms_key_arn
 
   log_retention_days = var.clusters.log_retention_days

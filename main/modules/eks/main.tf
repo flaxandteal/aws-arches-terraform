@@ -45,6 +45,12 @@ module "eks" {
       most_recent       = true
       resolve_conflicts = "OVERWRITE"
     }
+
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      resolve_conflicts        = "OVERWRITE"
+      service_account_role_arn = aws_iam_role.ebs_csi.arn
+    }
   }
 
   # cluster_enabled_log_types = [
@@ -52,9 +58,40 @@ module "eks" {
   # ]
   # cloudwatch_log_group_retention_in_days = var.log_retention_days
 
+  # Allow control plane to reach istiod webhook (port 15017) on nodes
+  node_security_group_additional_rules = {
+    istio_webhook = {
+      description                   = "Control plane to istiod webhook"
+      protocol                      = "tcp"
+      from_port                     = 15017
+      to_port                       = 15017
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+    # Default node-to-node rule only covers 1025-65535 (ephemeral ports).
+    # Istio ingressgateway listens on 80/443, so cross-node kube-proxy
+    # forwarding to those ports gets blocked without these rules.
+    ingress_http_from_nodes = {
+      description = "Node to node HTTP (for ingress gateway)"
+      protocol    = "tcp"
+      from_port   = 80
+      to_port     = 80
+      type        = "ingress"
+      self        = true
+    }
+    ingress_https_from_nodes = {
+      description = "Node to node HTTPS (for ingress gateway)"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      self        = true
+    }
+  }
+
   eks_managed_node_groups = {
     main = {
-      ami_type                   = "AL2023_ARM_64_STANDARD"
+      ami_type                   = "AL2023_x86_64_STANDARD"
       instance_types             = [var.node_group.instance_type]
       min_size                   = var.node_group.min_size
       max_size                   = var.node_group.max_size
@@ -65,7 +102,7 @@ module "eks" {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size           = 20
+            volume_size           = 100  # Match Catalyst Cloud docker_volume_size
             volume_type           = "gp3"
             encrypted             = true
             kms_key_id            = var.ebs_kms_key_arn != "" ? var.ebs_kms_key_arn : null
@@ -85,6 +122,38 @@ module "eks" {
       GitHubRepo = var.github_repo
     }
   )
+}
+
+# IAM role for EBS CSI driver (IRSA)
+data "aws_iam_policy_document" "ebs_csi_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi" {
+  name               = "${var.name}-ebs-csi-driver"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_assume.json
+  tags               = var.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi" {
+  role       = aws_iam_role.ebs_csi.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
 
 resource "null_resource" "delay_destroy" {

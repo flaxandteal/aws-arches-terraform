@@ -1,9 +1,9 @@
 provider "aws" {
-  region = "eu-central-1" # Replace with your desired region
+  region = "ap-southeast-6" # AWS Asia Pacific (New Zealand)
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "catalina-terraform-state"
+  bucket = "catalina-terraform-state-510664426317"
   tags = {
     Name = "terraform-state"
   }
