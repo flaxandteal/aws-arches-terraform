@@ -15,4 +15,10 @@ terraform {
       version = "~> 1.19"
     }
   }
+
+  backend "s3" {
+    # Configured via -backend-config=<env>.backend.tfvars
+    # Run bootstrap/ first to create the bucket and DynamoDB table
+    skip_region_validation = true # ap-southeast-6 not yet in Terraform's region list
+  }
 }
