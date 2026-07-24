@@ -14,19 +14,6 @@ module "common" {
 }
 
 # --------------------------------------------------------------------------
-# VPC
-# --------------------------------------------------------------------------
-module "vpc" {
-  source = "./modules/vpc"
-
-  name        = module.common.name
-  common_tags = module.common.common_tags
-
-  cidr = var.vpc_cidr
-  azs  = var.vpc_azs
-}
-
-# --------------------------------------------------------------------------
 # IAM
 # --------------------------------------------------------------------------
 module "iam" {
@@ -51,9 +38,9 @@ module "eks" {
   eks_admin_principal_arn = var.eks_admin_principal_arn
 
   cluster_version          = var.cluster_version
-  vpc_id                   = module.vpc.vpc_id
-  subnet_ids               = module.vpc.private_subnet_ids
-  control_plane_subnet_ids = module.vpc.control_plane_subnet_ids
+  vpc_id                   = var.vpc_id
+  subnet_ids               = var.app_subnet_ids
+  control_plane_subnet_ids = var.app_subnet_ids
 
   node_group = {
     instance_type = var.clusters.instance_type
@@ -103,8 +90,8 @@ module "rds" {
   name        = module.common.name
   common_tags = module.common.common_tags
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnet_ids
+  vpc_id     = var.vpc_id
+  subnet_ids = var.data_subnet_ids
   eks_sg_id  = module.eks.node_security_group_id
 
   db_class            = var.db_class

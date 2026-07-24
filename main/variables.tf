@@ -17,8 +17,25 @@ variable "extra_tags" {
 # --------------------------------------------------------------------------
 # VPC
 # --------------------------------------------------------------------------
-variable "vpc_cidr" { type = string }
-variable "vpc_azs" { type = list(string) }
+# This branch consumes an existing, externally-managed VPC (shared "publicApps"
+# VPC, owned by a separate CDK stack) instead of creating its own.
+variable "vpc_id" { type = string }
+
+variable "app_subnet_ids" {
+  type        = list(string)
+  description = "Private subnet IDs for EKS nodes and control plane"
+}
+
+variable "data_subnet_ids" {
+  type        = list(string)
+  description = "Private subnet IDs for RDS"
+}
+
+variable "public_subnet_ids" {
+  type        = list(string)
+  description = "Public subnet IDs (ingress load balancers)"
+  default     = []
+}
 
 # --------------------------------------------------------------------------
 # EKS
