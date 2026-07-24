@@ -102,7 +102,7 @@ module "eks" {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size           = 100  # Match Catalyst Cloud docker_volume_size
+            volume_size           = 100 # Match Catalyst Cloud docker_volume_size
             volume_type           = "gp3"
             encrypted             = true
             kms_key_id            = var.ebs_kms_key_arn != "" ? var.ebs_kms_key_arn : null
@@ -110,6 +110,16 @@ module "eks" {
           }
         }
       }
+
+      # app_subnet_ids are private, NAT-routed subnets (no auto-assign public
+      # IP) - explicit here so the launch template doesn't request one, which
+      # otherwise fails node group creation with Ec2SubnetInvalidConfiguration.
+      network_interfaces = [
+        {
+          associate_public_ip_address = false
+          delete_on_termination       = true
+        }
+      ]
 
       depends_on = ["vpc-cni"]
     }
