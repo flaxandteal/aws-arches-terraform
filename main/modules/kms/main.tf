@@ -15,9 +15,10 @@ data "aws_iam_role" "node" {
 # KMS Key – EBS
 # ------------------------------------------------------------------
 resource "aws_kms_key" "ebs" {
-  description             = "${var.name} - EBS volume encryption"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
+  description                        = "${var.name} - EBS volume encryption"
+  deletion_window_in_days            = 10
+  enable_key_rotation                = true
+  bypass_policy_lockout_safety_check = true
 
   policy = data.aws_iam_policy_document.ebs.json
 
@@ -31,9 +32,10 @@ resource "aws_kms_key" "ebs" {
 # KMS Key – S3
 # ------------------------------------------------------------------
 resource "aws_kms_key" "s3" {
-  description             = "${var.name} - S3 bucket encryption"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
+  description                        = "${var.name} - S3 bucket encryption"
+  deletion_window_in_days            = 10
+  enable_key_rotation                = true
+  bypass_policy_lockout_safety_check = true
 
   policy = data.aws_iam_policy_document.s3.json
 
