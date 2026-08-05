@@ -85,15 +85,35 @@ module "s3_media" {
 # --------------------------------------------------------------------------
 # s3-gateway (srv-starches) access to the media bucket
 # --------------------------------------------------------------------------
-# Static IAM user, not IRSA: nginx-s3-gateway takes AWS_ACCESS_KEY_ID/
-# AWS_SECRET_ACCESS_KEY/AWS_SESSION_TOKEN as plain env vars and doesn't call
-# AssumeRoleWithWebIdentity or refresh them itself, so IRSA's short-lived
-# tokens don't fit without extra sidecar machinery. Access key is created
-# out-of-band (aws iam create-access-key), not in Terraform, to avoid
-# storing the secret key material in state.
-resource "aws_iam_user" "s3_gateway" {
-  name = "${module.common.name}-s3-gateway"
-  tags = module.common.common_tags
+# IRSA, not a static IAM user: the org SCP (p-1ubxebgn) denies iam:CreateUser
+# outright, so static credentials aren't an option here. We swapped the
+# gateway image from nginx-s3-gateway (which only takes static env-var
+# creds and can't refresh STS tokens itself) to aws-sigv4-proxy, which uses
+# the default AWS SDK credential chain and picks up IRSA automatically.
+data "aws_iam_policy_document" "s3_gateway_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = ["system:serviceaccount:srv-starches:s3-gateway"]
+    }
+  }
+}
+
+resource "aws_iam_role" "s3_gateway" {
+  name               = "${module.common.name}-s3-gateway"
+  assume_role_policy = data.aws_iam_policy_document.s3_gateway_assume_role.json
+  tags               = module.common.common_tags
 }
 
 data "aws_iam_policy_document" "s3_gateway_access" {
@@ -108,9 +128,9 @@ data "aws_iam_policy_document" "s3_gateway_access" {
   }
 }
 
-resource "aws_iam_user_policy" "s3_gateway" {
+resource "aws_iam_role_policy" "s3_gateway" {
   name   = "${module.common.name}-s3-gateway-access"
-  user   = aws_iam_user.s3_gateway.name
+  role   = aws_iam_role.s3_gateway.name
   policy = data.aws_iam_policy_document.s3_gateway_access.json
 }
 

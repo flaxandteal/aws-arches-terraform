@@ -14,6 +14,6 @@ output "s3_media_bucket_name" {
   value = module.s3_media.bucket_name
 }
 
-output "s3_gateway_iam_user_name" {
-  value = aws_iam_user.s3_gateway.name
+output "s3_gateway_role_arn" {
+  value = aws_iam_role.s3_gateway.arn
 }
