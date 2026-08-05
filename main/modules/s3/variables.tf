@@ -14,6 +14,12 @@ variable "lifecycle_storage_class" {
   default     = "GLACIER"
 }
 
+variable "enable_lifecycle" {
+  description = "Whether to transition objects to lifecycle_storage_class. Disable for buckets serving live content (e.g. Glacier isn't instantly readable)."
+  type        = bool
+  default     = true
+}
+
 variable "common_tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)

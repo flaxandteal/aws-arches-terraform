@@ -43,6 +43,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 # Lifecycle 
 # --------------------------------------------------------------------------
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
+  count = var.enable_lifecycle ? 1 : 0
+
   bucket = aws_s3_bucket.this.id
 
   rule {

@@ -69,6 +69,51 @@ module "s3" {
   common_tags               = module.common.common_tags
 }
 
+# Dedicated bucket for starches media, served live via the s3-gateway pod -
+# kept separate from the general-purpose bucket above, and with lifecycle
+# transitions disabled since Glacier isn't instantly readable.
+module "s3_media" {
+  source = "./modules/s3"
+  name   = "${module.common.name}-media"
+
+  lifecycle_transition_days = var.lifecycle_transition_days
+  enable_lifecycle          = false
+  s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  common_tags               = module.common.common_tags
+}
+
+# --------------------------------------------------------------------------
+# s3-gateway (srv-starches) access to the media bucket
+# --------------------------------------------------------------------------
+# Static IAM user, not IRSA: nginx-s3-gateway takes AWS_ACCESS_KEY_ID/
+# AWS_SECRET_ACCESS_KEY/AWS_SESSION_TOKEN as plain env vars and doesn't call
+# AssumeRoleWithWebIdentity or refresh them itself, so IRSA's short-lived
+# tokens don't fit without extra sidecar machinery. Access key is created
+# out-of-band (aws iam create-access-key), not in Terraform, to avoid
+# storing the secret key material in state.
+resource "aws_iam_user" "s3_gateway" {
+  name = "${module.common.name}-s3-gateway"
+  tags = module.common.common_tags
+}
+
+data "aws_iam_policy_document" "s3_gateway_access" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [module.s3_media.bucket_arn]
+  }
+
+  statement {
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${module.s3_media.bucket_arn}/*"]
+  }
+}
+
+resource "aws_iam_user_policy" "s3_gateway" {
+  name   = "${module.common.name}-s3-gateway-access"
+  user   = aws_iam_user.s3_gateway.name
+  policy = data.aws_iam_policy_document.s3_gateway_access.json
+}
+
 # --------------------------------------------------------------------------
 # RDS
 # --------------------------------------------------------------------------
