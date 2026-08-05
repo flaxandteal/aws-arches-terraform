@@ -34,6 +34,18 @@ module "eks" {
       most_recent       = true
       before_compute    = true
       resolve_conflicts = "OVERWRITE"
+      # app_subnet_ids are /26 (~58 usable IPs each). Prefix delegation
+      # (tried first) allocates whole /28 blocks per ENI - too coarse for a
+      # subnet this small, one node exhausted it outright
+      # (InsufficientCidrBlocks). Individual per-IP allocation with a
+      # minimal warm pool uses the tiny address space far more efficiently.
+      configuration_values = jsonencode({
+        env = {
+          WARM_ENI_TARGET   = "0"
+          WARM_IP_TARGET    = "2"
+          MINIMUM_IP_TARGET = "2"
+        }
+      })
     }
 
     coredns = {
