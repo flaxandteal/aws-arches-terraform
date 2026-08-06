@@ -17,3 +17,11 @@ output "s3_media_bucket_name" {
 output "s3_gateway_role_arn" {
   value = aws_iam_role.s3_gateway.arn
 }
+
+output "s3_prebuild_bucket_name" {
+  value = module.s3_prebuild.bucket_name
+}
+
+output "starches_ci_role_arn" {
+  value = aws_iam_role.starches_ci.arn
+}

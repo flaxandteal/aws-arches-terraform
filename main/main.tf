@@ -135,6 +135,74 @@ resource "aws_iam_role_policy" "s3_gateway" {
 }
 
 # --------------------------------------------------------------------------
+# Prebuild data bucket (starches CI) - source of the prebuild.tar the
+# catalina-starches Docker build pulls in. Separate from the media bucket
+# above: different consumer (CI runner pod, not the live s3-gateway),
+# different lifecycle needs.
+# --------------------------------------------------------------------------
+module "s3_prebuild" {
+  source = "./modules/s3"
+  name   = "${module.common.name}-prebuild"
+
+  lifecycle_transition_days = var.lifecycle_transition_days
+  enable_lifecycle          = false
+  s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  common_tags               = module.common.common_tags
+}
+
+# --------------------------------------------------------------------------
+# starches-ci (srv-github-ci) access to the prebuild bucket
+# --------------------------------------------------------------------------
+# IRSA again, same reasoning as s3-gateway above: the org SCP denies
+# iam:CreateUser, so a static S3_ACCESS_KEY/S3_SECRET_KEY pair (what the old
+# dev CI used) isn't possible on this account. The new-zealand-starches-uat
+# runner pod is bound to a dedicated ServiceAccount (srv-github-ci/starches-ci)
+# scoped to just this role, so no other CI job on the cluster inherits it.
+data "aws_iam_policy_document" "starches_ci_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = ["system:serviceaccount:srv-github-ci:starches-ci"]
+    }
+  }
+}
+
+resource "aws_iam_role" "starches_ci" {
+  name               = "${module.common.name}-starches-ci"
+  assume_role_policy = data.aws_iam_policy_document.starches_ci_assume_role.json
+  tags               = module.common.common_tags
+}
+
+data "aws_iam_policy_document" "starches_ci_access" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [module.s3_prebuild.bucket_arn]
+  }
+
+  statement {
+    actions   = ["s3:GetObject", "s3:PutObject"]
+    resources = ["${module.s3_prebuild.bucket_arn}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "starches_ci" {
+  name   = "${module.common.name}-starches-ci-access"
+  role   = aws_iam_role.starches_ci.name
+  policy = data.aws_iam_policy_document.starches_ci_access.json
+}
+
+# --------------------------------------------------------------------------
 # RDS
 # --------------------------------------------------------------------------
 module "rds" {
