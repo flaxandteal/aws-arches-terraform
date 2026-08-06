@@ -223,6 +223,35 @@ module "rds" {
 }
 
 # --------------------------------------------------------------------------
+# GitHub Actions deploy role: Secrets Manager read access
+# --------------------------------------------------------------------------
+# The CI deploy role (catalina-<env>-github-actions-deploy) is created
+# out-of-band, not by this Terraform - see catalina-aws-deploy/README.md's
+# "GitHub OIDC" section. It's missing secretsmanager:DescribeSecret /
+# GetSecretValue on the RDS credentials secret, which breaks `terraform
+# plan` outright: Terraform refreshes every resource already in state
+# (including this pre-existing secret) before computing a diff, so the
+# whole plan errors out before it even gets to processing new resources.
+# Referencing the role here (rather than asking someone to hand-edit it in
+# the console) keeps this recreatable for prod without a manual ask.
+data "aws_iam_role" "github_actions_deploy" {
+  name = "${module.common.name}-github-actions-deploy"
+}
+
+data "aws_iam_policy_document" "github_actions_deploy_secrets_access" {
+  statement {
+    actions   = ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"]
+    resources = [module.rds.db_secret_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "github_actions_deploy_secrets_access" {
+  name   = "${module.common.name}-github-actions-deploy-secrets-access"
+  role   = data.aws_iam_role.github_actions_deploy.name
+  policy = data.aws_iam_policy_document.github_actions_deploy_secrets_access.json
+}
+
+# --------------------------------------------------------------------------
 # ECR - sji don't need this. images still in github presumably?
 # --------------------------------------------------------------------------
 # module "ecr" {
