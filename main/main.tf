@@ -194,6 +194,16 @@ data "aws_iam_policy_document" "starches_ci_access" {
     actions   = ["s3:GetObject", "s3:PutObject"]
     resources = ["${module.s3_prebuild.bucket_arn}/*"]
   }
+
+  # The bucket's SSE-KMS default encryption means S3 alone isn't enough -
+  # the calling principal also needs kms:Decrypt/GenerateDataKey* on the
+  # key itself. The key's policy allows IAM delegation ("Enable IAM User
+  # Permissions" statement in modules/kms/main.tf), but that only takes
+  # effect once the calling role's own identity policy grants it too.
+  statement {
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+    resources = [module.kms.s3_kms_key_arn]
+  }
 }
 
 resource "aws_iam_role_policy" "starches_ci" {
@@ -223,19 +233,50 @@ module "rds" {
 }
 
 # --------------------------------------------------------------------------
-# GitHub Actions deploy role: Secrets Manager read access
+# GitHub Actions deploy role (catalina-<environment>-github-actions-deploy)
 # --------------------------------------------------------------------------
-# The CI deploy role (catalina-<env>-github-actions-deploy) is created
-# out-of-band, not by this Terraform - see catalina-aws-deploy/README.md's
-# "GitHub OIDC" section. It's missing secretsmanager:DescribeSecret /
-# GetSecretValue on the RDS credentials secret, which breaks `terraform
-# plan` outright: Terraform refreshes every resource already in state
-# (including this pre-existing secret) before computing a diff, so the
-# whole plan errors out before it even gets to processing new resources.
-# Referencing the role here (rather than asking someone to hand-edit it in
-# the console) keeps this recreatable for prod without a manual ask.
-data "aws_iam_role" "github_actions_deploy" {
-  name = "${module.common.name}-github-actions-deploy"
+# Originally created out-of-band (bootstrap chicken-and-egg: something has
+# to create the first OIDC-trusted role before GitHub Actions can assume
+# anything itself). Brought fully under Terraform - via `terraform import`
+# of the existing UAT role, matching its live config exactly below - so a
+# fresh environment (prod) doesn't need this hand-created again. See
+# catalina-aws-deploy/README.md's "GitHub OIDC" section for the OIDC/sub
+# claim background.
+data "aws_iam_openid_connect_provider" "github_actions" {
+  url = "https://token.actions.githubusercontent.com"
+}
+
+data "aws_iam_policy_document" "github_actions_deploy_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [data.aws_iam_openid_connect_provider.github_actions.arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    # Numeric org/repo IDs, not org/repo names: this org is on GitHub
+    # Enterprise, whose sub claim uses the ID form regardless of what the
+    # AWS console's OIDC wizard assumes. Both IDs belong to
+    # tepapaatawhai/catalina-aws-deploy specifically (the repo that runs
+    # this Terraform for every environment) - only the environment suffix
+    # varies per environment.
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:tepapaatawhai@144412126/catalina-aws-deploy@1301718235:environment:${var.environment}"]
+    }
+  }
+}
+
+resource "aws_iam_role" "github_actions_deploy" {
+  name               = "${module.common.name}-github-actions-deploy"
+  description        = "OIDC role assumed by GitHub Actions (tepapaatawhai/catalina-aws-deploy) to deploy Catalina ${upper(var.environment)} infrastructure via Terraform"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_deploy_assume_role.json
+  tags               = module.common.common_tags
 }
 
 data "aws_iam_policy_document" "github_actions_deploy_secrets_access" {
@@ -247,8 +288,52 @@ data "aws_iam_policy_document" "github_actions_deploy_secrets_access" {
 
 resource "aws_iam_role_policy" "github_actions_deploy_secrets_access" {
   name   = "${module.common.name}-github-actions-deploy-secrets-access"
-  role   = data.aws_iam_role.github_actions_deploy.name
+  role   = aws_iam_role.github_actions_deploy.name
   policy = data.aws_iam_policy_document.github_actions_deploy_secrets_access.json
+}
+
+# Pre-existing custom inline policies, adopted as-is via import - not
+# tightened here, that's a separate exercise from making this reproducible.
+resource "aws_iam_role_policy" "github_actions_deploy_eks_full_access" {
+  name = "eks-full-access"
+  role = aws_iam_role.github_actions_deploy.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      { Effect = "Allow", Action = "eks:*", Resource = "*" }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "github_actions_deploy_kms_full_access" {
+  name = "kms-full-access"
+  role = aws_iam_role.github_actions_deploy.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      { Effect = "Allow", Action = "kms:*", Resource = "*" }
+    ]
+  })
+}
+
+locals {
+  github_actions_deploy_managed_policy_arns = toset([
+    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+    "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess",
+    "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
+    "arn:aws:iam::aws:policy/IAMFullAccess",
+    "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess",
+    "arn:aws:iam::aws:policy/AmazonVPCFullAccess",
+    "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
+    "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+  ])
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_deploy" {
+  for_each   = local.github_actions_deploy_managed_policy_arns
+  role       = aws_iam_role.github_actions_deploy.name
+  policy_arn = each.value
 }
 
 # --------------------------------------------------------------------------

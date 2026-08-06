@@ -4,6 +4,15 @@
 variable "region" { type = string }
 variable "name" { type = string }
 
+# Already passed in as TF_VAR_environment by catalina-aws-deploy's
+# terraform-deploy.yml, but was previously unused here (no matching
+# variable declared) - needed for the github_actions_deploy role's OIDC
+# trust condition, which is scoped per GitHub Environment (uat, prod, ...).
+variable "environment" {
+  type        = string
+  description = "Deployment environment name - must match the GitHub Environment used in the OIDC trust condition (e.g. uat, prod)."
+}
+
 variable "common_tags" {
   type    = map(string)
   default = {}
