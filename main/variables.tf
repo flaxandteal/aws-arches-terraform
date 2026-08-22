@@ -51,6 +51,23 @@ variable "arches_s3_service_accounts" {
   ]
 }
 
+variable "prebuild_push_service_accounts" {
+  description = "K8s service accounts allowed to push prebuild tarballs (JupyterHub notebooks)"
+  type        = list(string)
+  default     = [
+    "system:serviceaccount:srv-jupyterhub:default",
+    "system:serviceaccount:srv-jupyterhub:hub",
+  ]
+}
+
+variable "prebuild_pull_service_accounts" {
+  description = "K8s service accounts allowed to pull prebuild tarballs (CI runners)"
+  type        = list(string)
+  default     = [
+    "system:serviceaccount:srv-github-ci-runners:default",
+  ]
+}
+
 # --------------------------------------------------------------------------
 # s3
 # --------------------------------------------------------------------------

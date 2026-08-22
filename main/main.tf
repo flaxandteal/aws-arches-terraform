@@ -162,6 +162,169 @@ resource "aws_iam_role_policy_attachment" "arches_s3" {
 }
 
 # --------------------------------------------------------------------------
+# S3 – prebuild bucket (starches tarballs from JupyterHub -> CI)
+# --------------------------------------------------------------------------
+resource "random_id" "prebuild_suffix" {
+  byte_length = 4
+}
+
+resource "aws_s3_bucket" "prebuild" {
+  bucket = "${module.common.name}-prebuild-${random_id.prebuild_suffix.hex}"
+  tags = merge(module.common.common_tags, {
+    Name = "${module.common.name}-prebuild"
+  })
+}
+
+resource "aws_s3_bucket_versioning" "prebuild" {
+  bucket = aws_s3_bucket.prebuild.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "prebuild" {
+  bucket = aws_s3_bucket.prebuild.id
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = module.kms.s3_kms_key_arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "prebuild" {
+  bucket                  = aws_s3_bucket.prebuild.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# IRSA – JupyterHub notebooks push prebuild tarballs
+data "aws_iam_policy_document" "prebuild_push_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = var.prebuild_push_service_accounts
+    }
+  }
+}
+
+resource "aws_iam_role" "prebuild_push" {
+  name               = "${module.common.name}-prebuild-push"
+  assume_role_policy = data.aws_iam_policy_document.prebuild_push_assume.json
+  tags               = module.common.common_tags
+}
+
+resource "aws_iam_policy" "prebuild_push" {
+  name = "${module.common.name}-prebuild-push"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3PushPrebuild"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          aws_s3_bucket.prebuild.arn,
+          "${aws_s3_bucket.prebuild.arn}/*",
+        ]
+      },
+      {
+        Sid    = "KMSEncrypt"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+        ]
+        Resource = [module.kms.s3_kms_key_arn]
+      },
+    ]
+  })
+  tags = module.common.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "prebuild_push" {
+  role       = aws_iam_role.prebuild_push.name
+  policy_arn = aws_iam_policy.prebuild_push.arn
+}
+
+# IRSA – CI runner pulls prebuild tarballs
+data "aws_iam_policy_document" "prebuild_pull_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = var.prebuild_pull_service_accounts
+    }
+  }
+}
+
+resource "aws_iam_role" "prebuild_pull" {
+  name               = "${module.common.name}-prebuild-pull"
+  assume_role_policy = data.aws_iam_policy_document.prebuild_pull_assume.json
+  tags               = module.common.common_tags
+}
+
+resource "aws_iam_policy" "prebuild_pull" {
+  name = "${module.common.name}-prebuild-pull"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3PullPrebuild"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          aws_s3_bucket.prebuild.arn,
+          "${aws_s3_bucket.prebuild.arn}/*",
+        ]
+      },
+      {
+        Sid    = "KMSDecrypt"
+        Effect = "Allow"
+        Action = ["kms:Decrypt"]
+        Resource = [module.kms.s3_kms_key_arn]
+      },
+    ]
+  })
+  tags = module.common.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "prebuild_pull" {
+  role       = aws_iam_role.prebuild_pull.name
+  policy_arn = aws_iam_policy.prebuild_pull.arn
+}
+
+# --------------------------------------------------------------------------
 # RDS
 # --------------------------------------------------------------------------
 module "rds" {
