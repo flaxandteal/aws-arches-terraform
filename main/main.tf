@@ -246,6 +246,20 @@ resource "aws_iam_policy" "prebuild_push" {
         ]
       },
       {
+        Sid    = "S3ReadWriteData"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          module.s3.bucket_arn,
+          "${module.s3.bucket_arn}/*",
+        ]
+      },
+      {
         Sid    = "KMSEncrypt"
         Effect = "Allow"
         Action = [
