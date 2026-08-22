@@ -40,6 +40,18 @@ variable "clusters" {
 variable "github_repo" { type = string }
 
 # --------------------------------------------------------------------------
+# S3 / IRSA
+# --------------------------------------------------------------------------
+variable "arches_s3_service_accounts" {
+  description = "K8s service accounts allowed to assume the S3 IRSA role (system:serviceaccount:NS:SA format)"
+  type        = list(string)
+  default     = [
+    "system:serviceaccount:srv-catalina-arches:*",
+    "system:serviceaccount:srv-catalina-arches-ich:*",
+  ]
+}
+
+# --------------------------------------------------------------------------
 # s3
 # --------------------------------------------------------------------------
 variable "lifecycle_transition_days" {

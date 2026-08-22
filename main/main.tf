@@ -95,6 +95,73 @@ module "s3" {
 }
 
 # --------------------------------------------------------------------------
+# IRSA – S3 media access for Arches workloads
+# --------------------------------------------------------------------------
+data "aws_iam_policy_document" "arches_s3_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = var.arches_s3_service_accounts
+    }
+  }
+}
+
+resource "aws_iam_role" "arches_s3" {
+  name               = "${module.common.name}-arches-s3"
+  assume_role_policy = data.aws_iam_policy_document.arches_s3_assume.json
+  tags               = module.common.common_tags
+}
+
+resource "aws_iam_policy" "arches_s3" {
+  name = "${module.common.name}-arches-s3"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3ReadWrite"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          module.s3.bucket_arn,
+          "${module.s3.bucket_arn}/*",
+        ]
+      },
+      {
+        Sid    = "KMSDecrypt"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+        ]
+        Resource = [module.kms.s3_kms_key_arn]
+      },
+    ]
+  })
+  tags = module.common.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "arches_s3" {
+  role       = aws_iam_role.arches_s3.name
+  policy_arn = aws_iam_policy.arches_s3.arn
+}
+
+# --------------------------------------------------------------------------
 # RDS
 # --------------------------------------------------------------------------
 module "rds" {
