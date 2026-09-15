@@ -281,7 +281,7 @@ resource "aws_iam_role" "github_actions_deploy" {
 
 data "aws_iam_policy_document" "github_actions_deploy_secrets_access" {
   statement {
-    actions   = ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"]
+    actions   = ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue", "secretsmanager:GetResourcePolicy"]
     resources = [module.rds.db_secret_arn]
   }
 }
