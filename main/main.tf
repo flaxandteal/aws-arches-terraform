@@ -267,7 +267,7 @@ data "aws_iam_policy_document" "github_actions_deploy_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:tepapaatawhai@144412126/catalina-aws-deploy@1301718235:environment:${var.environment}"]
+      values   = ["repo:tepapaatawhai@144412126/catalina-aws-deploy@1354178491:environment:${var.environment}"]
     }
   }
 }
