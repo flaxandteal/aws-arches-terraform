@@ -327,6 +327,11 @@ locals {
     "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
     "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    # Added for the ECR migration (5 catalina-arches/catalina-starches
+    # repos below) - this role previously had no ECR permissions at all,
+    # so the first apply after adding those repos failed on
+    # ecr:CreateRepository AccessDeniedException.
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess",
   ])
 }
 
