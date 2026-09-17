@@ -6,13 +6,13 @@ locals {
 # ECR Repository
 # --------------------------------------------------------------------------
 resource "aws_ecr_repository" "app" {
-  name                 = "${var.name}/app"
+  name                 = var.name
   image_tag_mutability = "MUTABLE"
   # encryption_configuration {
   #   encryption_type = "KMS"
   #   kms_key         = var.kms_key_arn
   # }
-  image_scanning_configuration { #sji check
+  image_scanning_configuration {
     scan_on_push = true
   }
   tags = merge(var.common_tags, local.tags)

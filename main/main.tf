@@ -337,11 +337,179 @@ resource "aws_iam_role_policy_attachment" "github_actions_deploy" {
 }
 
 # --------------------------------------------------------------------------
-# ECR - sji don't need this. images still in github presumably?
+# ECR - GHCR -> ECR migration for catalina-arches / catalina-starches images.
+# Names are fixed (not environment-prefixed): they're baked directly into
+# the catalina-build workflows (IMAGE_NAME/matrix.image) and into Flux's
+# image-repository refs in catalina-fluxcd, both of which need to agree with
+# whatever's created here.
 # --------------------------------------------------------------------------
-# module "ecr" {
-#   source = "./modules/ecr"
+module "ecr_catalina_arches" {
+  source = "./modules/ecr"
+  name   = "catalina-arches"
 
-#   name        = module.common.name
-#   common_tags = module.common.common_tags
-# }
+  common_tags = module.common.common_tags
+}
+
+module "ecr_catalina_arches_static" {
+  source = "./modules/ecr"
+  name   = "catalina-arches_static"
+
+  common_tags = module.common.common_tags
+}
+
+module "ecr_catalina_arches_static_py" {
+  source = "./modules/ecr"
+  name   = "catalina-arches_static_py"
+
+  common_tags = module.common.common_tags
+}
+
+module "ecr_catalina_starches" {
+  source = "./modules/ecr"
+  name   = "catalina-starches"
+
+  common_tags = module.common.common_tags
+}
+
+module "ecr_catalina_starches_private" {
+  source = "./modules/ecr"
+  name   = "catalina-starches-private"
+
+  common_tags = module.common.common_tags
+}
+
+# --------------------------------------------------------------------------
+# catalina-build push role - GitHub OIDC role assumed by catalina-build's
+# Actions runs to push arches/starches images to the 5 ECR repos above.
+# Trust subject and scoping given directly by DOC (2026-09-17): scoped to
+# the main branch only (this workflow has no GitHub Environment, unlike
+# github_actions_deploy above), using the numeric org/repo ID form since
+# that's what this org's OIDC provider actually issues - see
+# github_actions_deploy_assume_role above for the same pattern and the
+# background on why it's IDs, not names.
+# --------------------------------------------------------------------------
+data "aws_iam_policy_document" "catalina_build_ecr_push_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [data.aws_iam_openid_connect_provider.github_actions.arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:tepapaatawhai@144412126/catalina-build@1353062778:ref:refs/heads/main"]
+    }
+  }
+}
+
+resource "aws_iam_role" "catalina_build_ecr_push" {
+  name               = "${module.common.name}-catalina-build-ecr-push"
+  description        = "OIDC role assumed by GitHub Actions (tepapaatawhai/catalina-build, main branch only) to push catalina-arches/catalina-starches images to ECR"
+  assume_role_policy = data.aws_iam_policy_document.catalina_build_ecr_push_assume_role.json
+  tags               = module.common.common_tags
+}
+
+data "aws_iam_policy_document" "catalina_build_ecr_push_access" {
+  # GetAuthorizationToken is not resource-scoped - ECR requires "*" here
+  # regardless of which repos the token ends up being used against.
+  statement {
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:PutImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:BatchGetImage",
+    ]
+    resources = [
+      module.ecr_catalina_arches.repository_arn,
+      module.ecr_catalina_arches_static.repository_arn,
+      module.ecr_catalina_arches_static_py.repository_arn,
+      module.ecr_catalina_starches.repository_arn,
+      module.ecr_catalina_starches_private.repository_arn,
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "catalina_build_ecr_push" {
+  name   = "${module.common.name}-catalina-build-ecr-push-access"
+  role   = aws_iam_role.catalina_build_ecr_push.name
+  policy = data.aws_iam_policy_document.catalina_build_ecr_push_access.json
+}
+
+# --------------------------------------------------------------------------
+# Flux image-reflector-controller ECR read - DOC's note: "The EKS node role
+# already has ECR read access" covers kubelet pulls, but Flux's
+# ImageRepository polling (used to auto-detect new tags for
+# srv-catalina-arches/config.yaml and srv-starches/starches-dv-deployment.yaml)
+# is a separate API call made by the image-reflector-controller pod itself,
+# which doesn't inherit the node role. IRSA'd to that controller's own
+# ServiceAccount (flux-system/image-reflector-controller) so only it gets
+# this, not every pod on the node. Scoped read-only to the two repos Flux
+# actually watches today (catalina-arches_static_py, catalina-starches-private)
+# - extend if a third ImageRepository is added later.
+# --------------------------------------------------------------------------
+data "aws_iam_policy_document" "flux_image_reflector_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = ["system:serviceaccount:flux-system:image-reflector-controller"]
+    }
+  }
+}
+
+resource "aws_iam_role" "flux_image_reflector" {
+  name               = "${module.common.name}-flux-image-reflector"
+  description        = "IRSA role for Flux's image-reflector-controller to poll ECR tags (spec.provider: aws on the ImageRepository resources)"
+  assume_role_policy = data.aws_iam_policy_document.flux_image_reflector_assume_role.json
+  tags               = module.common.common_tags
+}
+
+data "aws_iam_policy_document" "flux_image_reflector_access" {
+  statement {
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ecr:DescribeImages",
+      "ecr:ListImages",
+      "ecr:BatchGetImage",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+    ]
+    resources = [
+      module.ecr_catalina_arches_static_py.repository_arn,
+      module.ecr_catalina_starches_private.repository_arn,
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "flux_image_reflector" {
+  name   = "${module.common.name}-flux-image-reflector-access"
+  role   = aws_iam_role.flux_image_reflector.name
+  policy = data.aws_iam_policy_document.flux_image_reflector_access.json
+}
