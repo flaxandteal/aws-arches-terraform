@@ -433,7 +433,7 @@ data "aws_iam_policy_document" "catalina_build_ecr_push_assume_role" {
 
 resource "aws_iam_role" "catalina_build_ecr_push" {
   name               = "${module.common.name}-catalina-build-ecr-push"
-  description        = "OIDC role assumed by GitHub Actions (tepapaatawhai/catalina-build, main branch only) to push catalina-arches/catalina-starches images to ECR"
+  description        = "OIDC role assumed by GitHub Actions (tepapaatawhai/catalina-build, main branch only) to push and pull catalina-arches/catalina-starches images to/from ECR"
   assume_role_policy = data.aws_iam_policy_document.catalina_build_ecr_push_assume_role.json
   tags               = module.common.common_tags
 }
@@ -454,6 +454,10 @@ data "aws_iam_policy_document" "catalina_build_ecr_push_access" {
       "ecr:UploadLayerPart",
       "ecr:CompleteLayerUpload",
       "ecr:BatchGetImage",
+      # GetDownloadUrlForLayer: build-arches.yml's Build-Arches-Static job
+      # docker pulls its own Build-Arches output to run as a service
+      # container mid-build, so this role needs pull as well as push.
+      "ecr:GetDownloadUrlForLayer",
     ]
     resources = [
       module.ecr_catalina_arches.repository_arn,
