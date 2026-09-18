@@ -483,9 +483,9 @@ resource "aws_iam_role_policy" "catalina_build_ecr_push" {
 # is a separate API call made by the image-reflector-controller pod itself,
 # which doesn't inherit the node role. IRSA'd to that controller's own
 # ServiceAccount (flux-system/image-reflector-controller) so only it gets
-# this, not every pod on the node. Scoped read-only to the two repos Flux
-# actually watches today (catalina-arches_static_py, catalina-starches-private)
-# - extend if a third ImageRepository is added later.
+# this, not every pod on the node. Scoped read-only to the repos Flux
+# actually watches (catalina-arches_static_py, catalina-starches-private,
+# catalina-starches).
 # --------------------------------------------------------------------------
 data "aws_iam_policy_document" "flux_image_reflector_assume_role" {
   statement {
@@ -531,6 +531,7 @@ data "aws_iam_policy_document" "flux_image_reflector_access" {
     resources = [
       module.ecr_catalina_arches_static_py.repository_arn,
       module.ecr_catalina_starches_private.repository_arn,
+      module.ecr_catalina_starches.repository_arn,
     ]
   }
 }
