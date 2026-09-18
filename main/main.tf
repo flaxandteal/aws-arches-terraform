@@ -200,6 +200,41 @@ resource "aws_s3_bucket_public_access_block" "prebuild" {
   restrict_public_buckets = true
 }
 
+# --------------------------------------------------------------------------
+# Cross-account read for UAT's starches-ci CI role - UAT has no
+# prebuild-generation pipeline of its own, so its build pulls the tarball
+# straight from this bucket at build time rather than dev pushing/copying
+# anywhere. Bucket is SSE-KMS encrypted, so a cross-account read needs both
+# this bucket policy and a matching KMS grant below.
+# --------------------------------------------------------------------------
+data "aws_iam_policy_document" "prebuild_uat_cross_account_read" {
+  statement {
+    sid    = "UATStarchesCIRead"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::545788340931:role/catalina-uat-starches-ci"]
+    }
+    actions = ["s3:GetObject", "s3:ListBucket"]
+    resources = [
+      aws_s3_bucket.prebuild.arn,
+      "${aws_s3_bucket.prebuild.arn}/*",
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "prebuild_uat_cross_account_read" {
+  bucket = aws_s3_bucket.prebuild.id
+  policy = data.aws_iam_policy_document.prebuild_uat_cross_account_read.json
+}
+
+resource "aws_kms_grant" "prebuild_uat_cross_account_decrypt" {
+  name              = "uat-starches-ci-decrypt"
+  key_id            = module.kms.s3_kms_key_arn
+  grantee_principal = "arn:aws:iam::545788340931:role/catalina-uat-starches-ci"
+  operations        = ["Decrypt"]
+}
+
 # IRSA – JupyterHub notebooks push prebuild tarballs
 data "aws_iam_policy_document" "prebuild_push_assume" {
   statement {
