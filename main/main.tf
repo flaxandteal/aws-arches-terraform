@@ -209,18 +209,22 @@ data "aws_iam_policy_document" "starches_ci_access" {
   # prebuild-generation pipeline of its own, so the starches build pulls the
   # tarball straight from dev at build time instead of copying it into a
   # UAT-owned bucket first. Matching bucket policy + KMS grant added on the
-  # dev side (aws-arches-terraform, skeleton branch).
-  statement {
-    actions = ["s3:GetObject", "s3:ListBucket"]
-    resources = [
-      "arn:aws:s3:::catalina-dev-prebuild-e785373b",
-      "arn:aws:s3:::catalina-dev-prebuild-e785373b/*",
-    ]
+  # dev side (aws-arches-terraform, skeleton branch). Environments that own
+  # their prebuild bucket (prod) set dev_prebuild_cross_account_read = null.
+  dynamic "statement" {
+    for_each = var.dev_prebuild_cross_account_read == null ? [] : [var.dev_prebuild_cross_account_read]
+    content {
+      actions   = ["s3:GetObject", "s3:ListBucket"]
+      resources = [statement.value.bucket_arn, "${statement.value.bucket_arn}/*"]
+    }
   }
 
-  statement {
-    actions   = ["kms:Decrypt"]
-    resources = ["arn:aws:kms:ap-southeast-6:510664426317:key/da7d4378-c077-44e4-bd78-f9feada02105"]
+  dynamic "statement" {
+    for_each = var.dev_prebuild_cross_account_read == null ? [] : [var.dev_prebuild_cross_account_read]
+    content {
+      actions   = ["kms:Decrypt"]
+      resources = [statement.value.kms_key_arn]
+    }
   }
 }
 
@@ -426,7 +430,7 @@ data "aws_iam_policy_document" "catalina_build_ecr_push_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:tepapaatawhai@144412126/catalina-build@1353062778:ref:refs/heads/main"]
+      values   = [var.catalina_build_oidc_subject]
     }
   }
 }

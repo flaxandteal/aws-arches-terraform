@@ -100,3 +100,24 @@ variable "db_backup_retention" {
   type    = number
   default = 1
 }
+
+# --------------------------------------------------------------------------
+# Per-environment overrides
+# --------------------------------------------------------------------------
+variable "dev_prebuild_cross_account_read" {
+  description = "Dev prebuild bucket and KMS key the starches-ci role may read cross-account. Defaults to the dev bucket UAT reads from; set to null in environments that own their prebuild bucket (prod)."
+  type = object({
+    bucket_arn  = string
+    kms_key_arn = string
+  })
+  default = {
+    bucket_arn  = "arn:aws:s3:::catalina-dev-prebuild-e785373b"
+    kms_key_arn = "arn:aws:kms:ap-southeast-6:510664426317:key/da7d4378-c077-44e4-bd78-f9feada02105"
+  }
+}
+
+variable "catalina_build_oidc_subject" {
+  description = "GitHub OIDC token sub claim trusted by the catalina-build ECR push role. Defaults to catalina-build's main branch (UAT, no GitHub Environment); prod uses the environment form, e.g. repo:tepapaatawhai@<org_id>/catalina-build@<repo_id>:environment:prod."
+  type        = string
+  default     = "repo:tepapaatawhai@144412126/catalina-build@1353062778:ref:refs/heads/main"
+}
