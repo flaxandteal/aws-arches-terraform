@@ -53,3 +53,15 @@ output "ecr_catalina_starches_private_repository_url" {
 output "flux_image_reflector_role_arn" {
   value = aws_iam_role.flux_image_reflector.arn
 }
+
+output "prebuild_export_role_arn" {
+  value = aws_iam_role.prebuild_export.arn
+}
+
+output "s3_arches_bucket_name" {
+  value = module.s3_arches.bucket_name
+}
+
+output "arches_s3_role_arn" {
+  value = aws_iam_role.arches_s3.arn
+}

@@ -135,6 +135,74 @@ resource "aws_iam_role_policy" "s3_gateway" {
 }
 
 # --------------------------------------------------------------------------
+# Arches media bucket + IRSA (srv-catalina-arches http and worker pods)
+# --------------------------------------------------------------------------
+# Holds Django default storage (uploaded files and search export zips) so the
+# http and worker pods see the same files; pod disks are not shared. Live
+# content, so lifecycle transitions are off (Glacier is not instantly
+# readable). Same IRSA approach as s3-gateway above (org SCP denies
+# iam:CreateUser). The service account is created by the archesproject chart.
+module "s3_arches" {
+  source = "./modules/s3"
+  name   = "${module.common.name}-arches"
+
+  lifecycle_transition_days = var.lifecycle_transition_days
+  enable_lifecycle          = false
+  s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  common_tags               = module.common.common_tags
+}
+
+data "aws_iam_policy_document" "arches_s3_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = ["system:serviceaccount:srv-catalina-arches:srv-catalina-arches-archesproject"]
+    }
+  }
+}
+
+resource "aws_iam_role" "arches_s3" {
+  name               = "${module.common.name}-arches-s3"
+  assume_role_policy = data.aws_iam_policy_document.arches_s3_assume_role.json
+  tags               = module.common.common_tags
+}
+
+data "aws_iam_policy_document" "arches_s3_access" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [module.s3_arches.bucket_arn]
+  }
+
+  statement {
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${module.s3_arches.bucket_arn}/*"]
+  }
+
+  # SSE-KMS default encryption: the role also needs the key itself.
+  statement {
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+    resources = [module.kms.s3_kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "arches_s3" {
+  name   = "${module.common.name}-arches-s3-access"
+  role   = aws_iam_role.arches_s3.name
+  policy = data.aws_iam_policy_document.arches_s3_access.json
+}
+
+# --------------------------------------------------------------------------
 # Prebuild data bucket (starches CI) - source of the prebuild.tar the
 # catalina-starches Docker build pulls in. Separate from the media bucket
 # above: different consumer (CI runner pod, not the live s3-gateway),
@@ -232,6 +300,63 @@ resource "aws_iam_role_policy" "starches_ci" {
   name   = "${module.common.name}-starches-ci-access"
   role   = aws_iam_role.starches_ci.name
   policy = data.aws_iam_policy_document.starches_ci_access.json
+}
+
+# --------------------------------------------------------------------------
+# prebuild-export (srv-catalina-arches) write access to the prebuild bucket
+# --------------------------------------------------------------------------
+# The prebuild-export CronJob runs a management command from the catalina-arches
+# image that generates the prebuild tarball and uploads it here. IRSA for the
+# same reason as above (iam:CreateUser denied), bound to its own ServiceAccount
+# so the app pods do not inherit write access to this bucket.
+data "aws_iam_policy_document" "prebuild_export_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values   = ["system:serviceaccount:srv-catalina-arches:prebuild-export"]
+    }
+  }
+}
+
+resource "aws_iam_role" "prebuild_export" {
+  name               = "${module.common.name}-prebuild-export"
+  assume_role_policy = data.aws_iam_policy_document.prebuild_export_assume_role.json
+  tags               = module.common.common_tags
+}
+
+data "aws_iam_policy_document" "prebuild_export_access" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [module.s3_prebuild.bucket_arn]
+  }
+
+  statement {
+    actions   = ["s3:GetObject", "s3:PutObject"]
+    resources = ["${module.s3_prebuild.bucket_arn}/*"]
+  }
+
+  # SSE-KMS default encryption on the bucket, see starches_ci above.
+  statement {
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+    resources = [module.kms.s3_kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "prebuild_export" {
+  name   = "${module.common.name}-prebuild-export-access"
+  role   = aws_iam_role.prebuild_export.name
+  policy = data.aws_iam_policy_document.prebuild_export_access.json
 }
 
 # --------------------------------------------------------------------------
