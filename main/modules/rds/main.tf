@@ -164,8 +164,9 @@ module "rds_standard" {
 
   # Minor engine patches (security fixes) are applied automatically in the
   # maintenance window. Explicit rather than relying on the module default.
+  # The maintenance window is left to AWS: a fixed one can overlap the
+  # instance's backup window, which RDS rejects.
   auto_minor_version_upgrade = true
-  maintenance_window         = "Sun:14:00-Sun:15:00" # UTC. Mon 02:00-03:00 NZST (03:00-04:00 NZDT), low traffic
   skip_final_snapshot        = true
   deletion_protection        = false
   apply_immediately          = local.apply_now
