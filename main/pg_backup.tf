@@ -76,8 +76,12 @@ data "aws_iam_policy_document" "pg_backup_access" {
     resources = ["${module.s3_pgbackup.bucket_arn}/*"]
   }
 
+  # Multipart uploads (any dump over the CLI's 8 MB threshold) to an SSE-KMS
+  # bucket need kms:Decrypt as well as GenerateDataKey, or UploadPart fails
+  # with AccessDenied. This does not grant read access to the objects, the
+  # role still has no s3:GetObject.
   statement {
-    actions   = ["kms:GenerateDataKey*"]
+    actions   = ["kms:GenerateDataKey*", "kms:Decrypt"]
     resources = [module.kms.s3_kms_key_arn]
   }
 }
