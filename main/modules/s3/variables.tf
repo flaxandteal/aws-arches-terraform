@@ -39,3 +39,8 @@ variable "logging_bucket" {
   type    = string
   default = ""
 }
+variable "deletion_protection" {
+  description = "Attach a bucket policy that denies s3:DeleteBucket. Set to false, apply, then destroy when an environment is torn down on purpose."
+  type        = bool
+  default     = true
+}

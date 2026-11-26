@@ -14,6 +14,17 @@ module "common" {
 }
 
 # --------------------------------------------------------------------------
+# EBS default encryption (pentest finding, CIS AWS 6.1.1)
+# --------------------------------------------------------------------------
+# Account-and-region level setting: every new EBS volume and snapshot copy in
+# var.region is encrypted, including ones created by the EBS CSI driver for
+# PVCs. Uses the AWS-managed aws/ebs key unless a default key is set later.
+# Existing unencrypted volumes are not changed by this.
+resource "aws_ebs_encryption_by_default" "this" {
+  enabled = true
+}
+
+# --------------------------------------------------------------------------
 # EKS
 # --------------------------------------------------------------------------
 module "eks" {
@@ -66,6 +77,7 @@ module "s3" {
   lifecycle_transition_days = var.lifecycle_transition_days
   lifecycle_storage_class   = var.lifecycle_storage_class
   s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  deletion_protection       = var.s3_deletion_protection
   common_tags               = module.common.common_tags
 }
 
@@ -79,6 +91,7 @@ module "s3_media" {
   lifecycle_transition_days = var.lifecycle_transition_days
   enable_lifecycle          = false
   s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  deletion_protection       = var.s3_deletion_protection
   common_tags               = module.common.common_tags
 }
 
@@ -149,6 +162,7 @@ module "s3_arches" {
   lifecycle_transition_days = var.lifecycle_transition_days
   enable_lifecycle          = false
   s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  deletion_protection       = var.s3_deletion_protection
   common_tags               = module.common.common_tags
 }
 
@@ -215,6 +229,7 @@ module "s3_prebuild" {
   lifecycle_transition_days = var.lifecycle_transition_days
   enable_lifecycle          = false
   s3_kms_key_arn            = module.kms.s3_kms_key_arn
+  deletion_protection       = var.s3_deletion_protection
   common_tags               = module.common.common_tags
 }
 
@@ -459,6 +474,37 @@ resource "aws_iam_role_policy" "github_actions_deploy_kms_full_access" {
     Version = "2012-10-17"
     Statement = [
       { Effect = "Allow", Action = "kms:*", Resource = "*" }
+    ]
+  })
+}
+
+# Security services added for the pentest remediation (GuardDuty, Security Hub,
+# Config rules, and the SNS topic and EventBridge rules that alert from them).
+# The managed policies above cover EC2 (EBS default encryption), S3 bucket
+# policies, KMS, RDS and IAM, but none of these. Scoped to the service prefixes
+# rather than "*" actions across the account.
+resource "aws_iam_role_policy" "github_actions_deploy_security_services" {
+  name = "security-services"
+  role = aws_iam_role.github_actions_deploy.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "guardduty:*",
+          "securityhub:*",
+          "sns:*",
+          "events:*",
+          "config:PutConfigRule",
+          "config:DeleteConfigRule",
+          "config:DescribeConfigRules",
+          "config:TagResource",
+          "config:UntagResource",
+          "config:ListTagsForResource",
+        ]
+        Resource = "*"
+      }
     ]
   })
 }

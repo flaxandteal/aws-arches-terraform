@@ -36,6 +36,24 @@ resource "aws_s3_bucket_public_access_block" "terraform_state_block" {
   restrict_public_buckets = true
 }
 
+# Pentest finding: no protection from bucket deletion. The state bucket has no
+# teardown toggle on purpose; remove this policy by hand if it must go.
+resource "aws_s3_bucket_policy" "terraform_state_deletion_protection" {
+  bucket = aws_s3_bucket.terraform_state.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "PreventAccidentalDeletionOfBucket"
+      Effect    = "Deny"
+      Principal = "*"
+      Action    = "s3:DeleteBucket"
+      Resource  = aws_s3_bucket.terraform_state.arn
+    }]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.terraform_state_block]
+}
+
 resource "aws_dynamodb_table" "terraform_locks" {
   name           = "terraform-locks"
   billing_mode   = "PROVISIONED"

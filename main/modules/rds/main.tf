@@ -161,9 +161,14 @@ module "rds_standard" {
 
   multi_az                = var.db_multi_az
   backup_retention_period = var.db_backup_retention
-  skip_final_snapshot     = true
-  deletion_protection     = false
-  apply_immediately       = local.apply_now
+
+  # Minor engine patches (security fixes) are applied automatically in the
+  # maintenance window. Explicit rather than relying on the module default.
+  auto_minor_version_upgrade = true
+  maintenance_window         = "Sun:14:00-Sun:15:00" # UTC. Mon 02:00-03:00 NZST (03:00-04:00 NZDT), low traffic
+  skip_final_snapshot        = true
+  deletion_protection        = false
+  apply_immediately          = local.apply_now
 
   parameters = [
     {

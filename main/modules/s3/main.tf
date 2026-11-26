@@ -80,3 +80,29 @@ resource "aws_s3_bucket_logging" "this" {
   target_bucket = var.logging_bucket
   target_prefix = "s3/${var.name}-data/"
 }
+
+# --------------------------------------------------------------------------
+# Deletion protection (pentest finding: no protection from bucket deletion)
+# --------------------------------------------------------------------------
+# Explicit deny on s3:DeleteBucket for every principal, including admins, so a
+# compromised or careless credential cannot delete the bucket in one call.
+# Deleting objects is unaffected. To destroy an environment on purpose, set
+# deletion_protection = false, apply (removes this policy), then destroy.
+resource "aws_s3_bucket_policy" "deletion_protection" {
+  count = var.deletion_protection ? 1 : 0
+
+  bucket = aws_s3_bucket.this.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "PreventAccidentalDeletionOfBucket"
+      Effect    = "Deny"
+      Principal = "*"
+      Action    = "s3:DeleteBucket"
+      Resource  = aws_s3_bucket.this.arn
+    }]
+  })
+
+  # The public access block must exist first, or the policy put can race it.
+  depends_on = [aws_s3_bucket_public_access_block.this]
+}

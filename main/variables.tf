@@ -121,3 +121,30 @@ variable "catalina_build_oidc_subject" {
   type        = string
   default     = "repo:tepapaatawhai@144412126/catalina-build@1353062778:ref:refs/heads/main"
 }
+
+# --------------------------------------------------------------------------
+# GuardDuty alerting
+# --------------------------------------------------------------------------
+variable "security_alert_emails" {
+  type        = list(string)
+  description = "Email addresses subscribed to the GuardDuty alert SNS topic. Each recipient must confirm the subscription. Empty means the topic exists but nobody is notified."
+  default     = []
+}
+
+variable "guardduty_min_severity" {
+  type        = number
+  description = "Minimum GuardDuty finding severity forwarded to SNS (4 = medium and above, 7 = high only)."
+  default     = 4
+}
+
+variable "pg_backup_retention_days" {
+  type        = number
+  description = "Days to keep in-cluster Postgres backups in S3 before they expire."
+  default     = 35
+}
+
+variable "s3_deletion_protection" {
+  type        = bool
+  description = "Deny s3:DeleteBucket on the project buckets. Set false (and apply) before destroying an environment on purpose."
+  default     = true
+}
